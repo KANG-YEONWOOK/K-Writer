@@ -143,7 +143,9 @@ def main():
     ap.add_argument("--jobs", type=int, default=2)
     ap.add_argument("--model", default="opus")
     ap.add_argument("--effort", default="xhigh")
-    ap.add_argument("--budget", type=float, default=8.0)
+    # 6단계 subagent 넷(독자 점검, 후처리, 한국어 문장 점검, 수정 후 검토)을 모두 띄우는 실행의 예산. 2026-11-02 실행은 독자 점검까지
+    # $6.75를 쓰고, 8달러 안에서는 남은 subagent 셋을 띄울 수 없다고 판단해 6단계를 줄였다.
+    ap.add_argument("--budget", type=float, default=15.0)
     ap.add_argument("--timeout", type=int, default=45 * 60)
     ap.add_argument("--revise-from", help="이 iteration의 초안 사본으로 revise 모드 케이스를 만든다")
     ap.add_argument("--skill-dir", help="revise 모드에서 읽을 skill 폴더(지침 버전을 고정할 때 쓴다)")

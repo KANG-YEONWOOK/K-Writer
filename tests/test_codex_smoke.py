@@ -62,7 +62,7 @@ class CodexEvidenceTest(unittest.TestCase):
             base = Path(tmp)
             project, profile = base / "work", base / "profile"
             project.mkdir()
-            path = profile / "plugins/cache/k-writer/k-writer/0.1.0/skills/techblog/SKILL.md"
+            path = profile / "plugins/cache/k-writer/k-writer/0.2.0/skills/techblog/SKILL.md"
             path.parent.mkdir(parents=True)
             path.write_text("test", encoding="utf-8")
             actual = smoke.installed_skill(project, profile, "plugin")
