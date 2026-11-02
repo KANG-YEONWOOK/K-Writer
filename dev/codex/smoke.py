@@ -21,7 +21,7 @@ import time
 
 ROOT = Path(__file__).resolve().parents[2]
 CASES = ("default", "casual", "retone-casual", "retone-default", "url", "pdf", "cleanup")
-WORK_SUFFIXES = (".facts.md", ".draft.md", ".unrevised.md", ".repeats.md", ".reader.md")
+WORK_SUFFIXES = (".facts.md", ".draft.md", ".unrevised.md", ".repeats.md", ".reader.md", ".pre-fix.md", ".audit.md")
 
 
 def note_text():
@@ -226,8 +226,10 @@ def inspect_output(project, case, commands, hashes):
                                               lint.read_text(str(facts)) if facts.exists() else None)
     present = [s for s in WORK_SUFFIXES if (project / ("article" + s)).exists()]
     result["work_files"] = present
+    # 수정 전 사본(.pre-fix.md)은 수정 후 검토에서 고칠 곳이 나온 실행에만 생기므로 --keep-work 실행에서도 요구하지 않는다.
+    required = [s for s in WORK_SUFFIXES if s != ".pre-fix.md" and (s != ".draft.md" or tone == "casual")]
     result["work_files_ok"] = (not present if case == "cleanup" or case.startswith("retone-") else
-                               all(s in present for s in WORK_SUFFIXES if s != ".draft.md" or tone == "casual"))
+                               all(s in present for s in required))
     result["checker_commands"] = [c for c in commands if checker_invocations(c["command"])]
     result["reference_reads"] = reference_reads(commands)
     successful = [call for c in commands if c.get("exit_code") == 0

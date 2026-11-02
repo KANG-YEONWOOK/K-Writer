@@ -30,9 +30,9 @@
 - 현재 환경의 셸 실행 도구를 쓴다. Windows에서는 `python`, macOS와 Linux에서는 `python3`를 쓴다. 아래 `<스킬 절대 경로>`는 로드한 `SKILL.md`가 있는 디렉터리로 바꾼다. 현재 작업 폴더나 환경 변수의 존재로 추측하지 않는다.
 - 경로는 큰따옴표로 감싼다. 검사 명령은 한 번에 하나씩 실행한다. Claude Code의 Bash 사전 허용은 frontmatter의 검사 스크립트에 한정된다. Claude Code에서는 참고 문서를 Read로 열고 파일 목록은 Glob으로 확인한다. `cat`, `ls`, `Get-ChildItem` 같은 명령을 Bash나 PowerShell로 실행하거나 검사 명령에 이어 붙이지 않는다. 종료 코드를 보려고 `; echo "exit=$?"`를 붙이지 않는다. Bash 도구가 0이 아닌 종료 코드를 결과에 함께 보여 주고, 다른 명령을 붙인 검사 명령은 사전 허용과 맞지 않아 권한이 거부된다(Skill-Techblog 0.8.0 시험 실행에서 `revise_ko.py check`가 이 이유로 두 번 거부됐다). Codex의 파일 읽기와 PDF 처리는 runtime.md를 따른다.
   - 문체 검사: `python3 "<스킬 절대 경로>/scripts/lint_ko.py" "<글>" --tone default --facts "<이름>.facts.md"`
-  - 후처리: `python3 "<스킬 절대 경로>/scripts/revise_ko.py" start "<후처리 대상>"`, 같은 스크립트의 `repeats "<후처리 대상>"`, `check "<후처리 대상>"`
+  - 후처리: `python3 "<스킬 절대 경로>/scripts/revise_ko.py" start "<후처리 대상>"`, 같은 스크립트의 `repeats "<후처리 대상>"`, `check "<후처리 대상>"`, `mark "<후처리 대상>"`, `audit "<후처리 대상>"`(초안 사본이나 기존 글과 비교할 때 `--base "<파일>"`, 결과를 파일로 남길 때 `--out "<이름>.audit.md"`)
   - 어투 검사: `python3 "<스킬 절대 경로>/scripts/tone_check.py" "<Default 글>" "<Casual 글>"`
-  - 작업 파일 삭제: `python3 "<스킬 절대 경로>/scripts/tone_check.py" --cleanup "<이름>.facts.md" "<이름>.draft.md" "<이름>.unrevised.md" "<이름>.repeats.md" "<이름>.reader.md"`
+  - 작업 파일 삭제: `python3 "<스킬 절대 경로>/scripts/tone_check.py" --cleanup "<이름>.facts.md" "<이름>.draft.md" "<이름>.unrevised.md" "<이름>.repeats.md" "<이름>.reader.md" "<이름>.audit.md" "<이름>.pre-fix.md"`
 - Python이나 셸을 쓸 수 없으면 `references/rubric.md`로 직접 점검하고 자동 검사를 실행하지 못했다고 보고한다. 스크립트가 실행된 뒤 오류가 나면 경로와 오류를 확인한다. 실행 오류를 Python 부재로 취급하거나 검사를 통과했다고 보고하지 않는다.
 
 ## PDF와 URL

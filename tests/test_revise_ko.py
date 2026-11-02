@@ -74,6 +74,7 @@ class TestHelpers(unittest.TestCase):
         self.assertEqual(R.snapshot_path("a.draft.md"), "a.unrevised.md")
         self.assertEqual(R.facts_path("a.draft.md"), "a.facts.md")
         self.assertEqual(R.repeats_path("a.draft.md"), "a.repeats.md")
+        self.assertEqual(R.mark_path("a.draft.md"), "a.pre-fix.md")
 
 
 class TestRepeats(unittest.TestCase):
@@ -221,6 +222,123 @@ class TestCli(unittest.TestCase):
     def test_rejects_work_file_argument(self):
         code, _, err = self.run_cli("repeats", os.path.join(self.tmp.name, "article.facts.md"))
         self.assertEqual(code, 2)
+        code, _, err = self.run_cli("audit", os.path.join(self.tmp.name, "article.pre-fix.md"))
+        self.assertEqual(code, 2)
+
+    def test_mark_and_audit(self):
+        code, _, err = self.run_cli("audit", self.art)
+        self.assertEqual(code, 2)
+        self.assertIn("mark", err)
+        self.assertEqual(self.run_cli("mark", self.art)[0], 0)
+        mark = os.path.join(self.tmp.name, "article.pre-fix.md")
+        self.assertTrue(os.path.exists(mark))
+        self.write(DRAFT.replace("거절 비율은 2.1%에서 2.6%로 올랐습니다.",
+                                 "이때 거절 비율은 2.1%에서 2.6%로 올라서 재시도도 늘었습니다."))
+        code, out, _ = self.run_cli("audit", self.art)
+        self.assertIn("article.pre-fix.md", out.splitlines()[0])  # mark한 사본이 기본 비교 대상이다
+        self.assertIn("지시어: «이때»", out)
+        self.assertIn("이유·목적: «올라서»", out)
+        self.assertIn("수치 2.1%", out)
+        self.assertIn("fact sheet 1줄", out)
+        dest = os.path.join(self.tmp.name, "audit.txt")
+        code, out, _ = self.run_cli("audit", self.art, "--out", dest)
+        self.assertIn("바뀌거나 새로 쓴 단위 1개", out)
+        with open(dest, encoding="utf-8") as f:
+            self.assertIn("techblog audit", f.read())
+        self.assertEqual(self.run_cli("audit", self.art, "--out", self.art)[0], 2)
+        # 후처리를 다시 시작하면 이전 수정 전 사본을 지워 audit가 초안 사본과 비교하게 한다.
+        self.assertEqual(self.run_cli("start", self.art, "--force")[0], 0)
+        self.assertFalse(os.path.exists(mark))
+        code, out, _ = self.run_cli("audit", self.art)
+        self.assertIn("article.unrevised.md", out.splitlines()[0])
+
+
+class TestAudit(unittest.TestCase):
+    def toks(self, s):
+        return R.tokens(R.L.mask_quotes(s))
+
+    def test_deictics(self):
+        self.assertEqual(R.deictics_in(self.toks("이때 이 값은 기존 기준보다 컸습니다.")), ["이때", "이", "기존"])
+        self.assertEqual(R.deictics_in(self.toks("글을 모은 뒤 600편을 측정했습니다.")), [])  # 동작의 순서
+        self.assertEqual(R.deictics_in(self.toks("앞 절에서 본 두 값을 비교합니다.")), ["앞", "두"])
+        self.assertEqual(R.deictics_in(self.toks("프로그램 세 개와 결과는 다음과 같습니다.")), ["다음과"])
+        self.assertEqual(R.deictics_in(self.toks("\"이번\" 같은 말은 세지 않습니다.")), [])  # 따옴표 안
+
+    def test_causal_and_scope(self):
+        toks = self.toks("측정한 글이 늘어서 기준치를 다시 계산했습니다.")
+        self.assertEqual(R.causal_in(R.L.mask_quotes("측정한 글이 늘어서 기준치를 다시 계산했습니다."), toks), ["늘어서"])
+        self.assertEqual(R.causal_in("기술 글이면서 길이가 긴 글에서 측정했습니다.",
+                                     self.toks("기술 글이면서 길이가 긴 글에서 측정했습니다.")), [])
+        self.assertEqual(R.scope_in(self.toks("같은 저자의 셋째 글부터처럼 모든 글을 뺐습니다.")), ["글부터처럼", "모든"])
+
+    def test_coordinated_subjects(self):
+        found = R.coordinated(self.toks("쉼표가 붙은 것의 비율과 지시어로 여는 문장의 수가 기준 기간 글보다 많았습니다."))
+        self.assertEqual([(c["first"], c["head"], c["predicate"]) for c in found], [("비율과", "수가", "많았습니다")])
+        self.assertEqual(R.coordinated(self.toks("측정 결과와 비교해 보면 차이가 컸습니다.")), [])  # 결과는 명사
+
+    def test_name_overlaps(self):
+        text = ("AI 문체 연구가 지목한 항목(부정 대구, 굵은 글씨)의 기준치는 기준 기간 글로 계산합니다.\n\n"
+                "수정 때문에 AI 문체 항목(분포가 아닌 자동 측정 항목)의 판정이 나빠지면 안 됩니다.\n\n"
+                "AI 문체 연구가 지목한 항목(부정 대구, 굵은 글씨)은 위와 같습니다.\n")
+        units = R.audit_units(text)
+        found = R.name_overlaps(units, 0)
+        self.assertEqual([x["line"] for x in found], [3])  # 괄호 안 글이 같은 5줄은 뺀다
+        self.assertTrue(found[0]["other"].endswith("ai 문체 항목"), found)
+
+    def test_leftover_wording_and_split(self):
+        before = "## skill 본문\n\nskill 본문은 6,000바이트 이하입니다. 이 값은 시험이 확인합니다.\n"
+        after = "## skill 본문\n\nSKILL.md는 6,000바이트 이하입니다. 이 값은 시험이 확인합니다.\n"
+        res = R.audit(before, after)
+        self.assertEqual(len(res["groups"]), 1)
+        left = res["groups"][0]["leftover"]
+        self.assertIn({"phrase": "skill 본문", "where": [{"line": 1, "kind": "헤딩"}]}, left)
+        res = R.audit("검사는 600편을 측정한 뒤 기준치를 계산했고 holdout으로 확인했습니다.\n",
+                      "검사는 600편을 측정한 뒤 기준치를 계산했습니다. holdout으로 확인했습니다.\n")
+        items = res["groups"][0]["items"]
+        self.assertEqual([it["split"] for it in items], [False, True])
+
+    def test_numbers_and_fact_candidates(self):
+        facts = ("- 측정 600편, 뺀 글 239편(자료 22~35줄 표)\n"
+                 "- 이전 판은 README 239줄에 있다\n"
+                 "- K-Writer 0.2.0에서 고쳤다\n")
+        before = "사람 글을 모았습니다.\n\n측정한 글은 600편입니다.\n"
+        after = "사람 글 239편을 뺐습니다. K-Writer 0.2.0의 측정입니다.\n\n측정한 글은 600편입니다.\n"
+        res = R.audit(before, after, facts)
+        items = [it for g in res["groups"] for it in g["items"]]
+        first = items[0]
+        self.assertEqual([(x["value"], x["facts"]) for x in first["numbers"]], [("239", [1])])  # 자료 위치 239줄은 빼고 센다
+        self.assertEqual(first["facts"][0]["line"], 1)
+        self.assertEqual(items[1]["numbers"], [])  # 버전 번호는 수치가 아니다
+
+    def test_object_verbs_and_list_items(self):
+        s = "상위 agent는 검토 결과를 수정한 뒤 앞 문장, 다른 줄, 근거 후보 줄을 모아 목록을 만듭니다."
+        u = R.audit_units(s + "\n")[0]
+        pairs = [(o["object"], o["verb"]) for o in R.object_verbs(u["toks_main"])]
+        self.assertIn(("검토 결과를", "수정한"), pairs)
+        self.assertIn(("목록을", "만듭니다"), pairs)
+        self.assertEqual(R.list_items(u["raw_main"]), 3)
+        u = R.audit_units("값이 늘었고, 기준치를 다시 계산했습니다.\n")[0]
+        self.assertEqual(R.list_items(u["raw_main"]), 0)  # 연결어미 뒤 쉼표 하나는 나열이 아니다
+
+    def test_first_mentions_and_section_refs(self):
+        text = ("## 만든 방법\n\n기준치는 사람 글의 95%가 넘지 않는 값으로 정합니다. 이 값을 측정했습니다.\n\n"
+                "## 결과\n\n기준치는 \"만든 방법\" 절의 가중치와 경계로 다시 측정한 값입니다.\n")
+        units = R.audit_units(text)
+        idx = next(i for i, u in enumerate(units) if "경계" in u["text"])
+        self.assertEqual(R.first_mentions(units, idx), ["가중치", "경계"])  # "측정한"은 앞의 "측정했습니다"와 같은 말
+        refs = R.section_refs(units, idx)
+        self.assertEqual(refs[0]["lines"], [1, 3])
+        self.assertEqual(refs[0]["missing"], ["가중치", "경계"])
+        units = R.audit_units("## 결과\n\n자세한 기록은 \"없는 절\" 절에 있습니다.\n")
+        self.assertIsNone(R.section_refs(units, 1)[0]["lines"])
+
+    def test_render_audit(self):
+        res = R.audit("값은 3.2%였습니다.\n", "이 값은 3.2%였고 다른 서버보다 높았습니다.\n", "- 3.2%\n")
+        out = R.render_audit("a.pre-fix.md", "a.md", res)
+        self.assertIn("확인할 것(판정 아님)", out)
+        self.assertIn("[1] 고침: 기준 L1의 1단위 → 1단위", out)
+        self.assertIn("근거 후보 fact sheet 1줄", out)
+        self.assertIn("lint: 기준", out)
 
 
 if __name__ == "__main__":
