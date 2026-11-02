@@ -3,7 +3,7 @@
 `dev/baseline/calibrate.py --write`가 만든 문서다. 손으로 고치지 않는다. 측정 기록과 해석은 [README.md](README.md)에 있다.
 
 - 기간과 그룹: base(2018-01-01~2022-11-30)는 default/casual, mid(2022-12-01~2024-12-31)는 mid-default/mid-casual, drift(2025-01-01~)는 drift-default/drift-casual이다.
-- 가중치: base 1.0, mid 0.5(AI 문체 항목군 A1., A2., A3., A4., A5., A6., A7., A9.bold, A9.label_list, A9.list_ratio, A10., A12., A13., A14.은 0), drift 0.0. 지표 pool마다 한 사이트의 가중치는 40% 이하(글 5편 이상인 사이트가 3개 이상일 때).
+- 가중치: base 1.0, mid 0.5(기준 기간 전용 항목 A1., A2., A3., A4., A5., A6., A7., A9.bold, A9.label_list, A9.list_ratio, A10., A12., A13., A14.은 0), drift 0.0. 지표 pool마다 한 사이트의 가중치는 40% 이하(글 5편 이상인 사이트가 3개 이상일 때).
 - 경계: PASS는 가중 p95(하한은 p5), WARN은 가중 p99.5(하한은 p0.5×0.8)에 여유(횟수 +1, 비율 ×1.2). "bound": "extreme" 항목은 최댓값과 최솟값을 쓴다.
 
 ## 그룹
@@ -47,7 +47,7 @@
 
 ## AI 문체 지표의 기간별 중앙값
 
-AI 문체 항목군의 mid 가중치 0은 이 표의 2026-11-02 측정으로 정했다. 가중치는 이 표로 자동으로 바꾸지 않는다.
+기준 기간 전용 항목의 mid 가중치 0은 이 표의 2026-11-02 측정으로 정했다. 가중치는 이 표로 자동으로 바꾸지 않는다.
 
 | 지표 | 어투 | base p50 (p75) | mid p50 | drift p50 |
 |---|---|---|---|---|

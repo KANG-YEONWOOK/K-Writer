@@ -3,7 +3,7 @@
 
 - 기준치는 holdout이 아닌 사람 글에서 잡는다(holdout은 글 ID 해시로 20%).
 - 기간 가중치: base(2018-01~2022-11) 1.0, mid(2022-12~2024-12) 0.5, drift(2025~) 0. 2018~2022년 글에
-  가중치를 많이 두라는 사용자 요구를 따른다. drift 글은 비교에만 쓴다. AI 문체 항목군(AI_FAMILIES)은 mid 글도
+  가중치를 많이 두라는 사용자 요구를 따른다. drift 글은 비교에만 쓴다. 기준 기간 전용 항목(AI_FAMILIES)은 mid 글도
   가중치 0이라 base 글로만 잡는다.
 - 사이트 상한: 지표 pool마다 한 사이트의 가중치 합이 40%를 넘지 않게 줄인다. 글 5편 이상인 사이트가
   셋 이상일 때만 적용한다.
@@ -45,10 +45,11 @@ TONE_RULES = ("G4.off_tone", "G4.banned_ending")
 # 2025년 이후 글에서 함께 높아진 AI 문체 지표(rubric.md "사람 글 측정에서 확인한 것")
 AI_METRICS = ("A1.np", "A2.connective_comma_ratio", "A3.salience", "A4.para_end", "A5.style_words_per_1k",
               "A9.bold_per_1k", "A10.triad_per_1k", "A13.demonstrative_start_per_1k")
-# AI 문체 항목군. 2026-11-02 측정에서 mid(2022-12~2024-12) 글의 중앙값이 base의 p75를 넘은 지표가 있었다:
+# 기준 기간 전용 항목. 2026-11-02 측정에서 mid(2022-12~2024-12) 글의 중앙값이 base의 p75를 넘은 지표가 있었다:
 # A2.connective_comma_ratio(합니다체 0.27, base p75 0.24), A13.demonstrative_start_per_1k(합니다체 0.50 대 0.40,
-# 해요체 0.27 대 0.19). A4.para_end(합니다체)는 mid 중앙값 1.0이 base p75와 같았다. 그래서 이 항목군은 base 글로만
-# 기준치를 잡고(mid 가중치 0), 문장 길이, 문단, 종결어미 분포처럼 AI 문체 항목이 아닌 지표에만 mid를 PERIOD_WEIGHT로 넣는다.
+# 해요체 0.27 대 0.19). A4.para_end(합니다체)는 mid 중앙값 1.0이 base p75와 같았다. 그래서 이 항목들은 base 글로만
+# 기준치를 잡고(mid 가중치 0), 문장 길이, 문단, 종결어미 분포처럼 이 묶음에 들지 않는 지표에만 mid를 PERIOD_WEIGHT로 넣는다.
+# 6단계 판정의 "AI 문체 항목"(G, A1~A7, A10~A15, T, rubric.md)과 다른 묶음이라 이름을 따로 붙였다.
 AI_FAMILIES = ("A1.", "A2.", "A3.", "A4.", "A5.", "A6.", "A7.", "A9.bold", "A9.label_list", "A9.list_ratio",
                "A10.", "A12.", "A13.", "A14.")
 
@@ -210,7 +211,7 @@ def calibrate(stats, template):
     new["basis"] = (f"사람 글 baseline(dev/baseline/stats.json, holdout 제외). 기준 기간(2018-01~2022-11, 가중치 1.0) "
                     f"Default {n_by[('base', 'default')]}편, Casual {n_by[('base', 'casual')]}편. "
                     f"중간 기간(2022-12~2024-12, 가중치 {PERIOD_WEIGHT['mid']}) Default {n_by[('mid', 'default')]}편, "
-                    f"Casual {n_by[('mid', 'casual')]}편. AI 문체 항목(A1~A7, A9 굵은 글씨·목록, A10, A12~A14)은 "
+                    f"Casual {n_by[('mid', 'casual')]}편. 기준 기간 전용 항목(A1~A7, A9 굵은 글씨·목록, A10, A12~A14)은 "
                     f"기준 기간 글만 쓴다. 한 사이트의 가중치는 지표마다 {SITE_CAP:.0%} 이하. "
                     f"calibrate.py가 생성. 기준 commit {commit}")
     return new, notes
@@ -274,7 +275,7 @@ def report(stats, thresholds, notes, old=None):
              "[README.md](README.md)에 있다.", "",
              "- 기간과 그룹: base(2018-01-01~2022-11-30)는 default/casual, mid(2022-12-01~2024-12-31)는 "
              "mid-default/mid-casual, drift(2025-01-01~)는 drift-default/drift-casual이다.",
-             f"- 가중치: base {PERIOD_WEIGHT['base']}, mid {PERIOD_WEIGHT['mid']}(AI 문체 항목군 "
+             f"- 가중치: base {PERIOD_WEIGHT['base']}, mid {PERIOD_WEIGHT['mid']}(기준 기간 전용 항목 "
              f"{', '.join(AI_FAMILIES)}은 0), drift {PERIOD_WEIGHT['drift']}. "
              f"지표 pool마다 한 사이트의 가중치는 {SITE_CAP:.0%} 이하(글 {SITE_CAP_MIN_ARTICLES}편 이상인 사이트가 "
              f"{SITE_CAP_MIN_SITES}개 이상일 때).",
@@ -304,7 +305,7 @@ def report(stats, thresholds, notes, old=None):
             row.append(f"{pct(vals, .1):.2f} / {pct(vals, .5):.2f} / {pct(vals, .9):.2f}" if vals else "-")
         lines.append("| " + " | ".join(row) + " |")
     lines += ["", "## AI 문체 지표의 기간별 중앙값", "",
-              "AI 문체 항목군의 mid 가중치 0은 이 표의 2026-11-02 측정으로 정했다. 가중치는 이 표로 자동으로 "
+              "기준 기간 전용 항목의 mid 가중치 0은 이 표의 2026-11-02 측정으로 정했다. 가중치는 이 표로 자동으로 "
               "바꾸지 않는다.", "",
               "| 지표 | 어투 | base p50 (p75) | mid p50 | drift p50 |", "|---|---|---|---|---|"]
     for k in AI_METRICS:

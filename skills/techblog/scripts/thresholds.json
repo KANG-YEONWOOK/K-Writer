@@ -2,7 +2,7 @@
   "schema": 1,
   "version": "v2",
   "generated_at": "2026-11-02",
-  "basis": "사람 글 baseline(dev/baseline/stats.json, holdout 제외). 기준 기간(2018-01~2022-11, 가중치 1.0) Default 101편, Casual 13편. 중간 기간(2022-12~2024-12, 가중치 0.5) Default 82편, Casual 16편. AI 문체 항목(A1~A7, A9 굵은 글씨·목록, A10, A12~A14)은 기준 기간 글만 쓴다. 한 사이트의 가중치는 지표마다 40% 이하. calibrate.py가 생성. 기준 commit 745a9c0",
+  "basis": "사람 글 baseline(dev/baseline/stats.json, holdout 제외). 기준 기간(2018-01~2022-11, 가중치 1.0) Default 101편, Casual 13편. 중간 기간(2022-12~2024-12, 가중치 0.5) Default 82편, Casual 16편. 기준 기간 전용 항목(A1~A7, A9 굵은 글씨·목록, A10, A12~A14)은 기준 기간 글만 쓴다. 한 사이트의 가중치는 지표마다 40% 이하. calibrate.py가 생성. 기준 commit 745a9c0",
   "max_warn": 3,
   "metrics": {
     "G2.exp_ending": {
