@@ -211,9 +211,9 @@ def human_md(work, aid):
 
 
 def human_controls(work, tone, n, seed):
-    """baseline 캐시에서 같은 어투, 비슷한 길이의 사람 글을 고른다."""
+    """baseline 캐시에서 같은 어투, 비슷한 길이의 사람 글을 고른다. 기준 기간(base)과 중간 기간(mid) 그룹에서 고른다."""
     stats = json.load(open(os.path.join(ROOT, "dev", "baseline", "stats.json"), encoding="utf-8"))
-    pool = [a for a in stats["articles"] if a["group"] == tone and 3500 <= a["chars"] <= 10000]
+    pool = [a for a in stats["articles"] if a["group"] in (tone, "mid-" + tone) and 3500 <= a["chars"] <= 10000]
     rnd = random.Random(seed)
     rnd.shuffle(pool)
     out = []
@@ -438,7 +438,8 @@ def clarity_controls(work, tones=("default", "casual")):
     stats = json.load(open(os.path.join(ROOT, "dev", "baseline", "stats.json"), encoding="utf-8"))
     out = []
     for tone in tones:
-        pool = sorted((a for a in stats["articles"] if a["group"] == tone and 3500 <= a["chars"] <= 10000),
+        pool = sorted((a for a in stats["articles"]
+                       if a["group"] in (tone, "mid-" + tone) and 3500 <= a["chars"] <= 10000),
                       key=lambda a: a["id"])
         random.Random(f"clarity-controls-{tone}").shuffle(pool)
         picked = []

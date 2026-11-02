@@ -1,266 +1,1339 @@
 {
-  "measured_at": "2026-10-20",
+  "measured_at": "2026-11-02",
   "metric": "A8.same_predicate_adjacent",
   "basis": "stats.json의 기존 글 목록과 그룹. 측정일에 확보한 원문 캐시를 현재 lint로 분석.",
   "interpretation": "검토 후보 분포. 실제 반복 문제의 판정이나 자동 수정 기준으로 사용하지 않음.",
   "coverage": {
-    "expected": 224,
-    "available": 223,
-    "missing": [
-      "daangn-e2ba0a7f57fa"
-    ]
+    "expected": 600,
+    "available": 600,
+    "missing": []
   },
   "groups": {
     "default": {
-      "expected": 57,
+      "expected": 130,
       "all": {
-        "n": 57,
-        "zero": 5,
-        "total": 241,
-        "p10": 1.0,
-        "p50": 4.0,
-        "p90": 8.4,
-        "max": 14,
-        "chars": 270171,
-        "per_1k": 0.892
+        "n": 130,
+        "zero": 17,
+        "total": 466,
+        "p10": 0.0,
+        "p50": 3.0,
+        "p90": 8.0,
+        "max": 19,
+        "chars": 618074,
+        "per_1k": 0.754
       },
       "without_holdout": {
-        "n": 40,
-        "zero": 5,
-        "total": 166,
+        "n": 101,
+        "zero": 17,
+        "total": 341,
         "p10": 0.0,
-        "p50": 4.0,
-        "p90": 8.1,
-        "max": 14,
-        "chars": 187518,
-        "per_1k": 0.885
+        "p50": 3.0,
+        "p90": 7.0,
+        "max": 19,
+        "chars": 466610,
+        "per_1k": 0.731
       }
     },
     "casual": {
-      "expected": 31,
+      "expected": 15,
       "all": {
-        "n": 31,
-        "zero": 8,
-        "total": 95,
+        "n": 15,
+        "zero": 4,
+        "total": 42,
+        "p10": 0.0,
+        "p50": 2.0,
+        "p90": 6.8,
+        "max": 9,
+        "chars": 54329,
+        "per_1k": 0.773
+      },
+      "without_holdout": {
+        "n": 13,
+        "zero": 3,
+        "total": 41,
+        "p10": 0.0,
+        "p50": 2.0,
+        "p90": 7.4,
+        "max": 9,
+        "chars": 48299,
+        "per_1k": 0.849
+      }
+    },
+    "mid-default": {
+      "expected": 105,
+      "all": {
+        "n": 105,
+        "zero": 4,
+        "total": 508,
+        "p10": 1.0,
+        "p50": 4.0,
+        "p90": 10.0,
+        "max": 20,
+        "chars": 649304,
+        "per_1k": 0.782
+      },
+      "without_holdout": {
+        "n": 82,
+        "zero": 3,
+        "total": 374,
+        "p10": 1.0,
+        "p50": 4.0,
+        "p90": 9.0,
+        "max": 12,
+        "chars": 506632,
+        "per_1k": 0.738
+      }
+    },
+    "mid-casual": {
+      "expected": 20,
+      "all": {
+        "n": 20,
+        "zero": 7,
+        "total": 59,
         "p10": 0.0,
         "p50": 1.0,
         "p90": 8.0,
         "max": 23,
-        "chars": 133581,
-        "per_1k": 0.711
+        "chars": 98884,
+        "per_1k": 0.597
       },
       "without_holdout": {
-        "n": 26,
-        "zero": 5,
-        "total": 93,
+        "n": 16,
+        "zero": 4,
+        "total": 58,
         "p10": 0.0,
-        "p50": 2.0,
+        "p50": 1.0,
         "p90": 8.0,
         "max": 23,
-        "chars": 118260,
-        "per_1k": 0.786
+        "chars": 79945,
+        "per_1k": 0.725
       }
     },
     "drift-default": {
-      "expected": 90,
+      "expected": 208,
       "all": {
-        "n": 90,
-        "zero": 10,
-        "total": 379,
+        "n": 208,
+        "zero": 30,
+        "total": 723,
         "p10": 0.0,
-        "p50": 3.0,
-        "p90": 9.1,
+        "p50": 2.0,
+        "p90": 8.3,
         "max": 17,
-        "chars": 721312,
-        "per_1k": 0.525
+        "chars": 1493243,
+        "per_1k": 0.484
       },
       "without_holdout": {
-        "n": 72,
-        "zero": 8,
-        "total": 292,
-        "p10": 0.1,
-        "p50": 3.0,
-        "p90": 8.9,
+        "n": 162,
+        "zero": 26,
+        "total": 512,
+        "p10": 0.0,
+        "p50": 2.0,
+        "p90": 7.0,
         "max": 14,
-        "chars": 581466,
-        "per_1k": 0.502
+        "chars": 1130868,
+        "per_1k": 0.453
       }
     },
     "drift-casual": {
-      "expected": 46,
+      "expected": 48,
       "all": {
-        "n": 45,
-        "zero": 11,
-        "total": 106,
+        "n": 48,
+        "zero": 12,
+        "total": 108,
         "p10": 0.0,
         "p50": 1.0,
         "p90": 6.0,
         "max": 15,
-        "chars": 259757,
+        "chars": 264961,
         "per_1k": 0.408
       },
       "without_holdout": {
-        "n": 38,
-        "zero": 8,
-        "total": 92,
+        "n": 42,
+        "zero": 9,
+        "total": 95,
         "p10": 0.0,
         "p50": 1.0,
-        "p90": 6.0,
+        "p90": 5.8,
         "max": 15,
-        "chars": 219143,
-        "per_1k": 0.42
+        "chars": 231458,
+        "per_1k": 0.41
       }
     }
   },
   "calibration_without_holdout": {
-    "n": 66,
-    "zero": 10,
-    "total": 259,
+    "n": 114,
+    "zero": 20,
+    "total": 382,
     "p10": 0.0,
-    "p50": 3.0,
-    "p90": 8.0,
+    "p50": 2.5,
+    "p90": 7.7,
+    "max": 19,
+    "chars": 514909,
+    "per_1k": 0.742
+  },
+  "mid_without_holdout": {
+    "n": 98,
+    "zero": 7,
+    "total": 432,
+    "p10": 1.0,
+    "p50": 4.0,
+    "p90": 9.0,
     "max": 23,
-    "chars": 305778,
-    "per_1k": 0.847
+    "chars": 586577,
+    "per_1k": 0.736
   },
   "last_words": {
-    "있습니다": 346,
-    "있어요": 123,
-    "합니다": 60,
-    "있었습니다": 34,
-    "됩니다": 33,
-    "했습니다": 11,
+    "있습니다": 957,
+    "있다": 176,
+    "합니다": 139,
+    "있어요": 128,
+    "있었습니다": 125,
+    "됩니다": 90,
+    "했습니다": 33,
+    "것입니다": 24,
+    "되었습니다": 21,
+    "한다": 15,
+    "같습니다": 14,
+    "않습니다": 12,
+    "것이다": 12,
     "해요": 11,
-    "있었어요": 11,
-    "되었습니다": 9,
-    "했어요": 9,
-    "것입니다": 8,
+    "있었어요": 10,
+    "했어요": 10,
+    "사용합니다": 8,
+    "있었다": 7,
+    "입니다": 6,
+    "생각합니다": 6,
+    "저장합니다": 6,
+    "없다": 5,
+    "하겠습니다": 5,
+    "생성합니다": 5,
+    "사용했습니다": 5,
+    "발생했습니다": 5,
+    "의미합니다": 5,
     "같아요": 5,
-    "저장합니다": 4,
-    "같습니다": 3,
+    "된다": 4,
+    "동작합니다": 4,
+    "사용한다": 4,
+    "필요합니다": 4,
+    "거예요": 4,
+    "생성한다": 4,
+    "아닙니다": 4,
+    "적습니다": 4,
+    "보였습니다": 4,
+    "가능하다": 3,
+    "제공합니다": 3,
+    "없습니다": 3,
+    "가능합니다": 3,
+    "기능입니다": 3,
+    "점입니다": 3,
+    "하였습니다": 3,
     "되었어요": 3,
-    "거예요": 3,
+    "방법입니다": 3,
+    "실행됩니다": 3,
+    "생성된다": 3,
     "생각해요": 3,
+    "발생합니다": 3,
     "않아요": 3,
-    "의미합니다": 3,
-    "않습니다": 3,
+    "진행했습니다": 3,
+    "확인했습니다": 3,
+    "없었습니다": 3,
+    "전송합니다": 3,
+    "없어요": 3,
+    "살펴보겠습니다": 2,
+    "했다": 2,
+    "적용했다": 2,
+    "수행됩니다": 2,
+    "저장한다": 2,
+    "되었다": 2,
+    "구현하였습니다": 2,
+    "진행한다": 2,
+    "하셨습니다": 2,
+    "판단했습니다": 2,
+    "제어합니다": 2,
+    "선택합니다": 2,
     "많습니다": 2,
+    "설정합니다": 2,
+    "생각됩니다": 2,
     "소개합니다": 2,
-    "없습니다": 2,
-    "필요합니다": 2,
-    "가능합니다": 2,
+    "필요했습니다": 2,
+    "왔습니다": 2,
+    "사용된다": 2,
     "알고리즘입니다": 2,
-    "점입니다": 2,
-    "사용합니다": 2,
-    "사용했습니다": 2,
-    "보였어요": 2,
+    "모델입니다": 2,
+    "경우입니다": 2,
+    "적용합니다": 2,
+    "의미한다": 2,
+    "리턴합니다": 2,
+    "좋겠습니다": 2,
+    "호출한다": 2,
+    "것이었습니다": 2,
     "같았어요": 2,
-    "보였습니다": 2,
-    "생성합니다": 2,
+    "전달합니다": 2,
+    "않았습니다": 2,
+    "때문입니다": 2,
+    "호출합니다": 2,
+    "코드입니다": 2,
+    "관리합니다": 2,
+    "타입입니다": 2,
     "확인합니다": 2,
-    "전송합니다": 2,
-    "적습니다": 2,
+    "계획입니다": 2,
+    "수행합니다": 2,
     "능력입니다": 2,
     "적용하였습니다": 2,
-    "아닙니다": 2,
     "공간입니다": 2,
     "봅니다": 2,
+    "소비한다": 1,
+    "많다": 1,
+    "나타난다": 1,
+    "설명하겠습니다": 1,
+    "표시된다": 1,
+    "클릭한다": 1,
+    "결심했습니다": 1,
+    "시도했습니다": 1,
+    "약하다": 1,
+    "플랫폼이다": 1,
+    "기법이다": 1,
+    "설정한다": 1,
+    "소요됐다": 1,
+    "제외된다": 1,
+    "플랜이다": 1,
+    "변경된다": 1,
+    "제공한다": 1,
+    "실행한다": 1,
+    "찾는다": 1,
+    "예정이다": 1,
+    "결과다": 1,
+    "보인다": 1,
+    "접근한다": 1,
+    "전송한다": 1,
+    "라이브러리입니다": 1,
+    "구성하였습니다": 1,
+    "정했습니다": 1,
+    "서비스다": 1,
+    "형식이다": 1,
+    "적용된다": 1,
+    "레이아웃이다": 1,
+    "적용한다": 1,
+    "길어진다": 1,
+    "다릅니다": 1,
+    "준다": 1,
+    "유리하다": 1,
+    "걸린다": 1,
+    "위임했다": 1,
+    "사용했다": 1,
+    "포함한다": 1,
+    "발표했다": 1,
+    "통과합니다": 1,
+    "방법이다": 1,
+    "출력된다": 1,
+    "않는다": 1,
+    "큽니다": 1,
+    "이야기입니다": 1,
+    "묶음입니다": 1,
+    "어노테이션입니다": 1,
+    "지정합니다": 1,
+    "설정입니다": 1,
+    "메소드입니다": 1,
+    "등록해줍니다": 1,
     "소속됩니다": 1,
-    "제어합니다": 1,
+    "필요하다": 1,
+    "가능해졌다": 1,
     "찾았어요": 1,
+    "만들었습니다": 1,
+    "구현된다": 1,
     "확인하였습니다": 1,
-    "필요했습니다": 1,
-    "왔습니다": 1,
     "정의합니다": 1,
-    "동작합니다": 1,
-    "설정합니다": 1,
+    "싶었습니다": 1,
     "캐시합니다": 1,
     "관리됩니다": 1,
     "말합니다": 1,
     "과정입니다": 1,
+    "방식이다": 1,
+    "구현체이다": 1,
+    "수행한다": 1,
     "추출합니다": 1,
-    "모델입니다": 1,
-    "발생했습니다": 1,
     "처리합니다": 1,
     "권장합니다": 1,
     "진행합니다": 1,
+    "살펴보겠다": 1,
     "받았어요": 1,
     "사용했어요": 1,
     "진행했어요": 1,
     "구성했습니다": 1,
-    "기능입니다": 1,
-    "하였습니다": 1,
+    "많아졌습니다": 1,
     "편해요": 1,
-    "방법입니다": 1,
+    "출시되었다": 1,
+    "생각했습니다": 1,
     "결과물입니다": 1,
-    "리턴합니다": 1,
+    "예다": 1,
     "준비했어요": 1,
     "찾습니다": 1,
-    "실행됩니다": 1,
     "등록합니다": 1,
+    "받았습니다": 1,
+    "가능했습니다": 1,
+    "설계했다": 1,
+    "지표이다": 1,
+    "보여요": 1,
+    "가정하겠습니다": 1,
+    "추가합니다": 1,
     "때문이에요": 1,
     "해줘요": 1,
-    "구현했어요": 1,
+    "증가하였습니다": 1,
+    "비슷합니다": 1,
+    "만듭니다": 1,
+    "받습니다": 1,
+    "반환합니다": 1,
+    "알아보겠다": 1,
+    "비어있다": 1,
+    "구분한다": 1,
+    "어렵다": 1,
+    "방출한다": 1,
+    "부릅니다": 1,
+    "기다린다": 1,
+    "선호한다": 1,
     "많았어요": 1,
+    "어렵습니다": 1,
+    "보겠다": 1,
+    "전파된다": 1,
+    "명시했습니다": 1,
+    "설계하였습니다": 1,
+    "나가겠습니다": 1,
+    "분류합니다": 1,
+    "유도합니다": 1,
+    "필요했어요": 1,
+    "생각하였습니다": 1,
+    "검증했습니다": 1,
+    "느꼈습니다": 1,
+    "달렸습니다": 1,
+    "방식입니다": 1,
+    "비교했습니다": 1,
     "가능해졌습니다": 1,
     "뜻합니다": 1,
-    "필수적입니다": 1,
     "컴포넌트입니다": 1,
+    "필수적입니다": 1,
+    "어려웠습니다": 1,
+    "보입니다": 1,
     "나타났습니다": 1,
+    "측정합니다": 1,
+    "구조입니다": 1,
     "에요": 1,
-    "확인했습니다": 1,
+    "중입니다": 1,
     "바랍니다": 1,
-    "생각합니다": 1,
-    "수행됩니다": 1,
+    "적절합니다": 1,
     "진행하였습니다": 1,
+    "많았습니다": 1,
+    "제한됩니다": 1,
+    "걸립니다": 1,
     "만들어주었습니다": 1,
     "진행해주었습니다": 1,
     "패턴입니다": 1,
     "작성됩니다": 1,
     "설정됩니다": 1,
-    "하겠습니다": 1,
     "변환됩니다": 1,
     "점이었습니다": 1,
     "요약합니다": 1,
     "지원합니다": 1,
     "감소했어요": 1,
-    "없었습니다": 1,
-    "수행합니다": 1,
+    "전략입니다": 1,
+    "탐색합니다": 1,
+    "호출됩니다": 1,
     "데이터입니다": 1,
     "시작해요": 1,
     "제한했어요": 1,
     "시점입니다": 1,
-    "생각됩니다": 1,
+    "활성화됩니다": 1,
     "업데이트돼요": 1,
     "유형입니다": 1,
     "존재합니다": 1,
-    "없어요": 1,
+    "수정했습니다": 1,
     "없었어요": 1,
     "않았어요": 1,
+    "사라졌습니다": 1,
+    "못했습니다": 1,
     "됐어요": 1,
     "도구예요": 1,
     "부족합니다": 1,
-    "때문입니다": 1,
     "있겠습니다": 1,
-    "경우입니다": 1,
     "풀어보았습니다": 1,
     "암호화됩니다": 1,
     "들었어요": 1,
     "다룹니다": 1,
     "둡니다": 1,
+    "감소했습니다": 1,
     "수행하였습니다": 1,
     "향상되었습니다": 1,
     "기록했습니다": 1,
-    "계획입니다": 1,
     "실행합니다": 1,
     "어려웠어요": 1,
     "남았어요": 1,
+    "보였어요": 1,
+    "증가했습니다": 1,
+    "지식입니다": 1,
     "서비스예요": 1,
+    "렌더링됩니다": 1,
     "만들어냅니다": 1,
     "실행돼요": 1,
-    "읽습니다": 1
+    "읽습니다": 1,
+    "포함되었습니다": 1,
+    "계산해요": 1,
+    "늘어납니다": 1,
+    "공개합니다": 1,
+    "승인합니다": 1,
+    "모르겠습니다": 1,
+    "판정합니다": 1,
+    "두었습니다": 1
   },
   "articles": [
+    {
+      "id": "d2-0637045",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 4565,
+      "count": 4,
+      "ending_run4": 6,
+      "sha256": "27a13e8b31b5bb6a9b003bab35197036d4bacead288a917146bb4b130944b29b"
+    },
+    {
+      "id": "d2-2882112",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 6456,
+      "count": 3,
+      "ending_run4": 7,
+      "sha256": "2c2df2a9bc9235416acf594346722cc88e67a3a41792cd83c392be9552b85821"
+    },
+    {
+      "id": "d2-9767525",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 7710,
+      "count": 7,
+      "ending_run4": 13,
+      "sha256": "951e2838355f0a1073136d0e12f37228471a6849393d6465654f30bea9c16821"
+    },
+    {
+      "id": "woowahan-2557",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 4987,
+      "count": 0,
+      "ending_run4": 5,
+      "sha256": "cf983ac6bfbf40f10d7b9d3683dfc39f3bb7eea79f73514efffe31663f679978"
+    },
+    {
+      "id": "woowahan-2558",
+      "group": "haera",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 3788,
+      "count": 1,
+      "ending_run4": 2,
+      "sha256": "670b60b1b4dcfafe9df75989dc5e7f2d048b7852e2c4f97898e9e2499f1e0e93"
+    },
+    {
+      "id": "woowahan-2561",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 7086,
+      "count": 4,
+      "ending_run4": 1,
+      "sha256": "864c8c82914bff1ac9b8c21f0bbab506145219d859c785ae700f5b21e78b0ad0"
+    },
+    {
+      "id": "woowahan-2562",
+      "group": "haera",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 7483,
+      "count": 5,
+      "ending_run4": 8,
+      "sha256": "a8f1f92bc2fa535b8c764799514639e56ecf49b323bc88b8c9c20bc279f37d0f"
+    },
+    {
+      "id": "woowahan-2563",
+      "group": "default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 8871,
+      "count": 3,
+      "ending_run4": 1,
+      "sha256": "080bdbf9e2c85b2bd4a6fd899b01ecffb7e3754ce9e17431a17b399d7ddd247a"
+    },
+    {
+      "id": "woowahan-2564",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 5767,
+      "count": 5,
+      "ending_run4": 1,
+      "sha256": "2673770c52676147a74c518ab1359379ab119f60d34bdfc9e1cf8a04579f232a"
+    },
+    {
+      "id": "woowahan-2565",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 3561,
+      "count": 1,
+      "ending_run4": 0,
+      "sha256": "6424cf530b6f4958d998316bf234ab9cef95a36fb6c2e569b695809c68b39a95"
+    },
+    {
+      "id": "d2-9099561",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 23258,
+      "count": 14,
+      "ending_run4": 29,
+      "sha256": "0c48171ce0145601d659c1e2abdf1aeab359538e4edf8ed77d621ab83bbb8eb1"
+    },
+    {
+      "id": "d2-7495331",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 6754,
+      "count": 3,
+      "ending_run4": 3,
+      "sha256": "467f911d911d38e19bb23629f4984508d00b3dbc1b0f9309b2f919f1e8bbf3b6"
+    },
+    {
+      "id": "d2-5626759",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 9262,
+      "count": 4,
+      "ending_run4": 6,
+      "sha256": "36bee9a470c822e89d3ee545c66c3abac1fd340a9a442e9940a3b451c59ef8bf"
+    },
+    {
+      "id": "d2-3259111",
+      "group": "haera",
+      "holdout": true,
+      "site": "d2",
+      "chars": 12720,
+      "count": 13,
+      "ending_run4": 12,
+      "sha256": "9adf1ba604f1ba696745750c6df4df79e02080db7293667c3d8f7b8161b9b808"
+    },
+    {
+      "id": "d2-3585246",
+      "group": "haera",
+      "holdout": true,
+      "site": "d2",
+      "chars": 3211,
+      "count": 5,
+      "ending_run4": 6,
+      "sha256": "e637c7659df9c0f8c12fcdbf0da7b8880a7a043ed725875da69d11320e28ea04"
+    },
+    {
+      "id": "d2-1914772",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 8324,
+      "count": 3,
+      "ending_run4": 7,
+      "sha256": "089bb69c794a496c5ebf415668f43604dccff53cdf2e3dd3557100f23296cfb5"
+    },
+    {
+      "id": "kakao-349",
+      "group": "default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 4503,
+      "count": 1,
+      "ending_run4": 3,
+      "sha256": "b3d8e51dacf1648acd1d6ea49f7f19b113351f731d5f35ecedf4c320a2b8cf42"
+    },
+    {
+      "id": "woowahan-2573",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 4607,
+      "count": 1,
+      "ending_run4": 1,
+      "sha256": "4fbbe44383931f354a9c3a958d6dcc55671dbf2c58819a495ec5eafd089a643a"
+    },
+    {
+      "id": "woowahan-2575",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 4008,
+      "count": 1,
+      "ending_run4": 0,
+      "sha256": "69b0a4d7d6a5351c6f076c88167564089ab52d95b5b9b4d76d51a3f65d241480"
+    },
+    {
+      "id": "woowahan-2576",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 3798,
+      "count": 1,
+      "ending_run4": 3,
+      "sha256": "83f749e40287556eb9a338f3d3270b01305b36045915d182f584c65c214b6c27"
+    },
+    {
+      "id": "kakao-350",
+      "group": "default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 7676,
+      "count": 19,
+      "ending_run4": 2,
+      "sha256": "b498ef722f1cdf0e3cb56224c440bd412ffb99a69ec89856658f3748eb2fef88"
+    },
+    {
+      "id": "woowahan-2577",
+      "group": "haera",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 2898,
+      "count": 0,
+      "ending_run4": 6,
+      "sha256": "034db5951a296b961b7c74bd86f4b0d46ddd3bbb8b493def09c3d1deed9069ee"
+    },
+    {
+      "id": "kakao-351",
+      "group": "haera",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 5073,
+      "count": 8,
+      "ending_run4": 6,
+      "sha256": "a5bb2df3e2d455311e8e94832d7e80cae896d18bc8943f28212599632ba4dc0e"
+    },
+    {
+      "id": "d2-9511142",
+      "group": "default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 3946,
+      "count": 2,
+      "ending_run4": 3,
+      "sha256": "c50fea50782aa0512174335caf2b0605df99d4437b86db92aefa84c680b8284b"
+    },
+    {
+      "id": "woowahan-2584",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 2805,
+      "count": 2,
+      "ending_run4": 1,
+      "sha256": "d2ee736f40930bb18e3b8bff61f37466e4b8bfe8317e692e5c8061a43bebaaa9"
+    },
+    {
+      "id": "d2-5812258",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 4559,
+      "count": 0,
+      "ending_run4": 6,
+      "sha256": "5fae135c739d0c9c32c6ee63400ea85dcf5549da82fc996c931e9660f3cb7643"
+    },
+    {
+      "id": "d2-2351859",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 7346,
+      "count": 7,
+      "ending_run4": 8,
+      "sha256": "6a5009c1f15ffafa190356173ef1d413bf1d84cf11783692f096060827e03dec"
+    },
+    {
+      "id": "woowahan-2587",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 9864,
+      "count": 1,
+      "ending_run4": 9,
+      "sha256": "dc947276632e0c3c173c8cee9f23e31fad5c27dbf15806d8013e1351bad17cf3"
+    },
+    {
+      "id": "woowahan-2588",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 5457,
+      "count": 3,
+      "ending_run4": 6,
+      "sha256": "21dda15770fcc6a7f964a43c5d62078b7029c373c879e4b010529fab6a135549"
+    },
+    {
+      "id": "d2-6070967",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 7982,
+      "count": 6,
+      "ending_run4": 10,
+      "sha256": "c71e04d0ea9521d7b31d4815a2191c628a978f28cfddd514d3d523aaa2888f2a"
+    },
+    {
+      "id": "woowahan-2589",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 2363,
+      "count": 0,
+      "ending_run4": 2,
+      "sha256": "ba10471f8f3beca60972bfebcb0b50dc90d2c0c59aa876a2ef8c47e429407545"
+    },
+    {
+      "id": "d2-9878588",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 5050,
+      "count": 2,
+      "ending_run4": 7,
+      "sha256": "b1f2b51ebde9c21009eee2e5449c2380b86e535feadab318eefb43e23e18b6d3"
+    },
+    {
+      "id": "kakao-358",
+      "group": "default",
+      "holdout": true,
+      "site": "kakao",
+      "chars": 4358,
+      "count": 2,
+      "ending_run4": 1,
+      "sha256": "57772774c200fb860046c4ed82fd099609f9c7e2cd3acd23fef7b91ef5b2cbd4"
+    },
+    {
+      "id": "d2-4969726",
+      "group": "haera",
+      "holdout": true,
+      "site": "d2",
+      "chars": 7585,
+      "count": 8,
+      "ending_run4": 18,
+      "sha256": "1e820ffb8098e37e4ccd1c342124d347d63d2c8ab7bc9a2bb49bba5fc0096af0"
+    },
+    {
+      "id": "kakao-360",
+      "group": "default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 3830,
+      "count": 8,
+      "ending_run4": 2,
+      "sha256": "5588e57e7294776abe6c4e4375636433df3ddd0c7311ba2e53ca27e371099d52"
+    },
+    {
+      "id": "woowahan-2596",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 2090,
+      "count": 1,
+      "ending_run4": 1,
+      "sha256": "e7f26c4690a1771f8859af7a45d04cd843dc936fd8418be38a247bc9c4a91b8f"
+    },
+    {
+      "id": "woowahan-2597",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 3025,
+      "count": 3,
+      "ending_run4": 4,
+      "sha256": "0d047fcc47cb4afc56c5432d6345ec75240d8e50402d4567ccaa171ed85030c2"
+    },
+    {
+      "id": "d2-8540176",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 8315,
+      "count": 5,
+      "ending_run4": 1,
+      "sha256": "bb3430fbc117f84ff2ee001c2afa1e36768f3525a62e5d354aa791b473f04f49"
+    },
+    {
+      "id": "d2-2838729",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 4802,
+      "count": 5,
+      "ending_run4": 2,
+      "sha256": "ff358e1e9b50bb8a12506e9a530dac5cdf251b3b677a9eff3b7e6524b68e319b"
+    },
+    {
+      "id": "woowahan-2600",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 1876,
+      "count": 0,
+      "ending_run4": 1,
+      "sha256": "b4f7d45bc12c73351b038acff7821bc2454ecb1332ffad3c5f11fac69a21c69c"
+    },
+    {
+      "id": "woowahan-2602",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 2552,
+      "count": 2,
+      "ending_run4": 1,
+      "sha256": "8455be413f53cb959e379ff00b030746fd599ba1aa7e744dbd1542066a1cd5bc"
+    },
+    {
+      "id": "woowahan-2603",
+      "group": "haera",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 3243,
+      "count": 3,
+      "ending_run4": 2,
+      "sha256": "d44e3e4299056c5fe65756e4841e205b31a835c55089e2fa86b03cd1998c10a5"
+    },
+    {
+      "id": "woowahan-2604",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 1552,
+      "count": 3,
+      "ending_run4": 2,
+      "sha256": "b35b0042e80c1f518d3bab6723523ceb36f7c6d71bd395167aaa2d877ca996dd"
+    },
+    {
+      "id": "woowahan-2608",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 3280,
+      "count": 2,
+      "ending_run4": 2,
+      "sha256": "adfb7fd69a19cc3d6c78a797a17b3f3c5b64ce9ad470abed4199350d58cb5c57"
+    },
+    {
+      "id": "woowahan-2610",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 3134,
+      "count": 0,
+      "ending_run4": 1,
+      "sha256": "c0c846e72ab0f969c55ed95608e10d87c3062b88c4502716b190646530a1cf9c"
+    },
+    {
+      "id": "d2-0065813",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 3979,
+      "count": 3,
+      "ending_run4": 4,
+      "sha256": "a92e1c4d24a9b7591ce56aa8d5d7858511450ba4e254b127b075073fe5d7a32a"
+    },
+    {
+      "id": "woowahan-2615",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 5618,
+      "count": 3,
+      "ending_run4": 0,
+      "sha256": "d835cc9af2d375f042bb5f5c09c8d4d2b61d34e0ca2733e06711c61a244debd1"
+    },
+    {
+      "id": "woowahan-2617",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 3662,
+      "count": 1,
+      "ending_run4": 0,
+      "sha256": "12d32e760c1630ef5d4e3c3665e992953e0ca858d6ad38a181868220012f70f3"
+    },
+    {
+      "id": "woowahan-2618",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 2837,
+      "count": 1,
+      "ending_run4": 0,
+      "sha256": "11b1cf575e54d7390e981766545701c9866b0f4f4a3f5fc2da79b44aad8f5715"
+    },
+    {
+      "id": "woowahan-2622",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 2129,
+      "count": 1,
+      "ending_run4": 1,
+      "sha256": "1a217f57f8954d7f53a484e8a9163daf1faa548a56a97ab2ca40633c8b8af41a"
+    },
+    {
+      "id": "d2-3963776",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 9601,
+      "count": 1,
+      "ending_run4": 2,
+      "sha256": "79fb01313d2ba5e1f21de81f5ce3a381e945a9a2c3110153601f94782a8038be"
+    },
+    {
+      "id": "d2-7225347",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 14320,
+      "count": 12,
+      "ending_run4": 21,
+      "sha256": "47eb94a58076651a6c0505940d894e3496d466e3528fd816baa9a9aead7d1094"
+    },
+    {
+      "id": "d2-2564557",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 6744,
+      "count": 4,
+      "ending_run4": 1,
+      "sha256": "6dee85fdcbeef8a1164e2d883388bcedb1b16a5f38cc23930b261ee19a65bcc9"
+    },
+    {
+      "id": "woowahan-2624",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 4645,
+      "count": 0,
+      "ending_run4": 0,
+      "sha256": "5e935f17d611613e92292584bb578b57acfe918bb675fbc6d95e39e5f33ef7fb"
+    },
+    {
+      "id": "woowahan-2625",
+      "group": "haera",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 3598,
+      "count": 2,
+      "ending_run4": 6,
+      "sha256": "15d1cc92be3c9e709c9d7f36492d218b76e66d955355211951e084d15bee322b"
+    },
+    {
+      "id": "d2-1264836",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 23401,
+      "count": 1,
+      "ending_run4": 16,
+      "sha256": "7fc66ab2d6079ce30e5007a2d86bcf5b7a1691c511054ae766674112565dfa78"
+    },
+    {
+      "id": "d2-7861046",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 5264,
+      "count": 0,
+      "ending_run4": 4,
+      "sha256": "c0581def2bf10a49b079802dc3586f9ed6d825ff6082f53c429bc2e0aeb8f8f8"
+    },
+    {
+      "id": "woowahan-2628",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 1954,
+      "count": 0,
+      "ending_run4": 2,
+      "sha256": "a2af8793d3992f521eb7c07b20500e7fee48f69ac6d50f63a7b2e026ef1dedcb"
+    },
+    {
+      "id": "woowahan-2631",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 3035,
+      "count": 5,
+      "ending_run4": 1,
+      "sha256": "a5ff0368db4fbf968d615266b3446c84f454f747d53aedb99671e628b4441a23"
+    },
+    {
+      "id": "woowahan-2633",
+      "group": "default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 5820,
+      "count": 2,
+      "ending_run4": 1,
+      "sha256": "e4da1c52c272858f4157929de70949d77b055c68082a5661aa64c961b55d4728"
+    },
+    {
+      "id": "d2-4817173",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 15840,
+      "count": 1,
+      "ending_run4": 3,
+      "sha256": "d5abb0129de9abfacc10a7692ccafd82a66632cb67df52d477fd9894079fa0e2"
+    },
+    {
+      "id": "d2-4245995",
+      "group": "haera",
+      "holdout": true,
+      "site": "d2",
+      "chars": 2961,
+      "count": 1,
+      "ending_run4": 1,
+      "sha256": "7373ee61b0ccaa3c7d5857c2552f8bd5cd79923154f4d436258496d4e20fc791"
+    },
+    {
+      "id": "d2-6685007",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 3581,
+      "count": 2,
+      "ending_run4": 2,
+      "sha256": "a619081f61bd4d253fa5559152fe77d65f498224cb3c28282a05ea6e1961706f"
+    },
+    {
+      "id": "woowahan-2637",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 8865,
+      "count": 6,
+      "ending_run4": 3,
+      "sha256": "832e9a0f9bb94627a3e7ecc7e7af224e735cc2bc096c41594ed9331a64be96f2"
+    },
+    {
+      "id": "d2-7702933",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 6978,
+      "count": 11,
+      "ending_run4": 3,
+      "sha256": "24b372c38938a444eda583cc6fe8f219a556010798bd373c7dcd0c69a5741f7c"
+    },
+    {
+      "id": "woowahan-2638",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 2716,
+      "count": 0,
+      "ending_run4": 0,
+      "sha256": "ad9c088edb9ee23fef2ac8a61123e97bab4531a34e698c5a9441fb6686f54465"
+    },
+    {
+      "id": "d2-3661677",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 11371,
+      "count": 14,
+      "ending_run4": 13,
+      "sha256": "76ed609737b354aed63daa779b9c53021eff534bc14d221905e40c128c810f71"
+    },
+    {
+      "id": "kakao-364",
+      "group": "default",
+      "holdout": true,
+      "site": "kakao",
+      "chars": 5176,
+      "count": 8,
+      "ending_run4": 4,
+      "sha256": "89f7fe993f7ea09854f8de27fd086c1feb054059f8b8a6176adc33430c7fd719"
+    },
+    {
+      "id": "d2-7847943",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 9697,
+      "count": 3,
+      "ending_run4": 13,
+      "sha256": "aeb246d5ba200bb3665e30d0ba1538766c199b3f8f6bd1e39d17e39b0460f0b4"
+    },
+    {
+      "id": "woowahan-2647",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 4538,
+      "count": 5,
+      "ending_run4": 1,
+      "sha256": "15bb124a4d6b8c93d5bcff83f7cd70333d4caf0f93d7588292233babcd52d436"
+    },
+    {
+      "id": "woowahan-2650",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 2814,
+      "count": 5,
+      "ending_run4": 0,
+      "sha256": "f73d929f45dc23a22031d4a81de68128cdbfe8bbd17e754ac5c03586c27c238d"
+    },
+    {
+      "id": "kakao-372",
+      "group": "default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 6688,
+      "count": 6,
+      "ending_run4": 1,
+      "sha256": "027843e0be1b54daa883bded31866d38c6baddb528608dee04ca91edb4d93928"
+    },
+    {
+      "id": "kakao-375",
+      "group": "default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 5097,
+      "count": 3,
+      "ending_run4": 1,
+      "sha256": "94e71d543b840f85b14324fd075e5b9ffb3b84ecbba13422d12d5fa9d64ee90e"
+    },
+    {
+      "id": "woowahan-2655",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 2436,
+      "count": 1,
+      "ending_run4": 2,
+      "sha256": "be3d1ea0afc97def442538f6e3baae44e44c7d295458b7d475ae5c7f79057514"
+    },
+    {
+      "id": "woowahan-2658",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 4193,
+      "count": 4,
+      "ending_run4": 1,
+      "sha256": "64aa76c23f786bfc39b7de9a3718a909c43384aa623c99040b2a74c2c3492d96"
+    },
+    {
+      "id": "d2-0315536",
+      "group": "haera",
+      "holdout": true,
+      "site": "d2",
+      "chars": 7549,
+      "count": 5,
+      "ending_run4": 5,
+      "sha256": "3b008fe979c5b317e3ab2083cd442ac288f756df7552c9aa0d48fc5d4b7d9758"
+    },
+    {
+      "id": "woowahan-2659",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 3434,
+      "count": 1,
+      "ending_run4": 3,
+      "sha256": "525427caa913f2d3b294bc2ee0601d8a5fb72a35b204ea59ed364e9c7015cc0b"
+    },
+    {
+      "id": "woowahan-2661",
+      "group": "default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 4060,
+      "count": 8,
+      "ending_run4": 0,
+      "sha256": "21b444f151784d7553d976fdda40b30da11d5fa7d8d5c7d21af528fcc0f78146"
+    },
+    {
+      "id": "woowahan-2662",
+      "group": "default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 7499,
+      "count": 1,
+      "ending_run4": 0,
+      "sha256": "56a681bf484e2ff72ff53d2351c52e763552beb667a5b1dbba9df9941d7a8af4"
+    },
+    {
+      "id": "woowahan-2663",
+      "group": "default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 5789,
+      "count": 2,
+      "ending_run4": 1,
+      "sha256": "6658273425b346cca8c11511c6dc215b8a89ca0cc00865f78163a1a79bb30335"
+    },
+    {
+      "id": "woowahan-2665",
+      "group": "haera",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 3978,
+      "count": 3,
+      "ending_run4": 6,
+      "sha256": "ebe39152cec071254d9d9717bef65dbe05139a11037cd8015b68fde2932c0a01"
+    },
+    {
+      "id": "d2-2047663",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 5648,
+      "count": 0,
+      "ending_run4": 2,
+      "sha256": "643566e98f44e60c7bbfe6915476a2aa02c6572461b8ec87dd7d8852ea13d354"
+    },
+    {
+      "id": "woowahan-2673",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 7297,
+      "count": 3,
+      "ending_run4": 2,
+      "sha256": "315b3abd9c85d7bb896e872f2f39db8dd32d201a5985bcb7274f94ebbb438534"
+    },
+    {
+      "id": "woowahan-2675",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 2723,
+      "count": 3,
+      "ending_run4": 1,
+      "sha256": "02e00c7a646646dae4ce41ba20531d2240ee900ef9e9b4cd2a92ce7c293f58f0"
+    },
+    {
+      "id": "woowahan-2678",
+      "group": "default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 2524,
+      "count": 2,
+      "ending_run4": 1,
+      "sha256": "e023f0d969223a3d1f4e6c6573de8efff0291d19fcc83af868dadbe5718059e9"
+    },
     {
       "id": "kakao-391",
       "group": "default",
@@ -270,6 +1343,16 @@
       "count": 1,
       "ending_run4": 6,
       "sha256": "8d82edc3c5876f422ceb945d14a5933e0faf59dafc35d9c4f0cd76e22b14bd9b"
+    },
+    {
+      "id": "d2-7804182",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 3561,
+      "count": 2,
+      "ending_run4": 3,
+      "sha256": "ad2433bd46d87c7487b93bb90f8d933d8ca6aa2f2f30ab8a667ccfd172eb969a"
     },
     {
       "id": "kakao-392",
@@ -282,6 +1365,16 @@
       "sha256": "002c386579acf73f6f74e08d1053f5193540c6463cbb36da0185fc6d4cb2063d"
     },
     {
+      "id": "woowahan-2684",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 5851,
+      "count": 12,
+      "ending_run4": 5,
+      "sha256": "6a760d91f8ad30a0c7e6a7db589467cf05206bd7829ef5d5127461c7e4b8cd8d"
+    },
+    {
       "id": "kakao-394",
       "group": "default",
       "holdout": true,
@@ -290,6 +1383,36 @@
       "count": 6,
       "ending_run4": 4,
       "sha256": "f9a48a949cce898f97651c527cf89d5ccbabde3fc240f050233474db42edc260"
+    },
+    {
+      "id": "woowahan-2685",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 3359,
+      "count": 2,
+      "ending_run4": 1,
+      "sha256": "a60ad45b129c67bab5fb2d51025676a7fb85486e6eff7c33b47e9d482a96d6c3"
+    },
+    {
+      "id": "woowahan-2687",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 5788,
+      "count": 4,
+      "ending_run4": 4,
+      "sha256": "2c8cc938918b522d4a01eec013142df1758e048e413cba5d450a97108fe47b13"
+    },
+    {
+      "id": "woowahan-2688",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 5191,
+      "count": 0,
+      "ending_run4": 1,
+      "sha256": "14f68e3ae42289e3a4788b3f0934c73c39d898e64174a72f669575ca37fbb937"
     },
     {
       "id": "kakao-396",
@@ -310,6 +1433,26 @@
       "count": 0,
       "ending_run4": 2,
       "sha256": "aa7f0d20cf6d004a75f884ea46724c5d3fbf2c4e973208cb7b0b4c9487ded528"
+    },
+    {
+      "id": "d2-5827706",
+      "group": "haera",
+      "holdout": true,
+      "site": "d2",
+      "chars": 9468,
+      "count": 6,
+      "ending_run4": 13,
+      "sha256": "67727e66e5f5bb7d63b48edb84923acedf777434b87da0d5eb1103de40057b9e"
+    },
+    {
+      "id": "d2-6560422",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 4527,
+      "count": 0,
+      "ending_run4": 2,
+      "sha256": "c831c5f22d2a75ecf976212a15f746865aacb62d70180a88882c37004cc35683"
     },
     {
       "id": "kakao-403",
@@ -342,6 +1485,36 @@
       "sha256": "39a1dfe2ae17d95da6aca9e7b342fc9c9b040ae69930cf665a0cf2bbc18537d6"
     },
     {
+      "id": "woowahan-2695",
+      "group": "default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 7204,
+      "count": 5,
+      "ending_run4": 4,
+      "sha256": "8bce0cdca511821d529b9537a5eaf4cb87a8df85cd89b5b24466d434f357914a"
+    },
+    {
+      "id": "woowahan-2699",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 8974,
+      "count": 12,
+      "ending_run4": 3,
+      "sha256": "4ed8214cc3c6dae52d2e9794002df8fc7f674fe3072a9bc1241cec0508719a56"
+    },
+    {
+      "id": "d2-0527763",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 5352,
+      "count": 6,
+      "ending_run4": 7,
+      "sha256": "9b2fe4c3fe979a44a6d79e6beb70c215f3fe7ce4bc6541ce38b810f204d396ef"
+    },
+    {
       "id": "daangn-4c0e67612bb8",
       "group": "default",
       "holdout": true,
@@ -360,6 +1533,26 @@
       "count": 3,
       "ending_run4": 2,
       "sha256": "722b1ab750c476bc98b98943466d2fdf8160cee09edc31c8fbe105b34beb9a04"
+    },
+    {
+      "id": "d2-0189619",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 3996,
+      "count": 5,
+      "ending_run4": 7,
+      "sha256": "a7283f845905c643d8eef7ee8a9c662eb4ec68ee41cf544c7386983b4bed5d97"
+    },
+    {
+      "id": "d2-0814313",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 9850,
+      "count": 6,
+      "ending_run4": 16,
+      "sha256": "f6181459bc0b3f383c1bba47e6e1d5086a721fa63bad659fb6f877d0913961b4"
     },
     {
       "id": "kakao-412",
@@ -382,6 +1575,16 @@
       "sha256": "3bb787e4f4ed22a839fa2516cc51a7b296eb10eecbb506c8eb745fd5ca51ac2d"
     },
     {
+      "id": "woowahan-2707",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 5423,
+      "count": 2,
+      "ending_run4": 1,
+      "sha256": "f6e99404004defd0e789731b5e49dad20df0335f1f4a2a1d3783755f68d58ad7"
+    },
+    {
       "id": "kakao-418",
       "group": "default",
       "holdout": false,
@@ -400,6 +1603,16 @@
       "count": 1,
       "ending_run4": 2,
       "sha256": "5b556d20f61203fb7bea8befb00cd6161577abaa9a7190d31e4a6c9ce87e98db"
+    },
+    {
+      "id": "d2-3773258",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 12463,
+      "count": 8,
+      "ending_run4": 10,
+      "sha256": "82a358feffa2c1eeadbf66107799ad2992c5f9133c12f9392f12a932162c7a15"
     },
     {
       "id": "kakao-421",
@@ -422,6 +1635,16 @@
       "sha256": "fa5dfc8a3074cbed01ce0815ba9c27dcd973b0832c3bcded5f3213ca553a6df2"
     },
     {
+      "id": "woowahan-2718",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 3652,
+      "count": 3,
+      "ending_run4": 2,
+      "sha256": "9a5dc813911743db1a4c13075ee7cadb75c179763fa9b1eea01d5c82b165adeb"
+    },
+    {
       "id": "kakao-426",
       "group": "default",
       "holdout": false,
@@ -432,34 +1655,54 @@
       "sha256": "0b694cc726351d967740029ee364ba3851ae1faa8b47c5f41534bd5160bfcc80"
     },
     {
+      "id": "d2-0974525",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 12702,
+      "count": 4,
+      "ending_run4": 21,
+      "sha256": "438ffda1cdf777345a775f12ca525f5d837933d7da66a50235e467b1483872bc"
+    },
+    {
+      "id": "d2-9423440",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 5722,
+      "count": 1,
+      "ending_run4": 4,
+      "sha256": "d1e04c08688259dd736c32e06a2cef25b14a50cbea29c2815373345d7dd3a2ee"
+    },
+    {
       "id": "toss-smart-web-service-cache",
       "group": "default",
       "holdout": false,
       "site": "toss",
-      "chars": 3103,
+      "chars": 3081,
       "count": 4,
       "ending_run4": 4,
-      "sha256": "b856245b85505eba43f783f0a3d9f977f1448269331093fdc2bae3cb8d13a1fd"
+      "sha256": "d2e4b696b693d051fae518d076f431390c1b199b55909aeeb526f3cc8286c799"
     },
     {
       "id": "toss-jscodeshift",
       "group": "default",
       "holdout": true,
       "site": "toss",
-      "chars": 2960,
+      "chars": 2938,
       "count": 3,
       "ending_run4": 2,
-      "sha256": "0726fe14d81d8bf84c7a98e60758203f72a685a3fa1beac5abc0bdbdff9b6ebd"
+      "sha256": "fe88a86220fcf13038f92614bf7dbfdd02638cc432826a74ecfb85eb8f7f3a99"
     },
     {
       "id": "toss-node-modules-and-yarn-berry",
       "group": "default",
       "holdout": false,
       "site": "toss",
-      "chars": 5817,
+      "chars": 5795,
       "count": 8,
       "ending_run4": 5,
-      "sha256": "fe2e89294140e97c366c379d3a4ccc8da34ba9847b1de5b7270169541d3083b2"
+      "sha256": "f62fb1f756faabe23f4438a71e32712d507ece2e78bf79b2d7077687d8452f4e"
     },
     {
       "id": "kakao-436",
@@ -490,6 +1733,16 @@
       "count": 1,
       "ending_run4": 1,
       "sha256": "ec8fef76cee5940332a96b3884762ffd8465333c7a38f93ae370c79ae843be9f"
+    },
+    {
+      "id": "d2-9222129",
+      "group": "haera",
+      "holdout": true,
+      "site": "d2",
+      "chars": 4053,
+      "count": 3,
+      "ending_run4": 2,
+      "sha256": "327e62cac9803540ce202e336df7661ceaa6d49e9730a46f226499453a436496"
     },
     {
       "id": "kakao-444",
@@ -542,6 +1795,26 @@
       "sha256": "34825f7707e31e7ce41a145be42025be914fd769527209a123cec6e65a1cc8e8"
     },
     {
+      "id": "d2-0881672",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 10522,
+      "count": 4,
+      "ending_run4": 6,
+      "sha256": "4be837da60e7aa4f14ad9c54a978212bf4f8397e12bbf1f32eaf2371d9688be7"
+    },
+    {
+      "id": "d2-0473330",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 5237,
+      "count": 2,
+      "ending_run4": 1,
+      "sha256": "532b055c1085a9522472ba4083fed221293840eafc3ee9bc630949afbaf76353"
+    },
+    {
       "id": "kakao-452",
       "group": "default",
       "holdout": false,
@@ -550,6 +1823,16 @@
       "count": 8,
       "ending_run4": 1,
       "sha256": "cbb80f5a8fa1139e38ccfb296836d964cb8f3d2ecd2274a0471b5086ebe56a10"
+    },
+    {
+      "id": "d2-8446520",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 3630,
+      "count": 6,
+      "ending_run4": 8,
+      "sha256": "98d2b85b99ce6ef55b20ff08c0146e9cd04948cbc8d9e24bca910d74ec26dd85"
     },
     {
       "id": "daangn-18c368552da6",
@@ -602,6 +1885,16 @@
       "sha256": "550670646606dac7bdb7a9d00124f443e63143f878132a69ee1870a7864669de"
     },
     {
+      "id": "woowahan-5825",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 2708,
+      "count": 0,
+      "ending_run4": 0,
+      "sha256": "d6b588bbe96ea0d99ced95f4b34859a2de47cbb46683f34ff9f4019fa5086520"
+    },
+    {
       "id": "kakao-459",
       "group": "default",
       "holdout": false,
@@ -610,6 +1903,16 @@
       "count": 2,
       "ending_run4": 1,
       "sha256": "def824a84be84da576117c7b01fb5f2b39f2c7e50df6c209eb0395f0c9993bee"
+    },
+    {
+      "id": "d2-0203261",
+      "group": "haera",
+      "holdout": true,
+      "site": "d2",
+      "chars": 6115,
+      "count": 2,
+      "ending_run4": 1,
+      "sha256": "26df6c09b0dd84ba77bbcd6088d4d8989a6f39ded99df9d65b41b92db68888bf"
     },
     {
       "id": "kakao-461",
@@ -632,6 +1935,46 @@
       "sha256": "fd88be6d9025800206466fd13e422590b40e043427d9863d886cf66adaf950b1"
     },
     {
+      "id": "woowahan-5327",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 3655,
+      "count": 3,
+      "ending_run4": 1,
+      "sha256": "e7ea0b27502366d1c5a8fb1297ff353a901d22edad0dd896e2df813bff2dfd15"
+    },
+    {
+      "id": "woowahan-6217",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 10204,
+      "count": 6,
+      "ending_run4": 1,
+      "sha256": "3dda551481059420fac76ad87ecf3a54fd220891aebc3fa16df44e6eaac9693c"
+    },
+    {
+      "id": "woowahan-6339",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 6106,
+      "count": 7,
+      "ending_run4": 0,
+      "sha256": "4ada7a5e4859fff119cbf147326cf210a4beb48c88960cd085565cad5920a53b"
+    },
+    {
+      "id": "d2-3384599",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 7592,
+      "count": 0,
+      "ending_run4": 3,
+      "sha256": "00b6457efad3628affad23d9f8f7ebf2bb8cbd1cb30774754ed7161246af77dd"
+    },
+    {
       "id": "kakao-483",
       "group": "default",
       "holdout": false,
@@ -640,6 +1983,16 @@
       "count": 5,
       "ending_run4": 4,
       "sha256": "d9ac132ddcc7d5ec5a12767685eb60648c5091dc335c36efe615480773579311"
+    },
+    {
+      "id": "daangn-ca7e3f5c8441",
+      "group": "haera",
+      "holdout": false,
+      "site": "daangn",
+      "chars": 3313,
+      "count": 0,
+      "ending_run4": 6,
+      "sha256": "26035aef9c473e61e5c554dfa6b52418cd61549c46cc95d81385a634ea30ef4a"
     },
     {
       "id": "kakao-484",
@@ -672,6 +2025,16 @@
       "sha256": "9c2e29095d133cdcb24866880fa6dab95c210f6a69f5dbe687784f15e64780c5"
     },
     {
+      "id": "woowahan-7242",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 4659,
+      "count": 0,
+      "ending_run4": 7,
+      "sha256": "ae909febd3b61cff81e325c730b1e735cb3823cc851a00cb5231cb9d7b54124e"
+    },
+    {
       "id": "daangn-3b96608960",
       "group": "casual",
       "holdout": false,
@@ -692,6 +2055,16 @@
       "sha256": "cb1ffca45677fe72e94b23ae64989d4eba226bceb6392dccb7ae1a97572b49c3"
     },
     {
+      "id": "d2-0853669",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 11589,
+      "count": 7,
+      "ending_run4": 13,
+      "sha256": "8b2ee74019fac5602f78c7a64e67526415e58a316460e9e6d781c13a8a90a401"
+    },
+    {
       "id": "daangn-a33e2f3cef88",
       "group": "casual",
       "holdout": false,
@@ -702,16 +2075,6 @@
       "sha256": "f11b9533f09aac2ba22c489085af528e57295b2589b8e64cb6ffd9f6ff631c27"
     },
     {
-      "id": "toss-faster-initial-rendering",
-      "group": "default",
-      "holdout": false,
-      "site": "toss",
-      "chars": 3373,
-      "count": 0,
-      "ending_run4": 1,
-      "sha256": "29232dc8c019eedf0992adfc08d760b34cf4e3e0fcf425590137d6be50f2bba2"
-    },
-    {
       "id": "kakao-491",
       "group": "default",
       "holdout": false,
@@ -720,6 +2083,16 @@
       "count": 6,
       "ending_run4": 5,
       "sha256": "19d90f7f9afc9ac0e7898082464485fe26950882b67f1b343ba585dca3359511"
+    },
+    {
+      "id": "toss-faster-initial-rendering",
+      "group": "default",
+      "holdout": false,
+      "site": "toss",
+      "chars": 3351,
+      "count": 0,
+      "ending_run4": 1,
+      "sha256": "24726683eb25164e910dab37439a4a8d56f27cb69c5597b08cce77eeb48d2afe"
     },
     {
       "id": "daangn-4bd0e24e1bbd",
@@ -742,6 +2115,16 @@
       "sha256": "665f4f06d3c7e92ad1aa9f92e8d094604002a5ba6ee27bee78d16456c3b2518d"
     },
     {
+      "id": "daangn-732bf2bb9e",
+      "group": "casual",
+      "holdout": false,
+      "site": "daangn",
+      "chars": 2059,
+      "count": 3,
+      "ending_run4": 1,
+      "sha256": "c8a1eb233c924b00a1bde89ae925c4fcca003cf51076a17415178d21318f5515"
+    },
+    {
       "id": "daangn-d9d5e15e422b",
       "group": "default",
       "holdout": false,
@@ -752,14 +2135,24 @@
       "sha256": "3a2b3810c896628e5314d8ce9ab3ae7a8af1b9b76c915672408cd69bde5df0e2"
     },
     {
-      "id": "daangn-732bf2bb9e",
-      "group": "casual",
+      "id": "woowahan-7349",
+      "group": "default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 10838,
+      "count": 5,
+      "ending_run4": 2,
+      "sha256": "f16ab7daefddbf9751db6c068334e07a34cd0286fefd83bb7bc194880fb9fa3e"
+    },
+    {
+      "id": "woowahan-7724",
+      "group": "default",
       "holdout": false,
-      "site": "daangn",
-      "chars": 2059,
-      "count": 3,
-      "ending_run4": 1,
-      "sha256": "c8a1eb233c924b00a1bde89ae925c4fcca003cf51076a17415178d21318f5515"
+      "site": "woowahan",
+      "chars": 5284,
+      "count": 1,
+      "ending_run4": 2,
+      "sha256": "4eb5bba285541fd55ecd0d8d3886f9974693f04e3506452d12809c643252982f"
     },
     {
       "id": "daangn-39fb8577c4c7",
@@ -782,14 +2175,24 @@
       "sha256": "9c7bc6133b2a88f55ea3a86b8d1cd30453b9b12d986fd954b6cc61438260e92d"
     },
     {
+      "id": "woowahan-7425",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 6367,
+      "count": 3,
+      "ending_run4": 6,
+      "sha256": "48e7128c95df9031587004f166a6a4116d1254ae07f070ee84e2c152d5d717c8"
+    },
+    {
       "id": "toss-kotlin-dsl-restdocs",
       "group": "default",
       "holdout": true,
       "site": "toss",
-      "chars": 2761,
+      "chars": 2741,
       "count": 2,
       "ending_run4": 0,
-      "sha256": "59857d6814292dbbe938e5f2a29540955842a74e6c692930eb84a86c4493742b"
+      "sha256": "f4243ace59f96ee77fc01935cb5a8af3dae48b0e9ff9a92abc93fcb5fbb188de"
     },
     {
       "id": "kakao-506",
@@ -800,6 +2203,46 @@
       "count": 5,
       "ending_run4": 0,
       "sha256": "36de3b1ed188c2239ec9039c9d04065e2b3d8c275091c85094604556db0f9b6d"
+    },
+    {
+      "id": "woowahan-7976",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 6297,
+      "count": 1,
+      "ending_run4": 5,
+      "sha256": "0073a46deb7518bf220645e98893806727f42a374cee4d9d83fc807f3733959b"
+    },
+    {
+      "id": "d2-0923884",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 3613,
+      "count": 0,
+      "ending_run4": 1,
+      "sha256": "f2150a959d5361202a988a0aaca4f94e937b4d4f7759ec4df769edfaa55a97b9"
+    },
+    {
+      "id": "d2-7553804",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 8517,
+      "count": 3,
+      "ending_run4": 9,
+      "sha256": "a06b7aba8ccd2d20394838dd18db581a07dbe356bdfa188f12cf43caa2650023"
+    },
+    {
+      "id": "woowahan-7949",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 4288,
+      "count": 3,
+      "ending_run4": 7,
+      "sha256": "9af2937a871ef5194b4f4a9bb7315b7579dd817e6ca1f4610b82d5b6fcec2b17"
     },
     {
       "id": "kakao-516",
@@ -822,6 +2265,16 @@
       "sha256": "be89bdda774fce702bcd52cc6baea7c56d45300c83c1888f26d1d89c71b04b1b"
     },
     {
+      "id": "d2-3863967",
+      "group": "haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 7701,
+      "count": 5,
+      "ending_run4": 7,
+      "sha256": "fe10eed52618be1574aa28663c443625b11700fd4bd1a2f723f0e70312ed522c"
+    },
+    {
       "id": "daangn-d312b17e697c",
       "group": "casual",
       "holdout": false,
@@ -842,16 +2295,6 @@
       "sha256": "9dd92a7c0faa6dc9f6dc2cf369eba8ec34fc10ac25fd124e1e657677472c84a8"
     },
     {
-      "id": "toss-how-to-manage-test-dependency-in-gradle",
-      "group": "default",
-      "holdout": false,
-      "site": "toss",
-      "chars": 4834,
-      "count": 1,
-      "ending_run4": 2,
-      "sha256": "aff9b4f7084d4f3aef4c955be36cfbb7f714a7069fe2e9c3a18db39280626bc1"
-    },
-    {
       "id": "kakao-522",
       "group": "default",
       "holdout": false,
@@ -860,6 +2303,16 @@
       "count": 2,
       "ending_run4": 0,
       "sha256": "c88dfda50d7e56adf06849c414853f62e84c89eab82b662d08a3eb073fb60410"
+    },
+    {
+      "id": "toss-how-to-manage-test-dependency-in-gradle",
+      "group": "default",
+      "holdout": false,
+      "site": "toss",
+      "chars": 4814,
+      "count": 1,
+      "ending_run4": 2,
+      "sha256": "1cee9a7cfd9a23da3e04032f4e5e74c3133190d2e241680765a7dc417fe5105b"
     },
     {
       "id": "kakao-523",
@@ -872,6 +2325,16 @@
       "sha256": "93d0b900b1c82f9972412ee4f6478d2be2f0d9666a37c39b951ade0421182dd1"
     },
     {
+      "id": "daangn-1a50478f7df8",
+      "group": "casual",
+      "holdout": false,
+      "site": "daangn",
+      "chars": 4356,
+      "count": 2,
+      "ending_run4": 1,
+      "sha256": "d90b7c10d8a898ef68435727b02c2826c328f895a7fb539b332084cbd977757b"
+    },
+    {
       "id": "daangn-2162c28bbd2c",
       "group": "casual",
       "holdout": false,
@@ -882,14 +2345,24 @@
       "sha256": "677a84da637a7ade8a768467c3419a613f200db78f27886277515cb4a97bda79"
     },
     {
-      "id": "daangn-1a50478f7df8",
-      "group": "casual",
+      "id": "woowahan-12548",
+      "group": "default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 2852,
+      "count": 8,
+      "ending_run4": 0,
+      "sha256": "5f3b1fae90a25cfd5fa06a93bc1674630db22de06f7dcda5972e4839b4ce794a"
+    },
+    {
+      "id": "d2-6631477",
+      "group": "haera",
       "holdout": false,
-      "site": "daangn",
-      "chars": 4356,
-      "count": 2,
-      "ending_run4": 1,
-      "sha256": "d90b7c10d8a898ef68435727b02c2826c328f895a7fb539b332084cbd977757b"
+      "site": "d2",
+      "chars": 4652,
+      "count": 5,
+      "ending_run4": 2,
+      "sha256": "119afd2adf49c020cbd57031e015b8a6c3b9ef48483f8b489d5b7b408969fdce"
     },
     {
       "id": "kakao-528",
@@ -902,6 +2375,26 @@
       "sha256": "0d6e846ab8d4a83184d682a44d890e6c1dbf4433429d4c9c6104032d42d39ad7"
     },
     {
+      "id": "woowahan-8240",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 3110,
+      "count": 0,
+      "ending_run4": 2,
+      "sha256": "0e1ae6489a47fa3a4176ec8304399535b335f4109814ae392e32aef97faac642"
+    },
+    {
+      "id": "woowahan-8311",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 6317,
+      "count": 2,
+      "ending_run4": 0,
+      "sha256": "bc8fe182a663da94e63cb1202c82cbf151592cb7d0314ed48c7d0560df7bc993"
+    },
+    {
       "id": "kakao-529",
       "group": "default",
       "holdout": false,
@@ -910,6 +2403,16 @@
       "count": 0,
       "ending_run4": 3,
       "sha256": "4d9d746f1afdbe58dc636d812a34922389bcb6fa7bbea234712eae8304a96aa0"
+    },
+    {
+      "id": "woowahan-8339",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 7475,
+      "count": 4,
+      "ending_run4": 1,
+      "sha256": "891ef82a5399de9731f396b9424eeba6505527ef7405248faaef7bef274d76c1"
     },
     {
       "id": "daangn-3030daea456c",
@@ -952,6 +2455,16 @@
       "sha256": "a08ec4e04e30689f4fe1c0058517c4f3db649c53d4dd29fd3866275858353a76"
     },
     {
+      "id": "woowahan-8942",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 5630,
+      "count": 0,
+      "ending_run4": 0,
+      "sha256": "78d9315e22dea3be6879b94832b4fe92e681081aa8eeec627c8bc15b114fa07e"
+    },
+    {
       "id": "daangn-39fc41617993",
       "group": "casual",
       "holdout": true,
@@ -966,24 +2479,44 @@
       "group": "default",
       "holdout": false,
       "site": "toss",
-      "chars": 4310,
+      "chars": 4289,
       "count": 4,
       "ending_run4": 1,
-      "sha256": "7e6c2513c99cae0443862e31bd9146f24ccd414d3722bfa6062e6df1ef1280fe"
+      "sha256": "19933944c53af04018da09989f0c514ba132803ba6a05633eef272615cbd2ddf"
+    },
+    {
+      "id": "woowahan-9232",
+      "group": "default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 3883,
+      "count": 4,
+      "ending_run4": 2,
+      "sha256": "8124b8c9a4717d084cdd97bfa442b3eb4cdc7e6533ba885a63295764b95149a6"
     },
     {
       "id": "toss-nestjs-custom-decorator",
       "group": "default",
       "holdout": true,
       "site": "toss",
-      "chars": 5071,
+      "chars": 5050,
       "count": 6,
       "ending_run4": 3,
-      "sha256": "3f20f78523207f9483b362c408e86029fa0fa5330d3c79b5273724d26167323a"
+      "sha256": "8b56cd1fb7a2c435412bf141b4a56feea120654829a7aca0b1932680b6bb8b4f"
+    },
+    {
+      "id": "woowahan-9694",
+      "group": "default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 2413,
+      "count": 2,
+      "ending_run4": 3,
+      "sha256": "71ef8c910c8f6a5e7b35e513dde6baaee08a6592d7050e80e6bb27da23f37488"
     },
     {
       "id": "daangn-71c9e000cfa3",
-      "group": "casual",
+      "group": "mid-casual",
       "holdout": false,
       "site": "daangn",
       "chars": 2257,
@@ -992,8 +2525,258 @@
       "sha256": "dd7839165e1100812e0ed3a486ceafa54f7373665f931be9ef130ce2c438a159"
     },
     {
+      "id": "kakao-555",
+      "group": "mid-default",
+      "holdout": true,
+      "site": "kakao",
+      "chars": 6618,
+      "count": 7,
+      "ending_run4": 1,
+      "sha256": "3e844affe561e9cdea8c1bdd00994f738142b895634b219a4ca3301e4277eee4"
+    },
+    {
+      "id": "kakao-556",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 8323,
+      "count": 11,
+      "ending_run4": 3,
+      "sha256": "348a70f763439573f567bd3c340d4a73d594e26b1f7a0c0dd86429ef9daa0afc"
+    },
+    {
+      "id": "kakao-557",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 6825,
+      "count": 4,
+      "ending_run4": 3,
+      "sha256": "78106a9a8c7d136b8e82731047f822e50569590aa34d76e30c69f80e310203b0"
+    },
+    {
+      "id": "kakao-558",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 5465,
+      "count": 3,
+      "ending_run4": 2,
+      "sha256": "5803f5486fe8165c74d2347dd6a3fdf63adf37e89d924ff55f64fbece9bac957"
+    },
+    {
+      "id": "kakao-559",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 4775,
+      "count": 5,
+      "ending_run4": 1,
+      "sha256": "daffaa1ece311b7bd4a51e4cb52a6bf007fc3d744c2694b09e97bee49dd0d66d"
+    },
+    {
+      "id": "kakao-560",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 6448,
+      "count": 6,
+      "ending_run4": 1,
+      "sha256": "fd3cbe704a23432f2ef667dc531800003a159d4d5d50c92cc65d159d7b8138a2"
+    },
+    {
+      "id": "kakao-561",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 8219,
+      "count": 7,
+      "ending_run4": 9,
+      "sha256": "ae137b6bb8851bca83585dd89c07f14353a1e2700e79e574747e29f81ce9ec12"
+    },
+    {
+      "id": "d2-9879422",
+      "group": "mid-haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 7790,
+      "count": 10,
+      "ending_run4": 3,
+      "sha256": "28147039841184eba3db5ccc29788f281bba0f3d0c0e6a2662dbb4bc9287e470"
+    },
+    {
+      "id": "woowahan-9935",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 12309,
+      "count": 12,
+      "ending_run4": 2,
+      "sha256": "fcd129a7f99d73957122a406891da7bc1d0ebe75c073fd68f36d73fff4386bbb"
+    },
+    {
+      "id": "kakao-563",
+      "group": "mid-default",
+      "holdout": true,
+      "site": "kakao",
+      "chars": 6436,
+      "count": 2,
+      "ending_run4": 0,
+      "sha256": "cb2174a414404c7b37123fe8589fc7925a7f5d1279d72a84824c71a7ada5138a"
+    },
+    {
+      "id": "kakao-564",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 4563,
+      "count": 2,
+      "ending_run4": 1,
+      "sha256": "3571647dd0fec1d738c06729c4dc54de750f9aec78f030eea293b4c8c9505b30"
+    },
+    {
+      "id": "kakao-566",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 8034,
+      "count": 5,
+      "ending_run4": 2,
+      "sha256": "d632133b9f883082aa956447a5bcbf63333cb39847b4b371c87972e0889cf473"
+    },
+    {
+      "id": "woowahan-10221",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 8521,
+      "count": 2,
+      "ending_run4": 2,
+      "sha256": "f7904172ad758ec89e2020c5715af7a4fb16bc5095539c3643aae543bd6dd69e"
+    },
+    {
+      "id": "d2-5799075",
+      "group": "mid-haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 5363,
+      "count": 3,
+      "ending_run4": 10,
+      "sha256": "ae5da2615f5d1980c1fe51145f9661d881db8df04cd12dab437c066094d7f538"
+    },
+    {
+      "id": "toss-smart-polyfills",
+      "group": "mid-default",
+      "holdout": true,
+      "site": "toss",
+      "chars": 2476,
+      "count": 1,
+      "ending_run4": 0,
+      "sha256": "91569556f18cfffda15ce78326d0a1c34562cae0a0bfea64032342562ef9ea89"
+    },
+    {
+      "id": "d2-9231267",
+      "group": "mid-haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 6527,
+      "count": 2,
+      "ending_run4": 1,
+      "sha256": "e5a0351b8368f473c7bccccb293fbfd290fb7a62dd1e3c6a66f067bebfceb028"
+    },
+    {
+      "id": "woowahan-10291",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 3758,
+      "count": 5,
+      "ending_run4": 4,
+      "sha256": "88b4624f49fa6ba3bdbcf8e04e987862e979b536136d7dfbe24817d51786c850"
+    },
+    {
+      "id": "kakao-571",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 4915,
+      "count": 3,
+      "ending_run4": 2,
+      "sha256": "4997263d6a9e0086bb0632385dd0ff3ae30accd29ffc32a7d18fa6e7e65eb4ed"
+    },
+    {
+      "id": "toss-frontend-declarative-code",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "toss",
+      "chars": 2395,
+      "count": 5,
+      "ending_run4": 0,
+      "sha256": "d1dd9ca2f825dfddabfd13bb848ce3aa83c325f3bd3ec94835ade364855a9baa"
+    },
+    {
+      "id": "daangn-7abd9b35c664",
+      "group": "mid-casual",
+      "holdout": false,
+      "site": "daangn",
+      "chars": 2329,
+      "count": 8,
+      "ending_run4": 1,
+      "sha256": "a05a6e5b63871c505377ea928a63c03c1c1b5bf560d4f4c68b027cee5ad9d1af"
+    },
+    {
+      "id": "toss-tosspayments-restdocs",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "toss",
+      "chars": 3670,
+      "count": 1,
+      "ending_run4": 0,
+      "sha256": "3f39d45db36a880e1077ab87c6e6624fe4b5ac388af8ecaa55f8cd1d6f32235c"
+    },
+    {
+      "id": "toss-how-to-work-health-check-in-spring-boot-actuator",
+      "group": "mid-default",
+      "holdout": true,
+      "site": "toss",
+      "chars": 3932,
+      "count": 5,
+      "ending_run4": 2,
+      "sha256": "3cbfeae7c9d8989bb890b1938bf6984b1d7e253a185c4597986c1dc6a4ebccc0"
+    },
+    {
+      "id": "woowahan-11072",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 5331,
+      "count": 2,
+      "ending_run4": 3,
+      "sha256": "b5e8c8758a71e067fb24a5c285724916409d2591f155a8cbf26fb1fe17953d27"
+    },
+    {
+      "id": "daangn-f200992d4bf2",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "daangn",
+      "chars": 2260,
+      "count": 2,
+      "ending_run4": 2,
+      "sha256": "a75aca70b6df5a044e7c99cac324c3a750a970015348e32a1b9f046c8a78d3dc"
+    },
+    {
+      "id": "daangn-f4897a6dcdd5",
+      "group": "mid-casual",
+      "holdout": false,
+      "site": "daangn",
+      "chars": 4807,
+      "count": 0,
+      "ending_run4": 3,
+      "sha256": "afcf21ec8166987e0b0cfeb30b7eb9816ead681c2734bc890ca89708772c9fa4"
+    },
+    {
       "id": "daangn-bdf2688df267",
-      "group": "casual",
+      "group": "mid-casual",
       "holdout": false,
       "site": "daangn",
       "chars": 12171,
@@ -1002,38 +2785,348 @@
       "sha256": "07ff303ec83fa19743da8149a06b6b1e3f1c00fe8ed8d97274c079daa0262375"
     },
     {
-      "id": "daangn-5c939e8a3ea9",
-      "group": "casual",
+      "id": "woowahan-11582",
+      "group": "mid-default",
       "holdout": false,
-      "site": "daangn",
-      "chars": 7722,
-      "count": 2,
-      "ending_run4": 6,
-      "sha256": "e82ee6a075087caf3e878e3bdfd509f2baf6eb3816022dd4d85f30a86854acdf"
+      "site": "woowahan",
+      "chars": 9263,
+      "count": 11,
+      "ending_run4": 1,
+      "sha256": "2a3c938aa0e675c73c6f7bf924dfdb1d8f2082e1f75aeee3811d7ce83aeeb46c"
     },
     {
-      "id": "daangn-5c52a447dfb7",
-      "group": "casual",
+      "id": "daangn-e438aa02e622",
+      "group": "mid-casual",
       "holdout": false,
       "site": "daangn",
-      "chars": 9745,
+      "chars": 4057,
+      "count": 1,
+      "ending_run4": 1,
+      "sha256": "2bfe6c72dd5ca769b634db1bd87b286f8b21ef948dcfb00db6d9da78503e281a"
+    },
+    {
+      "id": "woowahan-11829",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 6694,
+      "count": 5,
+      "ending_run4": 3,
+      "sha256": "30c651157b84c4ff9a1a1b85ece49ca4cf031c1fb82a889332d9b962ce3f802f"
+    },
+    {
+      "id": "woowahan-11732",
+      "group": "mid-default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 4992,
+      "count": 7,
+      "ending_run4": 6,
+      "sha256": "a85f4beb722d878c0b19e4295083d14edd6830a169464214d278790a5e88e698"
+    },
+    {
+      "id": "kakao-585",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 5928,
+      "count": 6,
+      "ending_run4": 4,
+      "sha256": "cc373463c3597a02853a2df53e692aa2e0b765512087eae37b8904f16a7b4b96"
+    },
+    {
+      "id": "kakao-586",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 6153,
+      "count": 5,
+      "ending_run4": 8,
+      "sha256": "fda53212b3f7a6256b8b44d0dde2c9fa3a87bd30f442c47194f0ab134aa5960f"
+    },
+    {
+      "id": "kakao-587",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 5052,
+      "count": 2,
+      "ending_run4": 6,
+      "sha256": "2c0758adc37ffb2e756be629d10fffebee6f5746b6dc1b1f5abc04cd387229d9"
+    },
+    {
+      "id": "kakao-588",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 5687,
+      "count": 11,
+      "ending_run4": 3,
+      "sha256": "c2d64496e743e2cfc12e3c5e0f9110d6afd5e6a9bb9e08517df1e9a612323b27"
+    },
+    {
+      "id": "woowahan-12720",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 5837,
       "count": 4,
       "ending_run4": 2,
-      "sha256": "55fe14182123bd2cc78781acbd0fda499358fa20a139c50e19a491c946d68843"
+      "sha256": "b9cf312e700a1ce915d09b30e95d1e484c22c727128348adbe12a5cefc769714"
+    },
+    {
+      "id": "woowahan-11238",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 7084,
+      "count": 1,
+      "ending_run4": 4,
+      "sha256": "162ce840fd43d08f88ea05c347e3d80fb199c4112141d329ea0fa0850120dfbd"
+    },
+    {
+      "id": "d2-9223303",
+      "group": "mid-haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 4465,
+      "count": 5,
+      "ending_run4": 6,
+      "sha256": "6a8948adea09d2ff59dce1f09ae7d9b4c21d083c34ba2ddd03a8ed6ff10aa89c"
+    },
+    {
+      "id": "d2-9386302",
+      "group": "mid-haera",
+      "holdout": true,
+      "site": "d2",
+      "chars": 5651,
+      "count": 6,
+      "ending_run4": 1,
+      "sha256": "4fe9b498517cfe21c805b366e76a7642512e6f51980112b97f386ef6226794c3"
+    },
+    {
+      "id": "d2-2690975",
+      "group": "mid-haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 8044,
+      "count": 7,
+      "ending_run4": 5,
+      "sha256": "9c86352ee98a4dc9792ec80695fac2c42a2ec5ecb864c805223369384d46ac99"
+    },
+    {
+      "id": "d2-0128759",
+      "group": "mid-haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 7813,
+      "count": 4,
+      "ending_run4": 9,
+      "sha256": "c418bcedbda5bcf0bed9b98a80c80a79cee7a1a252d355ae3129f053d5a08797"
+    },
+    {
+      "id": "woowahan-13429",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 7563,
+      "count": 2,
+      "ending_run4": 4,
+      "sha256": "9c22bec4ac921244b1117e10847f660d065161b9bf8e4aef2b92d650b4e25325"
+    },
+    {
+      "id": "woowahan-11392",
+      "group": "mid-default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 5005,
+      "count": 3,
+      "ending_run4": 3,
+      "sha256": "9744a84a832e28d1038fba34b0b419db62f9fb8ffa95f91ab81ea02e8ca381ff"
+    },
+    {
+      "id": "d2-2771091",
+      "group": "mid-haera",
+      "holdout": true,
+      "site": "d2",
+      "chars": 10788,
+      "count": 4,
+      "ending_run4": 6,
+      "sha256": "872e228270061cc7b504cac610889f9f17a8be35e9e588490cdd9fa12611f2ba"
+    },
+    {
+      "id": "toss-slash23-data",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "toss",
+      "chars": 4996,
+      "count": 2,
+      "ending_run4": 2,
+      "sha256": "1f1abe94be0127a0d2f04b0c2d4b5f8ee3429e687c8aa91cb4a1f1f3d15621ef"
+    },
+    {
+      "id": "toss-slash23-server",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "toss",
+      "chars": 4240,
+      "count": 5,
+      "ending_run4": 3,
+      "sha256": "8887ee1d6fd22662c57e5d4b5662b57a7034481e262f789b433826a7c5a45a7b"
+    },
+    {
+      "id": "woowahan-14301",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 3939,
+      "count": 3,
+      "ending_run4": 5,
+      "sha256": "4455b80f56adb9dd44098bdaca8954de1385967773ba0eb4f809a5df40088935"
+    },
+    {
+      "id": "kakao-605",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 9811,
+      "count": 10,
+      "ending_run4": 4,
+      "sha256": "64fed2c22edfc04f420663ad1b414dbc2c966be01bb63eddc7a37de9a4f10f49"
+    },
+    {
+      "id": "d2-7181840",
+      "group": "mid-haera",
+      "holdout": true,
+      "site": "d2",
+      "chars": 7090,
+      "count": 8,
+      "ending_run4": 7,
+      "sha256": "f3ab231c33e0004c371e427744b083eca5c5e226f64a78c63b73c25343b41057"
+    },
+    {
+      "id": "d2-5766317",
+      "group": "mid-haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 5453,
+      "count": 0,
+      "ending_run4": 1,
+      "sha256": "00e5c66e2a257adcfdba7f45c91720620bf8ddc6643ceff009e799134408a820"
+    },
+    {
+      "id": "woowahan-14505",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 3303,
+      "count": 5,
+      "ending_run4": 3,
+      "sha256": "4d4a26e0fe11667a28053b8bda3691de3d69073a59dd4092723f1575b44014a3"
+    },
+    {
+      "id": "woowahan-14550",
+      "group": "mid-default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 4878,
+      "count": 2,
+      "ending_run4": 0,
+      "sha256": "f0b303e092432cfc6db59afc37319114fc9f8e8aa3a3432841c2cb6239ef5076"
+    },
+    {
+      "id": "d2-2184045",
+      "group": "mid-haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 5140,
+      "count": 5,
+      "ending_run4": 1,
+      "sha256": "06f33578755fbb5889c0107e4465cf8ed991a208804f5002cb6b1ef95f928d43"
+    },
+    {
+      "id": "d2-4555524",
+      "group": "mid-haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 10470,
+      "count": 10,
+      "ending_run4": 5,
+      "sha256": "9a0cffd7443ba50635c3324128d85c3726311005adf39dab6a830b80bd7b70d6"
+    },
+    {
+      "id": "woowahan-15398",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 7217,
+      "count": 2,
+      "ending_run4": 3,
+      "sha256": "8bef4c344643ce6ff6a1491f81744259ee930d0766653b2af483fb3fecb35fb5"
     },
     {
       "id": "toss-engineering-note-5",
-      "group": "casual",
+      "group": "mid-casual",
       "holdout": false,
       "site": "toss",
-      "chars": 3209,
+      "chars": 3187,
       "count": 1,
       "ending_run4": 2,
-      "sha256": "99114c05fab85bf2355211a97e50bb28fcf69a7c7cc66731e7a9fe5011d1008d"
+      "sha256": "c2150a371d3f685ae58b039fa6f7e465b0e82c010dc3b8db48609bea9dda98f7"
+    },
+    {
+      "id": "woowahan-15572",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 6459,
+      "count": 4,
+      "ending_run4": 5,
+      "sha256": "79d5ed097be210e98246b0b12fc9e9d23f71ea7250b3d793bdcecaad9f5e87c1"
+    },
+    {
+      "id": "kakao-611",
+      "group": "mid-default",
+      "holdout": true,
+      "site": "kakao",
+      "chars": 10946,
+      "count": 4,
+      "ending_run4": 6,
+      "sha256": "312ea12ce7306695e6823455d8c05aba2149951ca0b347d7998ff4a7d2493779"
+    },
+    {
+      "id": "kakao-612",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 6706,
+      "count": 4,
+      "ending_run4": 2,
+      "sha256": "892b9565c546ddcf92566009b5aa668bab7aa0a696547a9c9592d0644ffa3474"
+    },
+    {
+      "id": "woowahan-15694",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 5820,
+      "count": 11,
+      "ending_run4": 2,
+      "sha256": "291d55f35aa2c36974eb3644a1f619ca29dc2f209df907c4487a2493257cf1d7"
+    },
+    {
+      "id": "d2-8404108",
+      "group": "mid-haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 6539,
+      "count": 5,
+      "ending_run4": 8,
+      "sha256": "764aa1a4964d47b6cda4f2dbace3ce9d6e10bae4a12e79c286ee27cdcafbf607"
     },
     {
       "id": "toss-tech-writer-1",
-      "group": "casual",
+      "group": "mid-casual",
       "holdout": false,
       "site": "toss",
       "chars": 2728,
@@ -1043,7 +3136,7 @@
     },
     {
       "id": "toss-tech-writer-2",
-      "group": "casual",
+      "group": "mid-casual",
       "holdout": false,
       "site": "toss",
       "chars": 2471,
@@ -1052,8 +3145,48 @@
       "sha256": "8a1ebcdf0c9b8e4f9e8d3fe98eb64b89fdf68addfe0e6b4a50cfa267ec30d342"
     },
     {
+      "id": "woowahan-14041",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 8299,
+      "count": 1,
+      "ending_run4": 7,
+      "sha256": "f7b93d25354e23475580a9ea34da268d5e0832498d421ef66194eaced448772b"
+    },
+    {
+      "id": "d2-6867189",
+      "group": "mid-haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 2803,
+      "count": 1,
+      "ending_run4": 2,
+      "sha256": "528f8139e11f5f33b01832158c22af8a6a41708a698a1772008dbad60fd96e71"
+    },
+    {
+      "id": "d2-1203723",
+      "group": "mid-haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 3930,
+      "count": 2,
+      "ending_run4": 9,
+      "sha256": "edbda1d5812c8a60e7e67aec50203a98304519e19a64002c53a0577f1b17ac80"
+    },
+    {
+      "id": "d2-9581727",
+      "group": "mid-haera",
+      "holdout": false,
+      "site": "d2",
+      "chars": 4750,
+      "count": 2,
+      "ending_run4": 1,
+      "sha256": "57b613843a0e3a3072f85cb21f86d06e5cb3b8f41f8d97eedb0359e8b4a9bbf4"
+    },
+    {
       "id": "daangn-10b3387ba736",
-      "group": "casual",
+      "group": "mid-casual",
       "holdout": false,
       "site": "daangn",
       "chars": 3778,
@@ -1062,8 +3195,18 @@
       "sha256": "31b93976a2e1c07cfeeea8a93adc9409c8183b141dac944069b0b0821355257c"
     },
     {
+      "id": "woowahan-16158",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 3403,
+      "count": 1,
+      "ending_run4": 1,
+      "sha256": "bd1ddcca8be89ed8204cc6c301a5c8eb3540a7fad90c4796a267df19dd5a6abd"
+    },
+    {
       "id": "daangn-b96f837230da",
-      "group": "casual",
+      "group": "mid-casual",
       "holdout": false,
       "site": "daangn",
       "chars": 7926,
@@ -1072,8 +3215,28 @@
       "sha256": "77fad091da04ff8013a3f9d67e253606e6902b1f22f1226e3b08b294d6137102"
     },
     {
+      "id": "woowahan-16044",
+      "group": "mid-default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 8439,
+      "count": 1,
+      "ending_run4": 4,
+      "sha256": "892ed36b1d21245e3264bfa0a554708c97d27824ba57f11b86bff3c4427af18d"
+    },
+    {
+      "id": "d2-8588537",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 2301,
+      "count": 1,
+      "ending_run4": 1,
+      "sha256": "b7b8e93261b7ebc7ee3ece73f57d328fb33a39d1d892647a1fa8dd9b99d2d72b"
+    },
+    {
       "id": "daangn-76131ecebce1",
-      "group": "casual",
+      "group": "mid-casual",
       "holdout": false,
       "site": "daangn",
       "chars": 6033,
@@ -1082,8 +3245,38 @@
       "sha256": "7aa2df1590297d6414f9b72cf5f610f83a7e44d14a3014cdc69e961252a5a2d9"
     },
     {
+      "id": "d2-9227596",
+      "group": "mid-default",
+      "holdout": true,
+      "site": "d2",
+      "chars": 5053,
+      "count": 9,
+      "ending_run4": 1,
+      "sha256": "ca2ed553a304525b618a3a4914094cf79f96c0d2825906a1790f58b53ae0da60"
+    },
+    {
+      "id": "woowahan-15903",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 8234,
+      "count": 5,
+      "ending_run4": 3,
+      "sha256": "663ce93f1e656cb710d2ae4efe20ce9e9bb092d52aefd11550733e7062302d55"
+    },
+    {
+      "id": "d2-7136716",
+      "group": "mid-default",
+      "holdout": true,
+      "site": "d2",
+      "chars": 3977,
+      "count": 4,
+      "ending_run4": 3,
+      "sha256": "e7649ab5e6ee03da8803b980ce8142ac7b6704dfc9efc5f998e8112efaa82803"
+    },
+    {
       "id": "daangn-3ed969f07692",
-      "group": "casual",
+      "group": "mid-casual",
       "holdout": true,
       "site": "daangn",
       "chars": 4229,
@@ -1092,8 +3285,28 @@
       "sha256": "0c2fd99ba84d90ae36d613d951148a65ded29b826e7b7e00234d78ebfa3d1aef"
     },
     {
+      "id": "d2-8113611",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 7330,
+      "count": 5,
+      "ending_run4": 5,
+      "sha256": "f33e9a8428896ade2c26605667e0efd7ea034412913e3c067e7e2976b2916079"
+    },
+    {
+      "id": "woowahan-17221",
+      "group": "mid-default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 4102,
+      "count": 0,
+      "ending_run4": 2,
+      "sha256": "ef5e7b2e527caa9b9f4c07d44436f4606d47225da860925d3eb781f8c9e4d861"
+    },
+    {
       "id": "daangn-d2201319212a",
-      "group": "casual",
+      "group": "mid-casual",
       "holdout": true,
       "site": "daangn",
       "chars": 2418,
@@ -1103,7 +3316,7 @@
     },
     {
       "id": "daangn-6f01487abdda",
-      "group": "casual",
+      "group": "mid-casual",
       "holdout": false,
       "site": "daangn",
       "chars": 6238,
@@ -1112,34 +3325,624 @@
       "sha256": "85b855324484319baf4b6c95b792cd1bfec15a0d6bd2263a7be8b07d684d8f15"
     },
     {
+      "id": "woowahan-16910",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 4791,
+      "count": 5,
+      "ending_run4": 1,
+      "sha256": "6a2dc07b2dc8a25cf282a114c2eccb970f71eb53853ff57432658a273a61f29e"
+    },
+    {
+      "id": "kakao-618",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 7472,
+      "count": 6,
+      "ending_run4": 1,
+      "sha256": "a75f0df4ad08fa38a7e28d1b987b3982e2c56ebe478964524d25f82c18015509"
+    },
+    {
+      "id": "d2-2461452",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 3507,
+      "count": 1,
+      "ending_run4": 5,
+      "sha256": "356100804f0023f0246e344454b71d9590f7689e761673dfccbbf388a6628944"
+    },
+    {
       "id": "toss-27750",
-      "group": "casual",
+      "group": "mid-casual",
       "holdout": false,
       "site": "toss",
-      "chars": 2495,
+      "chars": 2473,
       "count": 1,
       "ending_run4": 0,
-      "sha256": "35453e4a96519cd2c04e40b4f0654ae6c548dbaa3d663e7b0a66c258bc0c31c7"
+      "sha256": "0fcfd2650aaa1464b8cc4ba23b6644cf56b92379dd96ea1da0f729212b0c7c80"
+    },
+    {
+      "id": "woowahan-17416",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 4071,
+      "count": 1,
+      "ending_run4": 4,
+      "sha256": "dcf0aa1a51dc0b57b3174160c373eddcf8ad5055e2005eecfcb75d60bcd32760"
+    },
+    {
+      "id": "woowahan-17386",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 8011,
+      "count": 12,
+      "ending_run4": 5,
+      "sha256": "9374984c322b23f8e9112f080e8057e16a57f11c3be89904313f6b36210411b2"
     },
     {
       "id": "toss-frontent-package-migration",
-      "group": "casual",
+      "group": "mid-casual",
       "holdout": true,
       "site": "toss",
-      "chars": 2644,
+      "chars": 2622,
       "count": 0,
       "ending_run4": 0,
-      "sha256": "aec25749c5a746824179a088a9abfdd5a16815614c1d8b4429d96b0f8f463fad"
+      "sha256": "3213592f05bc2d52316a4de947df207ecce66ee988ba9225ca528cd3f81b7cda"
+    },
+    {
+      "id": "woowahan-17710",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 5491,
+      "count": 7,
+      "ending_run4": 3,
+      "sha256": "39accb762fe13e5fb92ecff8888640fa2b319af05b627519d6320ec6c39d44db"
+    },
+    {
+      "id": "woowahan-17674",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 5948,
+      "count": 1,
+      "ending_run4": 1,
+      "sha256": "9813458ab8fe3524b722de3d7253668550c4c1a9b5ed54bbec996a2172f20512"
+    },
+    {
+      "id": "kakao-622",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 4218,
+      "count": 3,
+      "ending_run4": 0,
+      "sha256": "503efa46dc22fe5e50e5f4868f2893321e119a1cf483b6fccc57a23cf8250eb6"
     },
     {
       "id": "toss-secure-efficient-ai",
-      "group": "casual",
+      "group": "mid-casual",
       "holdout": false,
       "site": "toss",
-      "chars": 3188,
+      "chars": 3168,
       "count": 1,
       "ending_run4": 2,
-      "sha256": "17ccb86cc609449035577d17af5448fb2cce57d138e0756c36abcab4545a211f"
+      "sha256": "77fb359ae41868b4c8c34de55fedb1559a3f3543f2d5dc8c3194fd640b682a8b"
+    },
+    {
+      "id": "woowahan-17911",
+      "group": "mid-default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 3416,
+      "count": 3,
+      "ending_run4": 3,
+      "sha256": "5ee4ddde6c2d747a85cff898f13ab3219e836589509a41be411c544c1998148c"
+    },
+    {
+      "id": "woowahan-17383",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 5481,
+      "count": 0,
+      "ending_run4": 1,
+      "sha256": "bedbfa717970684fdc50e3b898f54951fbc31b413438ad86892ecc2b0d8306a1"
+    },
+    {
+      "id": "kakao-623",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 6042,
+      "count": 7,
+      "ending_run4": 5,
+      "sha256": "16912efd86be6870bc888f5f1638331fbb4c6c5c1f081365db2b83f4361673ff"
+    },
+    {
+      "id": "d2-3713986",
+      "group": "mid-default",
+      "holdout": true,
+      "site": "d2",
+      "chars": 2341,
+      "count": 1,
+      "ending_run4": 2,
+      "sha256": "113b8aa0f347cc6c30082853334f349b1dbf0eb7ba6bfdaba2e1f84878864462"
+    },
+    {
+      "id": "d2-9283310",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 4371,
+      "count": 1,
+      "ending_run4": 1,
+      "sha256": "965df5c8a6d9e9460b3373655c9a32e8250d023cb5e42e51ee28873e9db5599c"
+    },
+    {
+      "id": "kakao-627",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 4802,
+      "count": 4,
+      "ending_run4": 3,
+      "sha256": "c9f9502feee2352b9ede0775218325793c7a8eae7acae9a148f21e34b1dc2596"
+    },
+    {
+      "id": "woowahan-18144",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 7991,
+      "count": 5,
+      "ending_run4": 5,
+      "sha256": "186ae4847c290fb6408d0fe0682be92d0ba6b5f4c88dd1fd270874dbe5100c29"
+    },
+    {
+      "id": "d2-0281668",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 3861,
+      "count": 2,
+      "ending_run4": 4,
+      "sha256": "c0cf1f64ff61f494ebe44a10f7a56d1923571bcfa12f6e01eb748837450ab870"
+    },
+    {
+      "id": "d2-1623894",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 1989,
+      "count": 2,
+      "ending_run4": 2,
+      "sha256": "cc041a3c3d1f15bb366e802b0bd4b937becf4585a7b73029a6914f04753d25a1"
+    },
+    {
+      "id": "woowahan-17647",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 6266,
+      "count": 11,
+      "ending_run4": 5,
+      "sha256": "28a03e9c52514016550664d909d733f14a0023dcb1fdc316d1303edc09fdf61a"
+    },
+    {
+      "id": "d2-7989422",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 4433,
+      "count": 8,
+      "ending_run4": 3,
+      "sha256": "d96b5baa7f9eb0a80d5252ac316f7c7c01b7f494d28e052ff2803641c32a3c5a"
+    },
+    {
+      "id": "woowahan-17827",
+      "group": "mid-default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 9022,
+      "count": 14,
+      "ending_run4": 6,
+      "sha256": "8abe4ce71afeba9575c9c5f05afa10b2b387d8361b766f277c8c5fe46e3e12d0"
+    },
+    {
+      "id": "daangn-981c230cdc77",
+      "group": "mid-casual",
+      "holdout": true,
+      "site": "daangn",
+      "chars": 9670,
+      "count": 0,
+      "ending_run4": 1,
+      "sha256": "df65e508471145acdf1160981dfa059bfb51a9abe294882acb653b283e46eb61"
+    },
+    {
+      "id": "woowahan-18486",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 7415,
+      "count": 6,
+      "ending_run4": 0,
+      "sha256": "5280b0e0bbe64532a2205379d95d223a3dba991bb9eead71deff2f087eecbf8a"
+    },
+    {
+      "id": "clova-1c1d103294f6",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "clova",
+      "chars": 4004,
+      "count": 4,
+      "ending_run4": 1,
+      "sha256": "541d85ad957727b3cbc33663d2d4d81c209ea37c248570c4843e50439c32afa9"
+    },
+    {
+      "id": "clova-8dfe273e18de",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "clova",
+      "chars": 3421,
+      "count": 3,
+      "ending_run4": 0,
+      "sha256": "85d349a5212527cc5319a9ac6501790720d42aa3e5f72ccef00e256efef73d2c"
+    },
+    {
+      "id": "woowahan-18362",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 9314,
+      "count": 9,
+      "ending_run4": 8,
+      "sha256": "99a5789e4439c35f9604567af1653e23685bbe05dc4e1d81e48243fa7a8cdfc1"
+    },
+    {
+      "id": "daangn-75ffee8ccacd",
+      "group": "mid-casual",
+      "holdout": false,
+      "site": "daangn",
+      "chars": 10669,
+      "count": 3,
+      "ending_run4": 5,
+      "sha256": "08275f4185148e04ab6950c340704df504448e3f8fa83a0baa4702f1005edf3c"
+    },
+    {
+      "id": "woowahan-18980",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 8840,
+      "count": 2,
+      "ending_run4": 2,
+      "sha256": "47d59340a10e7c292e2a2d7c8760342fbff6468ec80eaacba389eed847635cee"
+    },
+    {
+      "id": "clova-b1620f948163",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "clova",
+      "chars": 5843,
+      "count": 2,
+      "ending_run4": 0,
+      "sha256": "d1ff209687d626e5d3992d3b1747fb0d6c8e1e3d45f29771c8c7aa91e481fb7c"
+    },
+    {
+      "id": "kakao-632",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 14325,
+      "count": 6,
+      "ending_run4": 5,
+      "sha256": "d18b917859c41bf4380aa5f37e7e89ed998e7308c4502f0afd2ed8fbfd5f4db3"
+    },
+    {
+      "id": "kakao-633",
+      "group": "mid-default",
+      "holdout": true,
+      "site": "kakao",
+      "chars": 4998,
+      "count": 7,
+      "ending_run4": 1,
+      "sha256": "5d8bb108a9b5aa1d8ae53fb1e5025aa32a1c2146a349fb1d4748c2db306aaea5"
+    },
+    {
+      "id": "d2-2380720",
+      "group": "mid-default",
+      "holdout": true,
+      "site": "d2",
+      "chars": 6156,
+      "count": 4,
+      "ending_run4": 3,
+      "sha256": "0cd9e1127ddfb336ab165ed593c644e7eb38aea398e963199a7e5a1f73d8a931"
+    },
+    {
+      "id": "d2-5692818",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 3265,
+      "count": 0,
+      "ending_run4": 2,
+      "sha256": "d21e312391b85dc9fd3719c0616abb1f9248ec73d316cf99ef478332e10d497d"
+    },
+    {
+      "id": "kakao-634",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 11617,
+      "count": 3,
+      "ending_run4": 2,
+      "sha256": "17d715458e9015347a3bb7cfde661d361efc7a3e90cd4f2b5f0defcfe0afc08c"
+    },
+    {
+      "id": "woowahan-19491",
+      "group": "mid-default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 13438,
+      "count": 20,
+      "ending_run4": 6,
+      "sha256": "c895f66f4294f11066974f2a1397ff86d902035a31231150cfa0e89b7383aeda"
+    },
+    {
+      "id": "woowahan-19509",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 4810,
+      "count": 7,
+      "ending_run4": 1,
+      "sha256": "881e9249e36729013f6ff42fc61c8472407e0d5352a72b4213a05b346a3906ff"
+    },
+    {
+      "id": "d2-6480558",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 3531,
+      "count": 4,
+      "ending_run4": 2,
+      "sha256": "bc77491b7ffdac745f7255fb1861875590cce9ce847919da951d973c6a3fdda0"
+    },
+    {
+      "id": "toss-test-strategy-server",
+      "group": "mid-default",
+      "holdout": true,
+      "site": "toss",
+      "chars": 9632,
+      "count": 5,
+      "ending_run4": 2,
+      "sha256": "081d6d461a08d0d4571bdfd43a81fcdf393199da6732cbbfdba54d5350b288da"
+    },
+    {
+      "id": "d2-1773964",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 4052,
+      "count": 5,
+      "ending_run4": 2,
+      "sha256": "b52f9d71cdbbdc6a5d3520518749322149d522ad20f1550d751115bb3ad8a8f8"
+    },
+    {
+      "id": "toss-datalake-iceberg",
+      "group": "mid-default",
+      "holdout": true,
+      "site": "toss",
+      "chars": 8569,
+      "count": 10,
+      "ending_run4": 5,
+      "sha256": "bc1274907ac3dc7729838c9e7a9860c43e06d3163c2e8c07e933dfdd7a3380c3"
+    },
+    {
+      "id": "woowahan-19548",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 6485,
+      "count": 4,
+      "ending_run4": 2,
+      "sha256": "07804bf89068375a4b8bb3a0b7a3a268607cf55f16b3062cde9f5018af91ba1b"
+    },
+    {
+      "id": "woowahan-19915",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 7489,
+      "count": 6,
+      "ending_run4": 2,
+      "sha256": "fae82365a2bfec5f13742cf66c576a88241395ea94717b289458228111a4de9b"
+    },
+    {
+      "id": "woowahan-20029",
+      "group": "mid-casual",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 5653,
+      "count": 0,
+      "ending_run4": 1,
+      "sha256": "22c400397234ac881114864639c888cad2612ddf49593bef028364f7b0f18509"
+    },
+    {
+      "id": "woowahan-20154",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 5078,
+      "count": 0,
+      "ending_run4": 2,
+      "sha256": "b1fd69f1d068750302821b652dabe0ddb6ecccecf78360a92c513a25ba8cf803"
+    },
+    {
+      "id": "toss-llm-serving",
+      "group": "mid-default",
+      "holdout": true,
+      "site": "toss",
+      "chars": 4395,
+      "count": 7,
+      "ending_run4": 2,
+      "sha256": "2d098830d100ce18cac66ce9996746432ec364ccd52a42742663645dfa6b7fd4"
+    },
+    {
+      "id": "clova-90ea24f8525e",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "clova",
+      "chars": 3474,
+      "count": 4,
+      "ending_run4": 1,
+      "sha256": "efcbaf42f9bf0d1681dcdcaa910af5e543fbfcfb412bbc3859107a7b3ced86e7"
+    },
+    {
+      "id": "kakao-671",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 5740,
+      "count": 7,
+      "ending_run4": 8,
+      "sha256": "3e4ee205df3d101c09d01c02d7bee0394c85f744eca095f8964211266b56c6e5"
+    },
+    {
+      "id": "kakao-670",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 15131,
+      "count": 5,
+      "ending_run4": 4,
+      "sha256": "09a6f4de0e2ba6e81c48c2064a8ed1038b68475177071158c4553805aa656d44"
+    },
+    {
+      "id": "kakao-672",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 2341,
+      "count": 8,
+      "ending_run4": 1,
+      "sha256": "0869a7e4891adb896bd473a269a297303f47fd0bf127c0f731356c308e657de9"
+    },
+    {
+      "id": "kakao-673",
+      "group": "mid-default",
+      "holdout": true,
+      "site": "kakao",
+      "chars": 3856,
+      "count": 1,
+      "ending_run4": 4,
+      "sha256": "61fb8e4deaf5cd7fb292ab332b76b37565a0d4e8ff88a6ae6b16a6483ba91e9a"
+    },
+    {
+      "id": "kakao-678",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 9809,
+      "count": 8,
+      "ending_run4": 9,
+      "sha256": "8edf906931a6f52568b62624cb98a8731b2de3cfafa2ff422a52c25185bd5b3f"
+    },
+    {
+      "id": "kakao-679",
+      "group": "mid-default",
+      "holdout": true,
+      "site": "kakao",
+      "chars": 9995,
+      "count": 17,
+      "ending_run4": 7,
+      "sha256": "a0110f25a4e623fffcdbcb15b3f87158fb46608ef22601f58511a49d089f951d"
+    },
+    {
+      "id": "kakao-680",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "kakao",
+      "chars": 9105,
+      "count": 5,
+      "ending_run4": 12,
+      "sha256": "5a7d4638b9f3e0c972586ad2e5d73704bd6395409bbf7a8d54c7806296e92b70"
+    },
+    {
+      "id": "woowahan-20371",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 7435,
+      "count": 2,
+      "ending_run4": 1,
+      "sha256": "a7754b483b2e1c847125c3bbec4376552d9d58e4f1e596d565edc8193b968ac1"
+    },
+    {
+      "id": "d2-6754228",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 4666,
+      "count": 3,
+      "ending_run4": 4,
+      "sha256": "400824f530ac720a4200caa0a51959e677fe0e8aba80d4ae392dc14af3e0f8b6"
+    },
+    {
+      "id": "woowahan-20938",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 13565,
+      "count": 9,
+      "ending_run4": 13,
+      "sha256": "eee7bfb5860917d38d06d2a2df3d68a648578fa8db38b592b35de3393107ec45"
+    },
+    {
+      "id": "d2-0556679",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 3999,
+      "count": 2,
+      "ending_run4": 7,
+      "sha256": "6bd0a1a6920f49010f9ede48305a4907265a6e1431108daf57ebac1aab13765f"
+    },
+    {
+      "id": "d2-6482000",
+      "group": "mid-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 6003,
+      "count": 3,
+      "ending_run4": 8,
+      "sha256": "15914b1868c1678ee62032380d50e4968083efdec43a01c1698e4a6539fc98e4"
+    },
+    {
+      "id": "d2-4936925",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 5245,
+      "count": 4,
+      "ending_run4": 5,
+      "sha256": "dd4d2c14db686f644a486a9ccc95298a1daa58001b10ea263655b2ccc93fb08b"
+    },
+    {
+      "id": "d2-5152301",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 2131,
+      "count": 1,
+      "ending_run4": 2,
+      "sha256": "0d9e9848dc99ec899367e5540566a6da595659c0fb41fd43007274b57bb7e963"
     },
     {
       "id": "daangn-d764fd300067",
@@ -1152,14 +3955,24 @@
       "sha256": "61b551dab1193441bb40529af722a25416928ef410d328487f0170e9b75bd745"
     },
     {
+      "id": "woowahan-20763",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 4296,
+      "count": 2,
+      "ending_run4": 4,
+      "sha256": "7354e9898e272c4770df44009e0c6bfb0452a41d6edb6b3515ee0a3a65bc4fc0"
+    },
+    {
       "id": "toss-kafka-distribution-1",
       "group": "drift-default",
       "holdout": true,
       "site": "toss",
-      "chars": 4648,
+      "chars": 4631,
       "count": 0,
       "ending_run4": 2,
-      "sha256": "91a25dc3a0ff3cfc7a11eae9ce4bb62d1d7b28ffc8859e763603f5acd3da4b6b"
+      "sha256": "a9e330c4805d4233f3d5424fcebec2240e87e29c0ad76c794be20dbcc8179508"
     },
     {
       "id": "daangn-d2de99e089b7",
@@ -1172,14 +3985,24 @@
       "sha256": "df2fafdee0c335c428770202fb8b7a116b2b93abc03960bdd6ee010ad42bbb25"
     },
     {
-      "id": "toss-toss-people-3",
-      "group": "drift-casual",
+      "id": "woowahan-20156",
+      "group": "drift-default",
       "holdout": false,
-      "site": "toss",
-      "chars": 5935,
+      "site": "woowahan",
+      "chars": 5272,
+      "count": 6,
+      "ending_run4": 0,
+      "sha256": "ea6bb7f47c1170db302823db9e934efc2629afd8af45a668db470dab85f7030d"
+    },
+    {
+      "id": "d2-4142663",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 6508,
       "count": 2,
-      "ending_run4": 3,
-      "sha256": "6761110007d2f38eea1882e6e396cff7d31968367cf79b3801e5830cf3c55acb"
+      "ending_run4": 1,
+      "sha256": "1f6f0d7e984dfda0d55ca333458cf6455d8707bb7ce94bece348412680d8e584"
     },
     {
       "id": "kakao-682",
@@ -1192,14 +4015,24 @@
       "sha256": "6cbf459c9c079dedd9471984ca88e4c9415af9d887758198526396a6d674bd14"
     },
     {
+      "id": "toss-toss-people-3",
+      "group": "drift-casual",
+      "holdout": false,
+      "site": "toss",
+      "chars": 5912,
+      "count": 2,
+      "ending_run4": 3,
+      "sha256": "1392789754187fd75eb592f0977689b3b6b4802b58525febcaaab1de8102be21"
+    },
+    {
       "id": "toss-kafka-distribution-2",
       "group": "drift-default",
       "holdout": false,
       "site": "toss",
-      "chars": 3699,
+      "chars": 3682,
       "count": 2,
       "ending_run4": 2,
-      "sha256": "9383bd76da5cba9b376aff4716efb840ef0f830ba8d961b8c7a3474e54d67f0f"
+      "sha256": "4127495899b2b99fd15ca48cc19d8b4bbd797863f0c4afc58f576a05a31346c0"
     },
     {
       "id": "kakao-683",
@@ -1222,16 +4055,6 @@
       "sha256": "1d692e17dcf49445e0d627a4a9a9d6ad0801fcec816ebd119a2f1d4cc4dfafb4"
     },
     {
-      "id": "toss-kafka-distribution-3",
-      "group": "drift-default",
-      "holdout": false,
-      "site": "toss",
-      "chars": 13053,
-      "count": 14,
-      "ending_run4": 7,
-      "sha256": "1b0f15a2787e6996f8a295dc589b9c2ab5c6230e34341bfa62c9b89ab536cfb8"
-    },
-    {
       "id": "kakao-685",
       "group": "drift-default",
       "holdout": true,
@@ -1242,14 +4065,54 @@
       "sha256": "bef72c9eb5da224e2b727fbf0f9b6ee409bdb4474421f1d602705e3b2c5cf377"
     },
     {
+      "id": "toss-kafka-distribution-3",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "toss",
+      "chars": 13036,
+      "count": 14,
+      "ending_run4": 7,
+      "sha256": "70921f1d551161957a0a4321d3637dde5dafe78601820a4ccada35ec26677bcc"
+    },
+    {
+      "id": "d2-3435419",
+      "group": "drift-default",
+      "holdout": true,
+      "site": "d2",
+      "chars": 11128,
+      "count": 15,
+      "ending_run4": 8,
+      "sha256": "763934c8ccc1449cef1f2fb82a7736bebaa31e7cdbced9a987aede46cb6f3519"
+    },
+    {
       "id": "toss-tosspeople-jimin",
       "group": "drift-casual",
       "holdout": false,
       "site": "toss",
-      "chars": 3617,
+      "chars": 3597,
       "count": 2,
       "ending_run4": 0,
-      "sha256": "cbb95c977d2fa2d34097e1e9128e20b1d5b2fed88ab3ca081b69c860d48cfae0"
+      "sha256": "6fc44e9a70dd8299f8013169a929e41f7d4e124c0ca4086c4cd0ff49f6d9a2b9"
+    },
+    {
+      "id": "clova-a96f31821716",
+      "group": "drift-default",
+      "holdout": true,
+      "site": "clova",
+      "chars": 1943,
+      "count": 3,
+      "ending_run4": 0,
+      "sha256": "a625ddaa5988b3658c5a852c29ac503eaa16d6cd36e2a37ea21e4d2955f3767f"
+    },
+    {
+      "id": "woowahan-21176",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 6371,
+      "count": 6,
+      "ending_run4": 3,
+      "sha256": "d8ae74cd12290b2325ab776b8259fd42f27a4b05c0da03c329ba895ad4bfdf38"
     },
     {
       "id": "daangn-211930ec74a1",
@@ -1262,6 +4125,36 @@
       "sha256": "a393710c3638b403ac6cca63ee5b8bade843c26eef4ac48ff63af7f8a957e183"
     },
     {
+      "id": "d2-5316262",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 6881,
+      "count": 8,
+      "ending_run4": 3,
+      "sha256": "b11196f98b48568b11c06466130bb448dd263e4244625c6c17bb6fb441fa912d"
+    },
+    {
+      "id": "woowahan-21324",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 2010,
+      "count": 0,
+      "ending_run4": 2,
+      "sha256": "f0852b6390e3c9b3b98394a951f873c8c9b693976d4cbc7886cb6d38a8595980"
+    },
+    {
+      "id": "woowahan-21434",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 4251,
+      "count": 3,
+      "ending_run4": 6,
+      "sha256": "5e8159215acbe0802f1a7ea595e9f831985d79b43049b562821164862d0f4ffa"
+    },
+    {
       "id": "kakao-688",
       "group": "drift-default",
       "holdout": false,
@@ -1270,6 +4163,26 @@
       "count": 5,
       "ending_run4": 2,
       "sha256": "9bee3754b3fdbfcbbebf052a6b414fca25d46d688589ef14c02cfd6e0a36c3ca"
+    },
+    {
+      "id": "clova-ca7bc4afb425",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "clova",
+      "chars": 2974,
+      "count": 0,
+      "ending_run4": 2,
+      "sha256": "f1f9cc9646f44bc1a3784c0fa51b9e23e5a98f14656d04fab68e2c81e482e354"
+    },
+    {
+      "id": "woowahan-21294",
+      "group": "drift-default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 4762,
+      "count": 1,
+      "ending_run4": 4,
+      "sha256": "6a48c4ff5852f00b5ac9aa4542130a7ca86a02d0dedb3128434dd5b68687ec56"
     },
     {
       "id": "daangn-bd4650ec67f4",
@@ -1282,6 +4195,16 @@
       "sha256": "a328377afb86a53784c699dce69e25cbfad1e28bc34a18136dd4921f8f63a4ed"
     },
     {
+      "id": "d2-7248350",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 2897,
+      "count": 2,
+      "ending_run4": 0,
+      "sha256": "bdc7bd87230bff4026e07b59fd501de8fb50ea0ee9e4d2463417d666228e32a6"
+    },
+    {
       "id": "kakao-689",
       "group": "drift-default",
       "holdout": false,
@@ -1290,6 +4213,16 @@
       "count": 0,
       "ending_run4": 1,
       "sha256": "3f151e8775475a4fcef56342995eaf5420906ff9dd5d0260791c2f7ecd624680"
+    },
+    {
+      "id": "clova-1bf6043b6757",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "clova",
+      "chars": 5497,
+      "count": 6,
+      "ending_run4": 0,
+      "sha256": "cee5ccb901aeb42aedf27928c3009b9becac64add5de9e3f07869220bfa4cc89"
     },
     {
       "id": "kakao-690",
@@ -1302,14 +4235,84 @@
       "sha256": "964a5d8d400aa9278d6da500ffee961a1d6cce0447f2bf28712337552b365615"
     },
     {
+      "id": "d2-4896087",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 3337,
+      "count": 1,
+      "ending_run4": 5,
+      "sha256": "ccfde4d65590a69816435e0cccf13988a8656e35d778517f287a519b19aa4ddc"
+    },
+    {
+      "id": "d2-8366976",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 2274,
+      "count": 0,
+      "ending_run4": 2,
+      "sha256": "3a00ace413ca93bd5433ec27a0c65ace593973e5ca28cf28041db18c2ed9992f"
+    },
+    {
+      "id": "d2-9582944",
+      "group": "drift-default",
+      "holdout": true,
+      "site": "d2",
+      "chars": 4783,
+      "count": 4,
+      "ending_run4": 2,
+      "sha256": "ddd29364eda09edfd05aea10ef18085e8d06600573dfc63d5e64d0c651035bda"
+    },
+    {
+      "id": "d2-8998207",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 12987,
+      "count": 6,
+      "ending_run4": 10,
+      "sha256": "1a65f01b7117c3763575b61ee36d74b978c6f3203c828c714284a9c708a7f272"
+    },
+    {
+      "id": "d2-7061905",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 1721,
+      "count": 0,
+      "ending_run4": 0,
+      "sha256": "9623adff209cc9753f65a707165ad2ea77a5c9bd3bf4e56664023c607165ad70"
+    },
+    {
       "id": "toss-frontend-tree-structure",
       "group": "drift-casual",
       "holdout": false,
       "site": "toss",
-      "chars": 4897,
+      "chars": 4875,
       "count": 6,
       "ending_run4": 2,
-      "sha256": "9f767c0555953015692a07dae165ca0a43c938a0323d927f74ca24045733e531"
+      "sha256": "2168691dd1d6090e000a9966b03feecbaba9783c7cdff1e3456195cfdbfbe94a"
+    },
+    {
+      "id": "d2-9921217",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 9179,
+      "count": 4,
+      "ending_run4": 2,
+      "sha256": "213a1ac5d36f4cbc7367686fb3a13f88de0abcabf38ba6dac61b5252e5dee6de"
+    },
+    {
+      "id": "d2-6615449",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 1832,
+      "count": 1,
+      "ending_run4": 1,
+      "sha256": "86a1e38d032138270a0bbe10559a8c9467a5421f7e4a268b43a5987d3b2026bc"
     },
     {
       "id": "daangn-ce8bd45ec8f2",
@@ -1326,20 +4329,70 @@
       "group": "drift-casual",
       "holdout": false,
       "site": "toss",
-      "chars": 3795,
+      "chars": 3775,
       "count": 1,
       "ending_run4": 0,
-      "sha256": "2d5411131ff641c130c95892c4b7a6d2a780c19118e3440289fbe86ad046a245"
+      "sha256": "2b2b8ed4296f3af0d615ce7c3d5231a533c6396cc4e8d8c5670e95bf5dc9335d"
+    },
+    {
+      "id": "clova-8c7b794a21c5",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "clova",
+      "chars": 5621,
+      "count": 2,
+      "ending_run4": 2,
+      "sha256": "160e592f4e6d6b99cbd0f662eacb77891f4390d896926dd6abcff736e04ee92c"
+    },
+    {
+      "id": "d2-2523796",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 4184,
+      "count": 1,
+      "ending_run4": 2,
+      "sha256": "374fbf66aab2a2ed9cd89e8b415e229f8083ce520eddb8652d0bcf4d22c6d848"
+    },
+    {
+      "id": "d2-7823344",
+      "group": "drift-default",
+      "holdout": true,
+      "site": "d2",
+      "chars": 5384,
+      "count": 1,
+      "ending_run4": 5,
+      "sha256": "a5b206de3dbbbbc95f55e0cc1dd1c9cf0ce40ec69ea8a16e3bab76010b90da54"
     },
     {
       "id": "toss-frontend-apply-without-resume",
       "group": "drift-casual",
       "holdout": false,
       "site": "toss",
-      "chars": 2017,
+      "chars": 1997,
       "count": 1,
       "ending_run4": 0,
-      "sha256": "55c3eed2d13075db8a5073e3c153be7e90ead228b6969da1ae711e2cce10e91e"
+      "sha256": "197f328d691bc93c92dcc6d07834e4cb40825fad3d5e6704e7fecc38f7d436dd"
+    },
+    {
+      "id": "woowahan-21604",
+      "group": "drift-default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 8456,
+      "count": 0,
+      "ending_run4": 1,
+      "sha256": "c64f1984c31ef69a30e4922c59ea5e00967a792b3f2f9a8080f19846e4aaea4f"
+    },
+    {
+      "id": "clova-a2d97357e4d1",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "clova",
+      "chars": 2301,
+      "count": 2,
+      "ending_run4": 0,
+      "sha256": "415dc956cbe6230598bae1ead442501884ab95fc483cf83f6eb37b6794002979"
     },
     {
       "id": "daangn-c01c64292831",
@@ -1350,6 +4403,16 @@
       "count": 1,
       "ending_run4": 1,
       "sha256": "ec8e8ca500bb785026bb0c54e0091bd7968b34307187ae6fb3f59ee017421fc4"
+    },
+    {
+      "id": "d2-1168674",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 4986,
+      "count": 2,
+      "ending_run4": 3,
+      "sha256": "4758f2312203bd6d45943ed2c1ae2855c38f3c882fd5a27990416a63b3029845"
     },
     {
       "id": "daangn-0e4a245caee2",
@@ -1402,6 +4465,16 @@
       "sha256": "dad57ba4178dce3dda03114e638dd354573226b15366bb3ed875190e673e6f99"
     },
     {
+      "id": "clova-5450111c6945",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "clova",
+      "chars": 2809,
+      "count": 1,
+      "ending_run4": 2,
+      "sha256": "83642e2dfd6862aec0409ab9ebf33ff4d26789817524494f56fe89c35b62f42b"
+    },
+    {
       "id": "kakao-699",
       "group": "drift-default",
       "holdout": false,
@@ -1422,6 +4495,26 @@
       "sha256": "f049226621453e04f587ffbe4f5664b05e5a435dcb2b3fd641229d88851a30ac"
     },
     {
+      "id": "clova-23cf79bee618",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "clova",
+      "chars": 2610,
+      "count": 10,
+      "ending_run4": 2,
+      "sha256": "a59d2bbc58bff16922d691920846dc518cc99bcde6874efca87333c4f3fad36f"
+    },
+    {
+      "id": "clova-a62bc9d78417",
+      "group": "drift-default",
+      "holdout": true,
+      "site": "clova",
+      "chars": 5027,
+      "count": 4,
+      "ending_run4": 1,
+      "sha256": "3a36c61f0d5ba5f53a80ecf7e4c9e3bbb31dee1863e70374bfa618d9c992626a"
+    },
+    {
       "id": "kakao-702",
       "group": "drift-default",
       "holdout": false,
@@ -1432,6 +4525,16 @@
       "sha256": "643ff0d1b530712d87b595031f18f0154a90d92504ca3b9809949a98f53397f3"
     },
     {
+      "id": "woowahan-21686",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 2277,
+      "count": 1,
+      "ending_run4": 0,
+      "sha256": "5fe5909689cf8940a82173dd25046b58f8d79052c9dd6eb6b9843b02a7635b6d"
+    },
+    {
       "id": "kakao-703",
       "group": "drift-default",
       "holdout": false,
@@ -1440,6 +4543,26 @@
       "count": 2,
       "ending_run4": 4,
       "sha256": "906e7e4cde1ad4ecbc2cc0371dd2c2bcbaa32beef08f3a928e36ea152cb5de15"
+    },
+    {
+      "id": "woowahan-22127",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 3155,
+      "count": 0,
+      "ending_run4": 3,
+      "sha256": "d4740ff094241368cc347822fc51e646cdb37caa36068abe173d65142d9bd086"
+    },
+    {
+      "id": "woowahan-22043",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 6122,
+      "count": 2,
+      "ending_run4": 3,
+      "sha256": "aba99be3aa529738cf490b7b0a66e6c137825bc4e3bd0aaf9870d87d21bc4fc6"
     },
     {
       "id": "kakao-706",
@@ -1472,6 +4595,16 @@
       "sha256": "98137d615ce7182e54e8ad7d9c475d9e654c0abddbe2bb18d47b6f422fdfabf2"
     },
     {
+      "id": "clova-5b064c25aeb8",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "clova",
+      "chars": 3969,
+      "count": 3,
+      "ending_run4": 1,
+      "sha256": "1fa5d925d158638b925a69ebfe085270424f81b99642695edc4771d5de4293b5"
+    },
+    {
       "id": "daangn-14d01677c273",
       "group": "drift-casual",
       "holdout": true,
@@ -1482,14 +4615,94 @@
       "sha256": "06064b92677efb59a28074a3d75d26bae1eb3bd0717214dcee8608433f651c90"
     },
     {
-      "id": "daangn-af3de9a74d0c",
-      "group": "drift-casual",
+      "id": "woowahan-22151",
+      "group": "drift-default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 5674,
+      "count": 2,
+      "ending_run4": 8,
+      "sha256": "a33d3715901bc73df4216cd4fca10630967318193604cf3a620e16d49478fb19"
+    },
+    {
+      "id": "d2-3814947",
+      "group": "drift-default",
       "holdout": false,
-      "site": "daangn",
-      "chars": 5717,
-      "count": 6,
+      "site": "d2",
+      "chars": 6284,
+      "count": 1,
       "ending_run4": 3,
-      "sha256": "9d7756b63b002b9cd14d8ead47ee6e42bec1d1b143b352ed856701523e2cba1d"
+      "sha256": "fb7668df38bd73cd8037366cdfd88a1b2542690fb182afa9bc5060b00685a05c"
+    },
+    {
+      "id": "woowahan-22246",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 2815,
+      "count": 1,
+      "ending_run4": 3,
+      "sha256": "c263f217badd51eac71a27064790c91320072bbada633ccc7f84a0eb6d82bd16"
+    },
+    {
+      "id": "woowahan-22263",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 7478,
+      "count": 1,
+      "ending_run4": 5,
+      "sha256": "9dba6fb0eb2c45e1587c794dc9f6b223f041d918af5c3d77e7786bcb44b4d575"
+    },
+    {
+      "id": "clova-65bbd5b7008e",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "clova",
+      "chars": 5765,
+      "count": 1,
+      "ending_run4": 4,
+      "sha256": "0ed79f5ca44f1766141b9e68fbf7d68e6b7367982d7e5ebfe7af6461900bc73e"
+    },
+    {
+      "id": "d2-0207214",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 8969,
+      "count": 2,
+      "ending_run4": 3,
+      "sha256": "4de0d49fd57e1d2733353a19df9df1f1772e2f0d23e205e7c65de88e042dc171"
+    },
+    {
+      "id": "d2-4394645",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 5250,
+      "count": 4,
+      "ending_run4": 3,
+      "sha256": "6a4d9cc50ee7e7652155e682b389de66ea59926c1b4c8ce51d8ed55bfeb4bddc"
+    },
+    {
+      "id": "woowahan-22396",
+      "group": "drift-default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 8210,
+      "count": 10,
+      "ending_run4": 4,
+      "sha256": "b352c9ceadc2c313594e81b63061a11b00d83efb9bb34a7208b3f63e06dc0b06"
+    },
+    {
+      "id": "d2-2774577",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 14150,
+      "count": 11,
+      "ending_run4": 4,
+      "sha256": "36825da198804ebcbe66fed5af34cd733e435393fd9724e33ed223d291c9af26"
     },
     {
       "id": "kakao-709",
@@ -1520,6 +4733,46 @@
       "count": 1,
       "ending_run4": 1,
       "sha256": "9be413ac22f89ab885e3b16cb481923c095924270ff190faf25a2888560b66d7"
+    },
+    {
+      "id": "clova-b31fe9cdd7f2",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "clova",
+      "chars": 3298,
+      "count": 1,
+      "ending_run4": 0,
+      "sha256": "2301b8a4091159ce158acb731a8874d4a9717f436a2d83bcae5b81e9e394a49b"
+    },
+    {
+      "id": "clova-5c9f38fe27c1",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "clova",
+      "chars": 3055,
+      "count": 0,
+      "ending_run4": 1,
+      "sha256": "da3897f55b8a80a8c42a73d215771e0acc97267c6f8d1fae5131120ea599b209"
+    },
+    {
+      "id": "woowahan-22586",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 7160,
+      "count": 4,
+      "ending_run4": 2,
+      "sha256": "e0c4ac16092eb05989146579cfb1fadb4222ede6c40991d879baba95a58280f0"
+    },
+    {
+      "id": "d2-1450243",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 5354,
+      "count": 1,
+      "ending_run4": 2,
+      "sha256": "3f5688b52db5c304f7f0deced3a0c0031305de6baaed576403d51a438347641e"
     },
     {
       "id": "kakao-714",
@@ -1562,6 +4815,16 @@
       "sha256": "5fe8090f29af0dbfafda3995b8b9d0e9cf549f43f4f24f0ec4e202f1d7d16857"
     },
     {
+      "id": "d2-2766731",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 15223,
+      "count": 1,
+      "ending_run4": 1,
+      "sha256": "d2bb87bf6ef56683192ed30953c330dcf9a287d1cae2dec1e4d93529a946e83f"
+    },
+    {
       "id": "kakao-721",
       "group": "drift-default",
       "holdout": false,
@@ -1590,6 +4853,26 @@
       "count": 0,
       "ending_run4": 0,
       "sha256": "076d31a93eee557cbbf0876ab853f109290e994db810558a1082f5332a6c93df"
+    },
+    {
+      "id": "woowahan-22767",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 4969,
+      "count": 0,
+      "ending_run4": 1,
+      "sha256": "03069210a6e0abe065dff5b738f8bfcc9e19c7f5bf8a25722078b4d877cadee9"
+    },
+    {
+      "id": "clova-9816f023bf85",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "clova",
+      "chars": 4046,
+      "count": 1,
+      "ending_run4": 0,
+      "sha256": "8838f42f57b2274efc92cecf97c6627286331dc5b3692fe54cb36fcde203e933"
     },
     {
       "id": "kakao-724",
@@ -1640,6 +4923,16 @@
       "count": 3,
       "ending_run4": 3,
       "sha256": "4f3d3eb4c0c12f00c738926189d5f7fe21a619dc7c82508b990a860cc62c2547"
+    },
+    {
+      "id": "d2-5215257",
+      "group": "drift-default",
+      "holdout": true,
+      "site": "d2",
+      "chars": 9204,
+      "count": 11,
+      "ending_run4": 3,
+      "sha256": "02314f5dece629dc472b50356a038fec76e6edd2a6ab03fb6c37e1af6b85e151"
     },
     {
       "id": "toss-iceberg-cdc-1",
@@ -1872,6 +5165,16 @@
       "sha256": "4d8595c9b568d93d1240b860389090ec72bd1f9b983233d1006215e1c5a5f776"
     },
     {
+      "id": "woowahan-22839",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 13047,
+      "count": 5,
+      "ending_run4": 10,
+      "sha256": "760914333c0cb2c21e6890412cd108b217e3b740b84c03c893e6d42bb962cf6b"
+    },
+    {
       "id": "kakao-775",
       "group": "drift-default",
       "holdout": false,
@@ -1902,6 +5205,26 @@
       "sha256": "540e0a44b6d2bd5708ea098c6f79820003b75f90025d16a40629fc6c38f8d421"
     },
     {
+      "id": "woowahan-23121",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 3924,
+      "count": 1,
+      "ending_run4": 4,
+      "sha256": "272b529874edc77926fb23ebada5c8e2b87272df882993a560f39e537dd7b108"
+    },
+    {
+      "id": "woowahan-23273",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 14244,
+      "count": 7,
+      "ending_run4": 15,
+      "sha256": "1f8a5788886d3be752f3a170208f0a2d62ff1294bcefe3c09082ebe873931e56"
+    },
+    {
       "id": "kakao-778",
       "group": "drift-default",
       "holdout": false,
@@ -1910,6 +5233,106 @@
       "count": 2,
       "ending_run4": 5,
       "sha256": "143506d2516994a70ff8712ec5d53beee0ba5059951048c7efc52ed901eb984b"
+    },
+    {
+      "id": "woowahan-23377",
+      "group": "drift-default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 8742,
+      "count": 12,
+      "ending_run4": 3,
+      "sha256": "be08f631f92b15951b3af4025b08b823c2ce1a5d13f06608aace7786b1bab7eb"
+    },
+    {
+      "id": "woowahan-23343",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 2803,
+      "count": 0,
+      "ending_run4": 0,
+      "sha256": "868d546c20f22b18bb9af873f63b2dfe5f4c3736a981cdaa3418f2f041cca684"
+    },
+    {
+      "id": "woowahan-23457",
+      "group": "drift-default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 2658,
+      "count": 0,
+      "ending_run4": 1,
+      "sha256": "d4c1ba5e724c7ca73876f7861ab6a0a61037b1b3c58842c2986f5e111dc7d781"
+    },
+    {
+      "id": "woowahan-23199",
+      "group": "drift-default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 7182,
+      "count": 5,
+      "ending_run4": 6,
+      "sha256": "dedb8c090c4a5bca16c4ca8dc0fb940508a1c43b2d77df47918d4cf5f451d80f"
+    },
+    {
+      "id": "d2-3088532",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 7470,
+      "count": 3,
+      "ending_run4": 4,
+      "sha256": "132bdcef30e5399eb64512eca59706ac1b7e65734d3a4941750aa578cb402880"
+    },
+    {
+      "id": "woowahan-23138",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 3846,
+      "count": 0,
+      "ending_run4": 0,
+      "sha256": "ad5b1a8c18847199cc203ec1ebda80440ffb792f4c74734f38031aac67bc23a3"
+    },
+    {
+      "id": "woowahan-23667",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 3198,
+      "count": 0,
+      "ending_run4": 1,
+      "sha256": "b13ff2c943ff3670fe1a6aa7b1b4774135d5414172b0f072ad0687571ccbc5be"
+    },
+    {
+      "id": "woowahan-23866",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 4426,
+      "count": 3,
+      "ending_run4": 1,
+      "sha256": "ee05477513fd24ae39e6d76582c283bd0bbfdc50cb453557725faa0101c2a7bc"
+    },
+    {
+      "id": "d2-6388660",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 16929,
+      "count": 5,
+      "ending_run4": 0,
+      "sha256": "d4ba05e53b967974dfc93fc4ddc837d94ed1d3b27ec130b6fd4b9bbb256524df"
+    },
+    {
+      "id": "woowahan-24165",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 5827,
+      "count": 2,
+      "ending_run4": 6,
+      "sha256": "9522d7d2c3c411abe738bdf68a7c666f7e749577b9d46cb1c71a746f2740034f"
     },
     {
       "id": "daangn-725c3a1c388d",
@@ -1922,24 +5345,104 @@
       "sha256": "4db8bb266a3d931600ec1436c32101f4382b30b7c3cd84fde1b03ce3f2662321"
     },
     {
+      "id": "woowahan-23625",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 4605,
+      "count": 0,
+      "ending_run4": 4,
+      "sha256": "92a4fe43cc498989b1a9319af50b2b6c8087d6e30c8dd27edbe3375800dbb60f"
+    },
+    {
+      "id": "d2-7610642",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 4399,
+      "count": 1,
+      "ending_run4": 3,
+      "sha256": "a792e2757585b5117533c1229cda62c06baae74af1f2e3329d847d2af39e86e4"
+    },
+    {
+      "id": "woowahan-24405",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 5094,
+      "count": 4,
+      "ending_run4": 0,
+      "sha256": "bf23ee007c564953d6b95fc214d42cbea9700054a2b7c0be4bb6aadbd1ea059e"
+    },
+    {
       "id": "toss-payments-legacy-4",
       "group": "drift-default",
       "holdout": false,
       "site": "toss",
-      "chars": 11776,
+      "chars": 11769,
       "count": 6,
       "ending_run4": 3,
-      "sha256": "273b09647d142c5d8ec1eb6087acdf48410216fd18947ffe45369b7e4cbdca8c"
+      "sha256": "5b92f09668b7ae1e7c0851ea18061bcbbc1627a5e1d46eb5938c09fe8d637365"
     },
     {
       "id": "toss-payments-legacy-5",
       "group": "drift-default",
       "holdout": false,
       "site": "toss",
-      "chars": 4999,
+      "chars": 4992,
       "count": 1,
       "ending_run4": 6,
-      "sha256": "47f0f283ccdf0d3eb2587decb6b270d6d5dae5d1579b5f1bc9ad044046d46401"
+      "sha256": "360a43bcaf998fa662954e6cb78604d593024768cba0b0667e9a363236936401"
+    },
+    {
+      "id": "d2-4571155",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 10386,
+      "count": 10,
+      "ending_run4": 7,
+      "sha256": "c16ed4b08a5a478d86b5f0eadd6c4e6d2f7c3175ef9e76800a30567c599d733f"
+    },
+    {
+      "id": "woowahan-24488",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 3961,
+      "count": 4,
+      "ending_run4": 2,
+      "sha256": "bb1176e0c9feaac0b5146b452dc027ee63040a750cfd7c6e49846b207c589b81"
+    },
+    {
+      "id": "woowahan-24568",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 3844,
+      "count": 0,
+      "ending_run4": 1,
+      "sha256": "2a233fe2c606f19eeeafb99c51ea9610ebde1654276f522564c588f89faa852c"
+    },
+    {
+      "id": "woowahan-24605",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 2884,
+      "count": 1,
+      "ending_run4": 3,
+      "sha256": "8503421cc8293b96baf9e73fea68dd7efacd7786a46c911ff0ea37ab31fb1b21"
+    },
+    {
+      "id": "woowahan-24434",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 9677,
+      "count": 3,
+      "ending_run4": 6,
+      "sha256": "bf7464cf843845287b2739edb6067f6796b7f7fe3a880c31840a00b870001389"
     },
     {
       "id": "kakao-801",
@@ -1972,6 +5475,16 @@
       "sha256": "7784b356abda4b2903292689ddb8909753798eb2d00e07a39e0644941db90be6"
     },
     {
+      "id": "woowahan-24337",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 6097,
+      "count": 2,
+      "ending_run4": 0,
+      "sha256": "0e4e27496daea5b2a291461a1c9a0b59b1748252aababc5fcf2a480a5fe84e54"
+    },
+    {
       "id": "kakao-803",
       "group": "drift-default",
       "holdout": false,
@@ -1980,6 +5493,16 @@
       "count": 5,
       "ending_run4": 10,
       "sha256": "09a5bc938cfc580f83b72ee0729e2818ed8d230867e17870a1f98557592ab6c0"
+    },
+    {
+      "id": "d2-0004394",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 11656,
+      "count": 2,
+      "ending_run4": 5,
+      "sha256": "dad4ed6bab7b348c3b41651078b1fa775490b36e6717b3eb653a0cc395f8c216"
     },
     {
       "id": "daangn-ee2ac8953046",
@@ -2006,10 +5529,30 @@
       "group": "drift-default",
       "holdout": false,
       "site": "toss",
-      "chars": 4546,
+      "chars": 4532,
       "count": 1,
       "ending_run4": 2,
-      "sha256": "3aa75752cdb70bc3f1bbfa9b5a61b39ccde5324f9e424c305c581cb0e278403b"
+      "sha256": "37ad6c3e0f84ae811fdb4b0cc20e9658b61939b3a6a81eb668f20f1594656161"
+    },
+    {
+      "id": "clova-a6b0f24fa20f",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "clova",
+      "chars": 5566,
+      "count": 3,
+      "ending_run4": 3,
+      "sha256": "69da3b584dc2b94248044f530bd8582524a1088978baec754fa0652a27eaa62b"
+    },
+    {
+      "id": "woowahan-25049",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 10966,
+      "count": 6,
+      "ending_run4": 12,
+      "sha256": "7fcfe195eb61047c8e756c823abb7bd69175a6f0c1cf071dfd580bf01241fd0b"
     },
     {
       "id": "daangn-f40d362107ff",
@@ -2052,6 +5595,16 @@
       "sha256": "76fa0473b2ab9d3262c2e26683988ac85c91f3436cee31777ccf7b79296da96a"
     },
     {
+      "id": "d2-4241703",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 4007,
+      "count": 2,
+      "ending_run4": 3,
+      "sha256": "fa629a7ca8559a447beb57cd86efed9422d5b5ad394a0365e5a8d6c7e5271d13"
+    },
+    {
       "id": "toss-income-qa-platform",
       "group": "drift-default",
       "holdout": false,
@@ -2070,6 +5623,46 @@
       "count": 2,
       "ending_run4": 3,
       "sha256": "6c65eed90fbf681aa1a4e8e31141fbf7b33307e1d86ba9d024a76f7b9f7c8aba"
+    },
+    {
+      "id": "d2-6512234",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 7500,
+      "count": 3,
+      "ending_run4": 7,
+      "sha256": "1a28d8a97a3749d470371560f1bd043ec30519e9ad4079f0a56082c61692db0f"
+    },
+    {
+      "id": "clova-28d4ae311389",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "clova",
+      "chars": 3595,
+      "count": 1,
+      "ending_run4": 0,
+      "sha256": "a846162adb643fa02e1b07c312400cbff695758018d16480c3f7815033e632c5"
+    },
+    {
+      "id": "woowahan-25189",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 6635,
+      "count": 0,
+      "ending_run4": 5,
+      "sha256": "6b23e2031da0f9f373419378e7b9abeb72aac0df63b90754c64a8f871518f23c"
+    },
+    {
+      "id": "clova-22990718e5f9",
+      "group": "drift-default",
+      "holdout": true,
+      "site": "clova",
+      "chars": 4173,
+      "count": 5,
+      "ending_run4": 0,
+      "sha256": "7c83d171d86e0a678cb6a8fcad28d5d8db31f03a33337d4e841791571825dddb"
     },
     {
       "id": "toss-harness-for-team-productivity",
@@ -2092,16 +5685,6 @@
       "sha256": "c34cca38f7936d61251f9aa9dae6a39424ffda405c81ac662f74118662906048"
     },
     {
-      "id": "daangn-f619f1db6b7b",
-      "group": "drift-casual",
-      "holdout": true,
-      "site": "daangn",
-      "chars": 11538,
-      "count": 10,
-      "ending_run4": 7,
-      "sha256": "4f3db50b2bc07bb72258f9a4edcc924204904f97249928a21a50d0d110414247"
-    },
-    {
       "id": "daangn-d10cf75845bd",
       "group": "drift-casual",
       "holdout": false,
@@ -2112,6 +5695,16 @@
       "sha256": "0a02a18c274d668bc1bb8dfe26986918cf05a6979f07b1d1afb292f2efa175bd"
     },
     {
+      "id": "daangn-f619f1db6b7b",
+      "group": "drift-casual",
+      "holdout": true,
+      "site": "daangn",
+      "chars": 11538,
+      "count": 10,
+      "ending_run4": 7,
+      "sha256": "4f3db50b2bc07bb72258f9a4edcc924204904f97249928a21a50d0d110414247"
+    },
+    {
       "id": "kakao-817",
       "group": "drift-default",
       "holdout": false,
@@ -2120,6 +5713,66 @@
       "count": 0,
       "ending_run4": 8,
       "sha256": "38ccc63b19b252760c6f10d1b8c2350c6716c799f1bdd977901f471f53e2cc84"
+    },
+    {
+      "id": "woowahan-25986",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 2618,
+      "count": 2,
+      "ending_run4": 1,
+      "sha256": "227f93979912652461aaf6c68f2f831234a50dd31fd6c6573e2f4096acbf8670"
+    },
+    {
+      "id": "woowahan-25888",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 4358,
+      "count": 0,
+      "ending_run4": 3,
+      "sha256": "e52a51a865df983f5c2c7bd42f34bd2af4b50a5d666531842a6e107a7af043c0"
+    },
+    {
+      "id": "woowahan-26128",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 5277,
+      "count": 0,
+      "ending_run4": 4,
+      "sha256": "4f9f539dcfce347b92667ca8b78972bc76971ad5103ce89054a4950cdaccd998"
+    },
+    {
+      "id": "d2-7997284",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 8552,
+      "count": 1,
+      "ending_run4": 2,
+      "sha256": "2f8a6369b1b176537b9dce1634ab15801f466732efcdeb1892173757e8dc8d48"
+    },
+    {
+      "id": "woowahan-26177",
+      "group": "drift-default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 3715,
+      "count": 2,
+      "ending_run4": 2,
+      "sha256": "cddaa6c64a785c77bb1eb483f8478cb2aaad61a049ecb6ac902db0c23cfd58b0"
+    },
+    {
+      "id": "d2-6475419",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 6642,
+      "count": 2,
+      "ending_run4": 5,
+      "sha256": "6ef5fe2072896efdbbeb827eb605395567b5c7b748df8a50961862432709908c"
     },
     {
       "id": "daangn-67bdb8fd91d4",
@@ -2140,6 +5793,16 @@
       "count": 5,
       "ending_run4": 5,
       "sha256": "6b0c5f4d1e4c0a96fe87b369b115ec388f3b3725cc93641eebc20f298c639d2c"
+    },
+    {
+      "id": "d2-2017402",
+      "group": "drift-default",
+      "holdout": true,
+      "site": "d2",
+      "chars": 5160,
+      "count": 4,
+      "ending_run4": 8,
+      "sha256": "2eb0b498d66591161276112393edde915997e3383083061f1fec58f19d45087b"
     },
     {
       "id": "daangn-0bc268f819c7",
@@ -2172,34 +5835,24 @@
       "sha256": "c5b18904e54b921fcd878d4a4b98018a439c1866e389fa53bbc3a0c94fd6547f"
     },
     {
-      "id": "daangn-93afe203d766",
-      "group": "drift-casual",
-      "holdout": true,
-      "site": "daangn",
-      "chars": 8804,
-      "count": 0,
-      "ending_run4": 6,
-      "sha256": "de9c4a7ae1484edd224476c85e74978ff768803a6e17e861cc6cfda60a33a69b"
-    },
-    {
       "id": "toss-toss-tpm",
       "group": "drift-default",
       "holdout": false,
       "site": "toss",
-      "chars": 5193,
+      "chars": 5186,
       "count": 13,
       "ending_run4": 6,
-      "sha256": "9943241ffe6a7b1d44c201412ecce14bfc95023b1c426758a8a5c081b378e746"
+      "sha256": "18bfa8a5c244c702896c08c00de38db76445050573d6517362fe779c2558e1d8"
     },
     {
-      "id": "toss-cross-functional-tpm-tip",
+      "id": "clova-4491a7467599",
       "group": "drift-default",
-      "holdout": true,
-      "site": "toss",
-      "chars": 3908,
-      "count": 2,
-      "ending_run4": 3,
-      "sha256": "52ac4208decf3cb9ebbe13a0b2bf4a63d784b8721d2de9f25890b81ce551741e"
+      "holdout": false,
+      "site": "clova",
+      "chars": 5538,
+      "count": 1,
+      "ending_run4": 2,
+      "sha256": "3129117ca8116671fbdd48677f302b362ad42dc5105f530fc06629c773fa83e8"
     },
     {
       "id": "kakao-822",
@@ -2210,6 +5863,26 @@
       "count": 11,
       "ending_run4": 10,
       "sha256": "8e93f71788cb5d1c61c767584b4d4194daf657668362fd0c42d6a15793b6aef1"
+    },
+    {
+      "id": "toss-cross-functional-tpm-tip",
+      "group": "drift-default",
+      "holdout": true,
+      "site": "toss",
+      "chars": 3901,
+      "count": 2,
+      "ending_run4": 3,
+      "sha256": "07873b161cab66bf5944167277cbcdd5b07f9929e32ae2fbc21ba3b5b6b5369b"
+    },
+    {
+      "id": "woowahan-26319",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 8076,
+      "count": 7,
+      "ending_run4": 8,
+      "sha256": "8e9e87a0a0a1af6678fe5c0bbd53103a68f76171494071456444ccb634a45243"
     },
     {
       "id": "daangn-65a499b4967a",
@@ -2236,20 +5909,20 @@
       "group": "drift-default",
       "holdout": false,
       "site": "toss",
-      "chars": 10363,
+      "chars": 10349,
       "count": 2,
       "ending_run4": 4,
-      "sha256": "ebd314ed97d2910ef8018ba8c0c1684afd6ad7c645019fc8a0deca585149e198"
+      "sha256": "f846b188b40aaea5c2ec199ef2c1b607e03b4e2c035b55fcbe7e647102c7a293"
     },
     {
-      "id": "daangn-4f6f2478a8db",
-      "group": "drift-casual",
+      "id": "clova-e98c1a8be402",
+      "group": "drift-default",
       "holdout": false,
-      "site": "daangn",
-      "chars": 7766,
-      "count": 1,
-      "ending_run4": 0,
-      "sha256": "37f78b8d4cd29cf59a2355add09dc5ef2012a43000391ae718fa69feca5b6d70"
+      "site": "clova",
+      "chars": 4747,
+      "count": 0,
+      "ending_run4": 2,
+      "sha256": "7d158694be4c525fb4b7a935be0bb7f11e84cbdacd8fc0c5ec56cc0ec80ee210"
     },
     {
       "id": "toss-50761",
@@ -2282,6 +5955,16 @@
       "sha256": "9b2166c970be4cbd9222c2f8c0b68b0f632df3f8e8fc189c19acc48eb7571b59"
     },
     {
+      "id": "woowahan-26388",
+      "group": "drift-default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 6288,
+      "count": 1,
+      "ending_run4": 6,
+      "sha256": "014d4b5788a860c5f6d8e0cf308e7bedfafecdfab0cae8fb40962e18de71a2af"
+    },
+    {
       "id": "kakao-825",
       "group": "drift-default",
       "holdout": false,
@@ -2302,14 +5985,14 @@
       "sha256": "7d061ded9493a59b382fa6599482020bc55c736e4699d60f5df10db0920a568f"
     },
     {
-      "id": "daangn-d4e61f6ba32f",
-      "group": "drift-casual",
-      "holdout": true,
-      "site": "daangn",
-      "chars": 3196,
-      "count": 1,
-      "ending_run4": 2,
-      "sha256": "58646d212b1ddf4e414514bbc7beb6675602d7b633ca11381fe7d80e09912497"
+      "id": "woowahan-26459",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 6136,
+      "count": 0,
+      "ending_run4": 6,
+      "sha256": "1af365d6589582775441ebeb30626087bda97ea891df47c249e6bac76c195813"
     },
     {
       "id": "daangn-090fb4021e20",
@@ -2320,6 +6003,26 @@
       "count": 16,
       "ending_run4": 23,
       "sha256": "5dcedff51d7668cbaa7e257b0d9b121f906c6d145ed99c3af4c5a1fbf4350d76"
+    },
+    {
+      "id": "woowahan-26492",
+      "group": "drift-default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 10048,
+      "count": 4,
+      "ending_run4": 6,
+      "sha256": "1debdd5a3c5d0ff4a86451f484737d6c082164a19e83808bd9b1793c4a421f03"
+    },
+    {
+      "id": "d2-5788040",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 6662,
+      "count": 1,
+      "ending_run4": 9,
+      "sha256": "d8a78039b629264fc9fe52b2272acb385c67a3b0d8d388c90abe26ee5cb71273"
     },
     {
       "id": "daangn-f8b32edb2eb1",
@@ -2342,14 +6045,24 @@
       "sha256": "a964957b49b6f1f6b854868dc9cb4d5e43ad2978bee8cb5a9ae36cbe9578eba5"
     },
     {
+      "id": "woowahan-26507",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 7162,
+      "count": 3,
+      "ending_run4": 6,
+      "sha256": "5e1aba4c9006bd8c06a2b473347cfc9d0e9858cfc726ad608d00bef647604967"
+    },
+    {
       "id": "toss-llm_context_topic",
       "group": "drift-casual",
       "holdout": true,
       "site": "toss",
-      "chars": 6766,
+      "chars": 6747,
       "count": 1,
       "ending_run4": 7,
-      "sha256": "1a01650ad57abac3bd3c0e947b0f24c003f4ce9ead1096cc5fbcdedca4884c2f"
+      "sha256": "c3d3f1444e4ef47bbd9a8cbb797dd51ff8394c0d1db039cc6fe357635907e64e"
     },
     {
       "id": "daangn-3fa344b4391b",
@@ -2366,10 +6079,20 @@
       "group": "drift-default",
       "holdout": false,
       "site": "kakao",
-      "chars": 16575,
+      "chars": 16654,
       "count": 10,
       "ending_run4": 5,
-      "sha256": "dd082dfee3a5dc95ff218f9d7097831ed71682ca7449518005ef35be48c25d8a"
+      "sha256": "84368dd9f8f8e5ceeedf0519d76e90acac15640f57eba07e0dcd04933bb35002"
+    },
+    {
+      "id": "woowahan-26729",
+      "group": "drift-default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 4126,
+      "count": 2,
+      "ending_run4": 4,
+      "sha256": "9b7ee1826fabd3adb4ddfdc4cf6cbaa4102a453525af0fbe43e5dbf5746c404e"
     },
     {
       "id": "kakao-829",
@@ -2386,10 +6109,30 @@
       "group": "drift-casual",
       "holdout": false,
       "site": "toss",
-      "chars": 8041,
+      "chars": 8036,
       "count": 15,
       "ending_run4": 12,
-      "sha256": "d986f1c8f3a36f118e13b907c145fadb2f7a528863fc86f885ba9119154be484"
+      "sha256": "77bda2c539593e258c1de971e78c71711e0e385b532c7b7f0fbe9f975ea4c002"
+    },
+    {
+      "id": "d2-0525182",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 10844,
+      "count": 8,
+      "ending_run4": 9,
+      "sha256": "224455460e6ba92e019cae1adc4ad38a0f33296e4d93c1b9a677ec18a06e8e70"
+    },
+    {
+      "id": "d2-7337586",
+      "group": "drift-default",
+      "holdout": true,
+      "site": "d2",
+      "chars": 7844,
+      "count": 2,
+      "ending_run4": 9,
+      "sha256": "2d04780ebd417e94bcba66cbfa46314aa7025a434b6f28980f8e564afce6d519"
     },
     {
       "id": "toss-tossion",
@@ -2406,10 +6149,10 @@
       "group": "drift-casual",
       "holdout": false,
       "site": "toss",
-      "chars": 6858,
+      "chars": 6846,
       "count": 1,
       "ending_run4": 1,
-      "sha256": "6758c7b8607f93f72e89c5644eee17e63df3f518ff598df915aac16f2f8c5e0a"
+      "sha256": "fa6227a8d28ece10189d7023bbf0d061eea2313ac3e77057f46865f4164dd13d"
     },
     {
       "id": "daangn-a50dd4b7b44c",
@@ -2432,6 +6175,26 @@
       "sha256": "1ee807519aebf28fb70a9c4bde24d213dd73d2ba815c64dccee361b15c216f01"
     },
     {
+      "id": "d2-4452165",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 6082,
+      "count": 3,
+      "ending_run4": 2,
+      "sha256": "7634f29bd3fd6a462b19d36791493a9ef7ff25cc6b2b8792af97a17fae10a4cc"
+    },
+    {
+      "id": "clova-c2a85304ff91",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "clova",
+      "chars": 6723,
+      "count": 0,
+      "ending_run4": 0,
+      "sha256": "ad09e81d80c18ead72d558463e8a72412ff35654d0819de5b5b3ca99fbbcb9b2"
+    },
+    {
       "id": "toss-52885",
       "group": "drift-casual",
       "holdout": false,
@@ -2440,6 +6203,26 @@
       "count": 1,
       "ending_run4": 6,
       "sha256": "304afa9b414a40649f5f2e48d021009bc9195295fe2f0108a4e360574a74dc70"
+    },
+    {
+      "id": "woowahan-26835",
+      "group": "drift-default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 4270,
+      "count": 1,
+      "ending_run4": 3,
+      "sha256": "c320ae47cdd224b9e63c3ee9903955f3f0ddf11cef472593c5d07e415c9fe733"
+    },
+    {
+      "id": "woowahan-26832",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 8951,
+      "count": 1,
+      "ending_run4": 2,
+      "sha256": "7002ce951edc854c3ed825499ed60dc41184be2b40ecd266a1066769a93c6058"
     },
     {
       "id": "toss-52999",
@@ -2452,6 +6235,16 @@
       "sha256": "6afc55f07f14d03ba153bde315a4d98b1c4fd2d0cd302e2f98ab289ae813d6e6"
     },
     {
+      "id": "woowahan-27330",
+      "group": "drift-default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 5427,
+      "count": 4,
+      "ending_run4": 5,
+      "sha256": "32f85bf8bebbe1bf713ea7b865b1699b16c277bd07db561968582be6a6063775"
+    },
+    {
       "id": "toss-toss-benchmark",
       "group": "drift-default",
       "holdout": false,
@@ -2460,6 +6253,26 @@
       "count": 2,
       "ending_run4": 5,
       "sha256": "27a32bf1d69e42bd277c64375de5f9853bfb4943c9e1232d241a46d93ddd1e00"
+    },
+    {
+      "id": "woowahan-27604",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 6969,
+      "count": 1,
+      "ending_run4": 8,
+      "sha256": "f15d4e1e81e33a75dbc150d06b47ac0c17fe8f08952176d7c3d7b79798aa27bb"
+    },
+    {
+      "id": "d2-7314597",
+      "group": "drift-default",
+      "holdout": true,
+      "site": "d2",
+      "chars": 7919,
+      "count": 3,
+      "ending_run4": 4,
+      "sha256": "89971fc4bc9dd04d1a8da8d33d8ad3e5a72b6ade1b13a7721c8a0a9f1c5d99dc"
     },
     {
       "id": "kakao-837",
@@ -2472,6 +6285,26 @@
       "sha256": "77cd4156f8af9c2eae201956a805fa0d8e0cfa3749f61119e4d2268c32c45d38"
     },
     {
+      "id": "woowahan-27678",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "woowahan",
+      "chars": 13612,
+      "count": 2,
+      "ending_run4": 10,
+      "sha256": "cc6bde12313a90f33fe10165f6fb1220c69328fd70cd783721a65da842db13fa"
+    },
+    {
+      "id": "clova-6ab50516b91b",
+      "group": "drift-default",
+      "holdout": true,
+      "site": "clova",
+      "chars": 15510,
+      "count": 3,
+      "ending_run4": 21,
+      "sha256": "1ff81669be4182a8e302da211b18c843ae151fce78106db270e0fd7bdf16b098"
+    },
+    {
       "id": "daangn-097551289b2a",
       "group": "drift-casual",
       "holdout": false,
@@ -2482,6 +6315,16 @@
       "sha256": "375a9645e333422e23598e34ae509af79e7b63b8acd64fdcd82762d322e11118"
     },
     {
+      "id": "clova-cd151d5329df",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "clova",
+      "chars": 5510,
+      "count": 3,
+      "ending_run4": 1,
+      "sha256": "a9cc12d8fe1f097deba0252bfdb6dbc85af63ec4a69bb15196137f530b933091"
+    },
+    {
       "id": "kakao-838",
       "group": "drift-default",
       "holdout": true,
@@ -2490,6 +6333,156 @@
       "count": 3,
       "ending_run4": 7,
       "sha256": "c4d8d4e53b670afe7b16ffa5a31816e365ada611e1607a0a1ecdc8af537e0b47"
+    },
+    {
+      "id": "daangn-16c6328dea50",
+      "group": "drift-casual",
+      "holdout": false,
+      "site": "daangn",
+      "chars": 5771,
+      "count": 1,
+      "ending_run4": 2,
+      "sha256": "2a2234b38ef32e0bec3b20e1158abaf2418ab92b2236a3157395c2296f83fd99"
+    },
+    {
+      "id": "daangn-5340546886b5",
+      "group": "drift-casual",
+      "holdout": false,
+      "site": "daangn",
+      "chars": 4923,
+      "count": 2,
+      "ending_run4": 5,
+      "sha256": "7c068c534e7923af1c16827f23a4f81596e90e237c40e9d9ae72bf3f3652185a"
+    },
+    {
+      "id": "d2-4149925",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 9046,
+      "count": 1,
+      "ending_run4": 6,
+      "sha256": "9a1dd5eb6283298c49e9b1543d47023a4fb8ee501b45985b017ef5e3044e373d"
+    },
+    {
+      "id": "toss-ai-platform-foundation",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "toss",
+      "chars": 4827,
+      "count": 1,
+      "ending_run4": 3,
+      "sha256": "41da3b14c9a341643e28daedf620904891bc67371e1fb6690bc5decc218431af"
+    },
+    {
+      "id": "toss-package-management-1",
+      "group": "drift-casual",
+      "holdout": false,
+      "site": "toss",
+      "chars": 1831,
+      "count": 0,
+      "ending_run4": 0,
+      "sha256": "52310cb3d6cb0ee1f23f5bb00c4c134773eba18985dfafc5a58a16f9e51c8481"
+    },
+    {
+      "id": "toss-dw-airflow-migration",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "toss",
+      "chars": 6571,
+      "count": 4,
+      "ending_run4": 4,
+      "sha256": "eccbd000464a63499c26887a81edff915b02af228503e624ea7bf7250268c64c"
+    },
+    {
+      "id": "toss-package-management-2",
+      "group": "drift-casual",
+      "holdout": false,
+      "site": "toss",
+      "chars": 2097,
+      "count": 2,
+      "ending_run4": 2,
+      "sha256": "c8942c964c4a3ea5af3884987f3e5906b99fc84c1b12e71a9bd59ee292a0591a"
+    },
+    {
+      "id": "d2-2675915",
+      "group": "drift-default",
+      "holdout": true,
+      "site": "d2",
+      "chars": 19862,
+      "count": 4,
+      "ending_run4": 11,
+      "sha256": "27f3ffaeb1cda1a5d2076c3848baf2107fb88de60b472cfaa7cf8e2c89beafc2"
+    },
+    {
+      "id": "daangn-5ae60ab5108b",
+      "group": "drift-casual",
+      "holdout": false,
+      "site": "daangn",
+      "chars": 8191,
+      "count": 4,
+      "ending_run4": 5,
+      "sha256": "45ea5419b9d747be08fbb82705c39608f4c63aa0bce2ee7456236572c4de5739"
+    },
+    {
+      "id": "kakao-840",
+      "group": "drift-default",
+      "holdout": true,
+      "site": "kakao",
+      "chars": 10521,
+      "count": 3,
+      "ending_run4": 4,
+      "sha256": "f24bc48779e841a9a6680d8dc98e83559d73cebb5294663e80d5b7cecb0ef8d2"
+    },
+    {
+      "id": "woowahan-27864",
+      "group": "drift-default",
+      "holdout": true,
+      "site": "woowahan",
+      "chars": 8567,
+      "count": 9,
+      "ending_run4": 5,
+      "sha256": "77b6b73caa1516c26ad9d542dc7479aee239845e6f40bb361ccb83160f1dee5f"
+    },
+    {
+      "id": "kakao-843",
+      "group": "drift-casual",
+      "holdout": true,
+      "site": "kakao",
+      "chars": 4908,
+      "count": 0,
+      "ending_run4": 1,
+      "sha256": "2bb5b66024a0067f3c56aad2f094ef86e33c01880e9b53c7927df49911a968f5"
+    },
+    {
+      "id": "toss-dataops-log-definition-skill",
+      "group": "drift-casual",
+      "holdout": false,
+      "site": "toss",
+      "chars": 3107,
+      "count": 1,
+      "ending_run4": 5,
+      "sha256": "8c262b24a4021b0eb8aaf1591c2c10ad4793281cb539a4bcad9267e851a05370"
+    },
+    {
+      "id": "d2-1975819",
+      "group": "drift-default",
+      "holdout": true,
+      "site": "d2",
+      "chars": 25970,
+      "count": 9,
+      "ending_run4": 10,
+      "sha256": "4ecc5fa89c5cdac44222dd2a2a122817a4d66688bacaecab3903eba50bc72066"
+    },
+    {
+      "id": "d2-2983631",
+      "group": "drift-default",
+      "holdout": false,
+      "site": "d2",
+      "chars": 10404,
+      "count": 6,
+      "ending_run4": 6,
+      "sha256": "afb899f1252cddd2e68e669596b3a48596e0a0f90067f83c0772f74a694d8948"
     }
   ]
 }
