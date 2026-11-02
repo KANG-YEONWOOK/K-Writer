@@ -637,9 +637,12 @@ class KoreanPatternTest(unittest.TestCase):
         for text in ('저자들은 결론에서 "성별 차이와 사춘기는 각각 관련된다"고 써요.',
                      'Sporns et al.(2005)은 "기본 요소는 정의하기 어렵다"라고 썼습니다.',
                      '저자들은 지연이 줄었다고 결론에서 써요.', '이 글은 그 값을 0이라고 적어요.',
-                     'Bargmann(2012)은 100종류 넘게 있다고 쓰고 다른 글은 200개라고 했어요.'):
+                     'Bargmann(2012)은 100종류 넘게 있다고 쓰고 다른 글은 200개라고 했어요.',
+                     '같은 글은 "규칙이 너무 많다"라고도 썼습니다.', '저자들은 효과가 작다고도 씁니다.'):
             self.assertEqual(self.m(text)["A14.report_write"]["value"], 1, text)
-        for text in ('논문에는 "..."라고 쓰여 있어요.', '로그에는 "timeout"이라고 적혀 있습니다.', '글을 씁니다.',
+        # "(이)라고도" 뒤의 현재형은 표기를 알려 주는 뜻이라 세지 않는다(2026-11-02 사람 글 측정의 D2 글).
+        for text in ('해마다 나오는 명세는 줄여서 "ES2026"이라고도 씁니다.', '이 값을 약자로 KV라고도 써요.',
+                     '논문에는 "..."라고 쓰여 있어요.', '로그에는 "timeout"이라고 적혀 있습니다.', '글을 씁니다.',
                      '이 방법을 사람 뇌에 썼어요.', '뉴런 수가 적어요.', '이 값은 적어도 두 배입니다.',
                      'Herting et al.(2012)의 저자들은 결론에서 "각각 관련된다"라고 말해요.'):
             self.assertEqual(self.m(text)["A14.report_write"]["value"], 0, text)
@@ -648,6 +651,19 @@ class KoreanPatternTest(unittest.TestCase):
         self.assertEqual((m["A14.quoted_english_token"]["value"], m["A14.report_write"]["value"]), (1, 0))
         m = self.m('저자들이 "~로 보인다(suggest)"고 쓴 추정입니다. 그 수보다 많다고 적은 하한입니다.')
         self.assertEqual((m["A14.report_write"]["value"], m["A14.report_write_check"]["value"]), (0, 2))
+
+    def test_new_site_false_positives(self):
+        # 2026-11-02 사람 글 측정(우아한형제들, D2)에서 찾은 오탐. 그림 번호와 출처, "~을 토대로", UX 용어 "사용자 여정"은 세지 않는다.
+        for text, pid in (('아래 [그림 2]처럼 세 단계로 나눕니다.', "G3.placeholder"),
+                          ('[출처: 사내 위키] 표는 응답 시간을 보여 줍니다.', "G3.placeholder"),
+                          ('측정한 로그를 토대로 원인을 찾았습니다.', "A6.calque"),
+                          ('사용자 여정 지도를 다시 그렸습니다.', "A6.calque")):
+            self.assertEqual(self.m(text)[pid]["value"], 0, text)
+        for text, pid in (('여기에 [이미지 삽입] 후 설명을 붙입니다.', "G3.placeholder"),
+                          ('자세한 내용은 [링크]를 봅니다.', "G3.placeholder"),
+                          ('이 결과가 다음 연구의 토대가 됐습니다.', "A6.calque"),
+                          ('팀은 개선의 여정을 이어 갑니다.', "A6.calque")):
+            self.assertEqual(self.m(text)[pid]["value"], 1, text)
 
     def test_quote_go_is_not_checked(self):
         # 처음에는 따옴표 뒤의 "고"를 FAIL로 셌다(A14.quote_go). 사용자 검토(2026-10-18)에서 직접 인용 뒤에도

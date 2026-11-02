@@ -2,10 +2,11 @@
 """사람 글에 revise_ko.py의 반복 후보 탐지를 돌려 후보 수 분포를 잰다.
 
 후처리 단계의 반복 후보는 판정이 아니라 다시 읽을 위치다. 사람 글에서도 후보가 많이 나오면 후보 목록이 쓸모없는
-목록이 된다. 이 스크립트로 2022-11-30 이전 합니다체 사람 글(stats.json의 default 그룹)에서 후보가 몇 개 나오는지 잰다.
+목록이 된다. 이 스크립트로 기준 기간(2018-01-01~2022-11-30) 합니다체 사람 글(stats.json의 default 그룹)에서
+후보가 몇 개 나오는지 잰다.
 
 사용법
-  python dev/baseline/repeats_stats.py --cache DIR [--extra 이름=경로 ...]
+  python dev/baseline/repeats_stats.py --cache DIR [--stats PATH] [--group default] [--extra 이름=경로 ...]
 """
 
 import argparse
@@ -43,9 +44,10 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--cache", required=True)
     ap.add_argument("--group", default="default")
+    ap.add_argument("--stats", default=os.path.join(ROOT, "dev", "baseline", "stats.json"))
     ap.add_argument("--extra", action="append", default=[], help="비교할 글: 이름=경로")
     args = ap.parse_args()
-    stats = json.load(open(os.path.join(ROOT, "dev", "baseline", "stats.json"), encoding="utf-8"))
+    stats = json.load(open(args.stats, encoding="utf-8"))
     rows = []
     for a in stats["articles"]:
         if a["group"] != args.group:

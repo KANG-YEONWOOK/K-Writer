@@ -5,7 +5,7 @@
 holdout을 포함한 분포와 제외한 분포를 함께 기록한다. 출력에는 원문을 저장하지 않는다.
 이 수치는 후보의 빈도이지 수정해야 할 문장의 수나 PASS/FAIL 임계값이 아니다.
 
-  python dev/baseline/predicate_stats.py --cache DIR [--out JSON] [--samples N]
+  python dev/baseline/predicate_stats.py --cache DIR [--stats PATH] [--out JSON] [--samples N]
 """
 
 import argparse
@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.join(ROOT, "skills", "techblog", "scripts"))
 import lint_ko as L  # noqa: E402
 
 METRIC = "A8.same_predicate_adjacent"
-GROUPS = ("default", "casual", "drift-default", "drift-casual")
+GROUPS = ("default", "casual", "mid-default", "mid-casual", "drift-default", "drift-casual")
 
 
 def quantile(values, q):
@@ -86,6 +86,8 @@ def measure(cache, stats, samples=0):
         "groups": groups,
         "calibration_without_holdout": summarize(
             [r for r in rows if r["group"] in ("default", "casual") and not r["holdout"]]),
+        "mid_without_holdout": summarize(
+            [r for r in rows if r["group"] in ("mid-default", "mid-casual") and not r["holdout"]]),
         "last_words": dict(words.most_common()), "articles": rows,
     }
 
@@ -96,8 +98,9 @@ def main():
     parser.add_argument("--cache", required=True)
     parser.add_argument("--out", help="원문 없이 집계와 글별 측정값을 저장할 JSON 경로")
     parser.add_argument("--samples", type=int, default=0, help="검토할 후보 수. -1이면 모두 출력")
+    parser.add_argument("--stats", default=os.path.join(ROOT, "dev", "baseline", "stats.json"))
     args = parser.parse_args()
-    stats = L.load_json(os.path.join(ROOT, "dev", "baseline", "stats.json"))
+    stats = L.load_json(args.stats)
     result = measure(args.cache, stats, args.samples)
     if not result["coverage"]["available"]:
         parser.error("캐시에 기존 사람 글이 없습니다. measure.py collect로 원문을 먼저 수집하세요.")

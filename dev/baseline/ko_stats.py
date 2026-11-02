@@ -16,10 +16,14 @@
 - --verdicts ID ...: 지금 thresholds.json으로 사람 글(합니다체, 해요체 그룹)을 판정해, 주어진 항목의 WARN과 FAIL 수와
   holdout 글의 통과율(policy 항목과 어투 Gate는 뺀다)을 낸다. 새 항목이 사람 글 통과율을 떨어뜨리는지 볼 때 쓴다.
 
+- --by-site: 그룹마다 사이트별 표를 함께 낸다. 새 사이트에서 기존 사이트보다 훨씬 많이 걸리는 항목(오탐 후보)을 찾을 때 쓴다.
+- --stats PATH: 읽을 stats.json. 기본값은 dev/baseline/stats.json이다.
+
 사용법
-  python dev/baseline/ko_stats.py --cache DIR [--groups default casual drift-default drift-casual]
+  python dev/baseline/ko_stats.py --cache DIR [--stats PATH]
+                                  [--groups default casual mid-default mid-casual drift-default drift-casual]
                                   [--extra 이름=경로 ...] [--notes GLOB] [--pairs DIR] [--samples N]
-                                  [--no-holdout] [--rates] [--verbs] [--verdicts ID ...]
+                                  [--no-holdout] [--rates] [--verbs] [--verdicts ID ...] [--by-site]
 """
 
 import argparse
@@ -221,7 +225,7 @@ def report_verdicts(arts, cache, ids):
         path = os.path.join(cache, "md", a["id"] + ".md")
         if a["group"] not in ("default", "casual") or not os.path.exists(path):
             continue
-        ev = L.evaluate(L.analyze(L.read_text(path)), th_judged, a["group"])
+        ev = L.evaluate(L.analyze(L.read_text(path)), th_judged, a["group"].rsplit("-", 1)[-1])
         for r in ev["results"]:
             if r["id"] in per and r["status"] in per[r["id"]]:
                 per[r["id"]][r["status"]] += 1
@@ -282,7 +286,10 @@ def main():
     L.setup_stdio()
     ap = argparse.ArgumentParser()
     ap.add_argument("--cache", help="measure.py collect의 캐시 폴더")
-    ap.add_argument("--groups", nargs="*", default=["default", "casual", "drift-default", "drift-casual"])
+    ap.add_argument("--stats", default=os.path.join(ROOT, "dev", "baseline", "stats.json"))
+    ap.add_argument("--groups", nargs="*", default=["default", "casual", "mid-default", "mid-casual",
+                                                    "drift-default", "drift-casual"])
+    ap.add_argument("--by-site", action="store_true", help="그룹마다 사이트별 표를 함께 낸다")
     ap.add_argument("--extra", action="append", default=[], help="비교할 글: 이름=경로")
     ap.add_argument("--notes", help="StudyNote 노트 glob(.mdx). 본문만 남겨 잰다")
     ap.add_argument("--pairs", help="<이름>.before.md, <이름>.after.md 쌍이 있는 폴더")
@@ -294,7 +301,8 @@ def main():
     args = ap.parse_args()
     verb_groups = []
     if args.cache:
-        stats = json.load(open(os.path.join(ROOT, "dev", "baseline", "stats.json"), encoding="utf-8"))
+        stats = json.load(open(args.stats, encoding="utf-8"))
+        site_of = {a["id"]: a["site"] for a in stats["articles"]}
         for group in args.groups:
             rows, vrows = [], []
             for a in stats["articles"]:
@@ -310,6 +318,9 @@ def main():
                 report_group(group, rows, args.samples)
                 if args.rates:
                     report_rates(group, rows)
+                if args.by_site:
+                    for site in sorted({site_of[r[0]] for r in rows}):
+                        report_group(f"{group} / {site}", [r for r in rows if site_of[r[0]] == site], 0)
             if vrows:
                 verb_groups.append((f"사람 글 {group}", vrows))
         if args.verdicts is not None:
