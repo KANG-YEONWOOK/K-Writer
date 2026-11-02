@@ -1,0 +1,164 @@
+{
+ "notes": [
+  "dogfooding 케이스. docs/ 자료는 저장소에 없으므로 로컬에서만 쓴다. {work}는 scratch 폴더(%TEMP%/techblog-work).",
+  "mode: skill(기본), baseline(스킬 없이 일반 프롬프트), retone(완성된 글의 어투만 변환), pasted(자료 텍스트를 프롬프트에 붙여넣음)",
+  "allowed_tools: claude -p에 --allowedTools로 넘길 도구 목록(baseline의 URL 읽기용)",
+  "mode revise: 다른 iteration 케이스의 초안 사본(article.unrevised.md), fact sheet, 자료로 새 세션에서 6단계(후처리)만 실행한다. revise_from에 <iteration>/<case>를 쓴다.",
+  "source_local: URL 자료를 한 번 받아 둔 로컬 파일. judge가 초안과 최종 글을 같은 원문으로 판정할 때 쓴다.",
+  "settings: run.py는 skill 프롬프트에 --defaults를 붙여 설정 질문 없이 실행한다. \"ask\"면 어투와 --defaults를 빼고 실행해, 질문할 수 없을 때(AskUserQuestion은 disallowed) 기본값으로 진행하고 보고하는지 본다."
+ ],
+ "cases": [
+  {
+   "name": "A-antislop-casual",
+   "source": "docs/2510.15061v1.pdf",
+   "tone": "casual"
+  },
+  {
+   "name": "B-idiosyncrasies-default",
+   "source": "docs/sun25z.pdf",
+   "tone": "default"
+  },
+  {
+   "name": "S1-pagedattention-casual",
+   "source": "{work}/sources/2309.06180.pdf",
+   "tone": "casual"
+  },
+  {
+   "name": "Arep-antislop-casual",
+   "source": "docs/2510.15061v1.pdf",
+   "tone": "casual",
+   "note": "A와 같은 설정. run 간 편차 측정용"
+  },
+  {
+   "name": "A0-antislop-baseline",
+   "source": "docs/2510.15061v1.pdf",
+   "tone": "casual",
+   "mode": "baseline"
+  },
+  {
+   "name": "B0-idiosyncrasies-baseline",
+   "source": "docs/sun25z.pdf",
+   "tone": "default",
+   "mode": "baseline"
+  },
+  {
+   "name": "S10-pagedattention-baseline",
+   "source": "{work}/sources/2309.06180.pdf",
+   "tone": "casual",
+   "mode": "baseline"
+  },
+  {
+   "name": "C-epanorthosis-default",
+   "source": "docs/2607.21498v2.pdf",
+   "tone": "default",
+   "set": "held-out"
+  },
+  {
+   "name": "D-munozortiz-casual",
+   "source": "docs/2308.09067v3.pdf",
+   "tone": "casual",
+   "set": "held-out"
+  },
+  {
+   "name": "E-discord-url-default",
+   "source": "https://discord.com/blog/how-discord-stores-trillions-of-messages",
+   "tone": "default",
+   "set": "held-out",
+   "note": "URL 입력. judge는 source_local(본문을 한 번 받아 둔 파일)로 판정한다",
+   "source_local": "{work}/sources/discord.md"
+  },
+  {
+   "name": "F-retone-casual",
+   "source": "{work}/dogfood/{last}/A-antislop-casual/article.draft.md",
+   "tone": "casual",
+   "mode": "retone",
+   "set": "held-out",
+   "note": "마지막 iteration의 A Default 초안을 --retone으로 변환. {last}는 실행 때 지정"
+  },
+  {
+   "name": "S2-pep659-pasted-default",
+   "source": "{work}/sources/pep-0659.rst",
+   "tone": "default",
+   "mode": "pasted",
+   "set": "held-out",
+   "note": "PEP 659(public domain) 본문을 프롬프트에 붙여넣음"
+  },
+  {
+   "name": "S3-pagedattention-sonnet-casual",
+   "source": "{work}/sources/2309.06180.pdf",
+   "tone": "casual",
+   "model": "sonnet",
+   "set": "held-out",
+   "note": "작은 모델에서도 동작하는지 확인"
+  },
+  {
+   "name": "C0-epanorthosis-baseline",
+   "source": "docs/2607.21498v2.pdf",
+   "tone": "default",
+   "mode": "baseline",
+   "set": "held-out-baseline"
+  },
+  {
+   "name": "D0-munozortiz-baseline",
+   "source": "docs/2308.09067v3.pdf",
+   "tone": "casual",
+   "mode": "baseline",
+   "set": "held-out-baseline"
+  },
+  {
+   "name": "E0-discord-url-baseline",
+   "source": "https://discord.com/blog/how-discord-stores-trillions-of-messages",
+   "tone": "default",
+   "mode": "baseline",
+   "set": "held-out-baseline",
+   "allowed_tools": [
+    "WebFetch"
+   ],
+   "note": "스킬이 없으면 WebFetch가 사전 승인되지 않으므로 allowed_tools로 허용한다. judge는 source_local(본문을 한 번 받아 둔 파일)로 판정한다",
+   "source_local": "{work}/sources/discord.md"
+  },
+  {
+   "name": "S20-pep659-baseline",
+   "source": "{work}/sources/pep-0659.rst",
+   "tone": "default",
+   "mode": "baseline",
+   "set": "held-out-baseline",
+   "note": "S2와 같은 자료. baseline은 파일 경로로 전달한다"
+  },
+  {
+   "name": "H-noradrenergic-default",
+   "source": "{work}/sources/fncom-2021-687075.pdf",
+   "tone": "default",
+   "set": "naturalness",
+   "note": "신경과학 논문(Frontiers in Computational Neuroscience 2021, doi 10.3389/fncom.2021.687075, CC BY). 한국어 문장 점검 확인용. 사용자 검토 노트와 같은 분야의 영어 자료"
+  },
+  {
+   "name": "N1-note-default",
+   "source": "{work}/sources/note.md",
+   "tone": "default",
+   "set": "smoke",
+   "note": "evals/note-default의 엔지니어링 노트를 파일로 준다. 후처리 흐름과 R6(비교 기준 없는 변화량) 확인용"
+  },
+  {
+   "name": "N2-note-casual",
+   "source": "{work}/sources/note.md",
+   "tone": "casual",
+   "set": "smoke",
+   "note": "N1과 같은 자료의 Casual. 후처리 뒤 어투 변환과 tone_check 인자 확인용"
+  },
+  {
+   "name": "W3-connectome-function-casual",
+   "source": "{work}/sources/bargmann-marder-2013.pdf",
+   "tone": "casual",
+   "set": "terms",
+   "note": "Bargmann & Marder(2013), From the connectome to brain function, Nature Methods 10(6). 사용자 검토 3주차 3편(STG와 C. elegans) 노트의 주 자료. 용어 설명, 출처 주어와 인용 동사, 한 낱말 한 뜻 규칙 확인용. 저작권 자료라 저장소에 넣지 않는다"
+  },
+  {
+   "name": "N3-note-nosettings",
+   "source": "{work}/sources/note.md",
+   "settings": "ask",
+   "set": "settings",
+   "note": "설정 질문의 대체 경로 확인용. 어투, 독자, 분량과 --defaults 없이 실행한다. AskUserQuestion을 쓸 수 없으므로 기본값(Default, 사전 지식 없는 독자, 자료에 맞춘 분량)으로 쓰고 보고에 값과 출처를 적어야 한다"
+  }
+ ]
+}

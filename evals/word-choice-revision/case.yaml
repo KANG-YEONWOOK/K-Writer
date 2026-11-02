@@ -1,0 +1,5 @@
+schema_version: "1.1"
+name: word-choice-revision
+description: 주어, 목적어와 어울리지 않는 서술어와 여러 일로 읽히는 비유 동사의 회귀 평가
+context:
+  scaffold_script: setup.sh

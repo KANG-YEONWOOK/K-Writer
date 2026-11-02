@@ -1,0 +1,1107 @@
+#!/usr/bin/env python3
+"""dogfooding 결과를 LLM judge로 평가한다. judge는 새 `claude -p` 프로세스(기본 sonnet)로 실행한다.
+
+- style: 이번 iteration의 글과 사람 블로그 글(대조군)을 섞어 누가 썼는지 알리지 않고 채점한다.
+  J2~J6, J8 점수와 "AI가 쓴 것처럼 읽히는 문장" 인용을 받고, 인용이 원문에 그대로 있는지 확인해 J7을 센다.
+  처음에는 J10(용어와 중심 대상 설명)도 style judge가 글 전체를 보고 점수 하나로 매겼다. 같은 글에 0점과 2점을 줘서
+  2026-10-18에 terms 단계로 옮겼다.
+- fidelity: 글의 수치·주장을 자료 원문과 대조한다(supported / unsupported / contradicted, coverage).
+- pairwise: 같은 자료로 쓴 두 글(이번 iteration과 비교 대상)을 순서를 바꿔 두 번 비교한다.
+- clarity(J9): 글 한 편씩 판정한다. 문단의 첫 문장, 수치가 든 문장, A18에 걸린 문장을 뽑아
+  헤딩과 바로 앞 문장과 함께 보여 준다. judge는 문장마다 그 문장만으로 무엇에 대한 말인지 알 수 있는지(self_contained),
+  바로 앞 문장을 읽어야 알 수 있는지(needs_prev), 앞 문장까지 읽어도 알 수 없는지(unclear)를 고른다.
+  사람 글 대조군 6편(합니다체 3, 해요체 3)도 같은 방식으로 판정하고 결과를 work 폴더에 저장해 다시 쓴다.
+- korean(J5): 글의 헤딩과 모든 문장을 하나씩 보여 주고, 문장마다 자연스러움(natural)과
+  어색함(awkward, 유형 A~R 가운데 문장 하나로 판정할 수 없는 I, M 제외)을 고르게 한다. 1,000자당 어색한 문장 수를 같은 어투의 사람 글 대조군 3편과 비교한다.
+  사람 글 결과는 _korean_humans.json에 둔다.
+- terms(J10): judge가 글만 읽고 독자(자료 분야의 지식이 충분하지 않거나 없을 수 있는 사람)가 모를 수 있는 말을
+  모두 적는다. 말마다 처음 나온 문장, 글의 설명 인용, 빠진 요소(무엇인지, 하는 일, 이름의 뜻, 설명에 쓴 말, 목록에서만
+  소개)를 받는다. 처음 나온 문장이 본문에 없는 말은 뺀다. J10은 코드가 빠진 요소가 있는 말의 수와 중심 대상 정의로 계산한다.
+  글마다 2번 실행하고, 두 실행이 빠졌다고 적은 말의 겹침(Jaccard)과 두 실행이 모두 적은 말로 계산한 J10(j10_both)을 낸다.
+  사람 글 대조군 6편도 같은 방식으로 판정해 _terms_humans.json에 둔다.
+
+- within: 같은 실행의 초안 사본(article.unrevised.md)과 후처리를 마친 합니다체 글(Default는 article.md, Casual은
+  article.draft.md)을 비교한다. 전체 pairwise, 바뀐 절만 모은 절 A/B, 문장을 맞춘 clarity, 두 글의 fidelity(걸린 주장을
+  바뀐 문장과 바뀌지 않은 문장으로 나눔), 케이스마다 두 글과 사람 글 2편을 한 묶음으로 채점하는 style을 실행한다.
+- cross: 이번 iteration과 다른 iteration의 같은 케이스에서 후처리를 마친 합니다체 글끼리 pairwise로 비교한다.
+
+사용법
+  python dev/dogfood/judge.py --iter iter-1 [--compare iter-0] [--skip style fidelity pairwise clarity korean]
+  python dev/dogfood/judge.py --iter iter-13 --skip style fidelity pairwise clarity --extra ex040=examples/paged-attention.default.md
+  python dev/dogfood/judge.py --iter iter-8b --skip style fidelity pairwise --extra s1-930779c=examples/paged-attention.casual.md
+  python dev/dogfood/judge.py --iter iter-11 --within [--skip sections style] [--only B-idiosyncrasies-default]
+  python dev/dogfood/judge.py --iter iter-11 --cross iter-11r
+  python dev/dogfood/judge.py --iter iter-090 --skip style fidelity pairwise clarity korean --extra e080=<비교할 이전 글>
+  python dev/dogfood/judge.py --iter iter-090 --human-cache %TEMP%/techblog-work/human   # 사람 글 캐시 위치
+"""
+
+import argparse
+import copy
+import hashlib
+import json
+import os
+import random
+import re
+import shutil
+import subprocess
+import sys
+
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DEFAULT_WORK = os.path.join(os.environ.get("TEMP", "/tmp"), "techblog-work")
+HUMAN_CACHE = None  # --human-cache. 없으면 {work}/baseline/cache
+sys.path.insert(0, os.path.join(ROOT, "skills", "techblog", "scripts"))
+import lint_ko as L  # noqa: E402
+
+MOVES = ["salience", "contrast_reframe", "summary_marker", "lesson_ending", "hedge_stack", "calque_metaphor",
+         "triplet", "rhetorical_q", "translationese", "tone_slip", "generic_claim", "other"]
+
+STYLE_SCHEMA = {
+    "type": "object",
+    "properties": {"texts": {"type": "array", "items": {
+        "type": "object",
+        "properties": {
+            "label": {"type": "string"},
+            "scores": {"type": "object", "properties": {k: {"type": "integer", "minimum": 0, "maximum": 2}
+                                                         for k in ("J2", "J3", "J4", "J5", "J6", "J8")},
+                       "required": ["J2", "J3", "J4", "J5", "J6", "J8"]},
+            "ai_like": {"type": "array", "items": {"type": "object", "properties": {
+                "quote": {"type": "string"}, "move": {"type": "string", "enum": MOVES},
+                "lost_if_deleted": {"type": "string"}}, "required": ["quote", "move", "lost_if_deleted"]}},
+            "comment": {"type": "string"}},
+        "required": ["label", "scores", "ai_like", "comment"]}}},
+    "required": ["texts"]}
+
+STYLE_PROMPT = """당신은 한국 테크 기업 기술 블로그의 편집자입니다. 현재 폴더의 {files} 파일을 Read 도구로 모두 끝까지 읽고 글마다 평가하세요. 이 중 일부는 사람이 썼고 일부는 AI가 썼을 수 있습니다. 글쓴이에 대한 정보는 주지 않습니다.
+
+글마다 아래 항목을 0~2점으로 매기세요.
+- J2 구체성: 주장마다 수치, 이름, 동작 원리가 붙어 있는가. 2: 평가어만 있는 문장이 없다 / 1: 1~2개 / 0: 3개 이상
+- J3 deletion test: 지워도 정보(사실, 수치, 동작 원리, 할 일)가 줄지 않는 문장(강조, 의의 부여, 예고, 교훈)이 있는가. 2: 없다 / 1: 1~2개 / 0: 3개 이상
+- J4 구조: 제목이 내용을 특정하는가, 글의 핵심 주제가 제목과 도입에 드러나고 각 절이 그 주제를 설명하는가, 도입이 독자 상황이나 다루는 문제에서 시작하는가, 마무리가 구체 사실이나 자료가 밝힌 한계로 끝나는가. 2: 모두 그렇다 / 1: 하나가 어긋난다 / 0: 둘 이상
+- J5 한국어 자연스러움: 사람이 쓴 한국어 정보 글(기술 블로그)처럼 읽히는가. 번역투, 추상 명사 나열, 어색한 조사, 억지 번역어가 있는가. 2: 없다 / 1: 1~2곳 / 0: 3곳 이상
+- J6 어투 품질: 합니다체 글이면 공문체가 아닌가, 해요체 글이면 정중하고 반말·과한 구어·이모지가 없는가, 어투가 섞이지 않았는가. 2 / 1 / 0
+- J8 과교정: 문장이 지나치게 단조롭거나, 자연스러운 대조, 단서, 원어와 단위 보충, 긴 문장이 사라져 기계적으로 읽히는가. 같은 주어를 문장마다 되풀이해 늘어진 곳도 과교정이다. 2: 자연스럽다 / 1: 다소 단조롭다 / 0: 내용이나 흐름이 손상됐다
+
+
+그리고 "AI가 쓴 것처럼 읽히는 문장"을 모두 찾아 ai_like에 원문 그대로 인용하세요. 인용은 글에 있는 문자열과 정확히 같아야 하고 한 문장 이내여야 합니다. 각 인용에 수사 동작(move)을 하나 고르고, 그 구절을 지우면 잃는 정보(lost_if_deleted, 없으면 "없음")를 적으세요.
+move: salience(중요하다고 말하기), contrast_reframe(X가 아니라 Y), summary_marker(결국·요컨대 등), lesson_ending(문단 끝 교훈), hedge_stack(추정 중첩), calque_metaphor(번역투 표현·상투 은유), triplet(근거 없는 셋 묶음), rhetorical_q(자문자답), translationese(번역투 문장), tone_slip(어투 이탈), generic_claim(근거 없는 일반론), other.
+사람이 쓴 글에도 이런 문장이 있을 수 있습니다. 실제로 그렇게 읽히는 문장만 고르세요. comment에는 글 전체에 대한 판단을 두세 문장으로 적으세요. label은 파일 이름에서 .md를 뺀 값입니다."""
+
+FIDELITY_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "claims": {"type": "array", "items": {"type": "object", "properties": {
+            "article_quote": {"type": "string"}, "source_ref": {"type": "string"},
+            "verdict": {"type": "string", "enum": ["supported", "interpretation", "general_knowledge", "unsupported",
+                                                   "contradicted"]},
+            "note": {"type": "string"}}, "required": ["article_quote", "source_ref", "verdict", "note"]}},
+        "coverage": {"type": "object", "properties": {k: {"type": "boolean"} for k in
+                                                        ("problem", "method", "results", "limitations")},
+                     "required": ["problem", "method", "results", "limitations"]},
+        "missing": {"type": "array", "items": {"type": "string"}},
+        "j1": {"type": "integer", "minimum": 0, "maximum": 2}},
+    "required": ["claims", "coverage", "missing", "j1"]}
+
+FIDELITY_PROMPT = """현재 폴더의 article.md는 자료 {source}를 정리한 한국어 기술 블로그 글입니다. 자료를 Read 도구(또는 URL이면 WebFetch)로 끝까지 읽은 뒤 article.md의 사실 관계를 검증하세요.
+1. claims: article.md에서 수치, 고유명사, 실험 결과, 인과 주장, 인용이 들어 있는 문장을 빠짐없이 뽑아 원문 그대로 인용하고(article_quote), 자료의 근거 위치(source_ref: 쪽, 절, 표)와 판정(verdict)을 적으세요.
+   - supported: 자료가 그대로 뒷받침한다.
+   - unsupported: 자료에서 찾을 수 없다(지어낸 수치, 경험, 출처, 사례 포함).
+   - interpretation: 글쓴이의 해석이나 추론이고, 문장에 해석·추론임이 드러나 있으며("~라면 ~할 수 있습니다", "표를 보면 ~로 읽힙니다"), 자료의 사실과 모순되지 않는다. 자료의 결론처럼 단정했다면 unsupported로 판정한다.
+   - general_knowledge: 용어를 설명하려고 쓴 일반 지식(사전, 교과서, 백과사전 수준의 정의, 이름의 뜻, 구성, 위치, 하는 일)이라 자료에 없다. 수치, 연구 결과, 연도, 인물, 평가는 일반 지식이 아니다. note에 그 내용이 사실과 맞는지 적는다.
+   - contradicted: 자료와 다르다(수치 오류, 조건이 빠져 뜻이 바뀜, 추정을 단정으로 바꿈, 대상을 혼동함).
+   note에는 판정 이유를 짧게 적으세요.
+2. coverage: 자료의 문제(problem), 방법(method), 핵심 결과(results), 한계(limitations)가 글에 있는지 각각 true/false로 적으세요.
+3. missing: 글에 빠진 자료의 핵심 내용을 최대 5개 적으세요.
+4. j1: 2 = 문제·방법·결과·한계가 모두 있다, 1 = 하나가 빠졌다, 0 = 둘 이상 빠졌거나 핵심 결과가 없다."""
+
+PAIR_SCHEMA = {
+    "type": "object",
+    "properties": {"winner": {"type": "string", "enum": ["X", "Y", "tie"]},
+                   "reasons": {"type": "array", "items": {"type": "string"}}},
+    "required": ["winner", "reasons"]}
+
+PAIR_PROMPT = """X.md와 Y.md는 같은 자료를 정리한 한국어 기술 블로그 글입니다. 두 글을 Read 도구로 끝까지 읽고, 한국 테크 기업 기술 블로그 편집자의 관점에서 어느 글이 나은지 고르세요.
+독자는 자료 분야의 지식이 충분하지 않거나 없을 수 있는 사람입니다.
+기준(앞의 것이 더 중요): 1) 독자가 이해하기 쉬운가(처음 나오는 말을 설명했는가, 문장을 따로 읽어도 무엇에 대한 말인지, 수치가 무엇을 측정한 값인지 알 수 있는가, 글의 핵심 주제가 분명한가) 2) 사람이 쓴 것처럼 자연스러운 한국어인가(강조 문장, 부정 대구, 요약 표지, 번역투, 상투 은유, 기계적인 리듬이 적은가) 3) 자료의 핵심을 정확하고 구체적으로 전달하는가 4) 구조.
+어투(합니다체/해요체) 차이는 판단에 넣지 마세요. winner는 "X", "Y", "tie" 중 하나, reasons에는 판단 근거 2~4개를 각 글의 문장을 인용해 적으세요."""
+
+CLARITY_SCHEMA = {
+    "type": "object",
+    "properties": {"items": {"type": "array", "items": {"type": "object", "properties": {
+        "id": {"type": "integer"},
+        "verdict": {"type": "string", "enum": ["self_contained", "needs_prev", "unclear"]},
+        "question": {"type": "string"}},
+        "required": ["id", "verdict", "question"]}}},
+    "required": ["items"]}
+
+CLARITY_PROMPT = """현재 폴더의 items.md에는 한국어 기술 블로그 글 한 편에서 뽑은 문장이 번호와 함께 있습니다. 번호마다 그 문장이 속한 절의 헤딩, 바로 앞 문장, 판정할 문장이 적혀 있습니다. Read 도구로 items.md를 끝까지 읽고 모든 번호에 답하세요.
+
+판정할 문장이 무엇에 대한 말인지(주어와 목적어), 문장 안의 수치가 무엇을 잰 값이고 무엇과 비교한 값인지를 기준으로 셋 중 하나를 고르세요.
+- self_contained: 헤딩과 이 문장만 읽어도 알 수 있다.
+- needs_prev: 이 문장만으로는 알 수 없고, 바로 앞 문장을 읽어야 알 수 있다. 예: 앞 문장의 주어를 생략한 문장, "그 값은", "차이는"처럼 앞 문장을 가리키는 말로 시작하는 문장, 비교 기준이 앞 문장에만 있는 수치 문장.
+- unclear: 바로 앞 문장까지 읽어도 알 수 없다.
+needs_prev나 unclear이면 question에 이 문장만 읽은 독자가 갖게 되는 질문을 한 문장으로 적습니다. 예: "무엇이 22배인가?", "무엇과 무엇의 차이인가?", "'이 방식'은 어떤 방식인가?" self_contained이면 question은 빈 문자열로 둡니다. 용어를 모르는 것은 이 판정의 이유가 아닙니다(용어 설명은 J10에서 봅니다). 판정할 문장이 표나 목록 바로 뒤에 있으면 앞 문장 칸에 그렇게 적혀 있습니다."""
+
+CLARITY_CONTROLS = 3  # 어투마다 사람 글 대조군 수
+
+KOREAN_TYPES = ["", "A", "B", "C", "D", "E", "F", "G", "H", "J", "K", "L", "N", "O", "P", "Q", "R"]
+KOREAN_SCHEMA = {
+    "type": "object",
+    "properties": {"items": {"type": "array", "items": {"type": "object", "properties": {
+        "id": {"type": "integer"},
+        "verdict": {"type": "string", "enum": ["natural", "awkward"]},
+        "type": {"type": "string", "enum": KOREAN_TYPES},
+        "reason": {"type": "string"}},
+        "required": ["id", "verdict", "type", "reason"]}}},
+    "required": ["items"]}
+
+KOREAN_PROMPT = """현재 폴더의 items.md에는 한국어 기술 블로그 글 한 편의 헤딩과 문장이 번호와 함께 있습니다. 번호마다 그 문장이 속한 절의 헤딩, 바로 앞 문장, 판정할 문장이 적혀 있습니다. 헤딩을 판정할 때는 헤딩 칸에 "(헤딩)"이라고 적혀 있습니다. Read 도구로 items.md를 끝까지 읽고 모든 번호에 답하세요.
+
+판정할 문장을 사람이 쓴 한국어 정보 글(기술 블로그)의 문장으로 읽었을 때 자연스러운지 고르세요.
+- natural: 한 번 읽어서 뜻이 들어오고, 사람이 쓴 한국어 정보 글에 그대로 실릴 만한 문장이다.
+- awkward: 아래 유형 중 하나에 해당한다. type에 유형 글자를, reason에 어느 말이 왜 어색한지 한 문장으로 적습니다.
+  A 범위, 기간, 한도를 "창"으로 쓴 말(적분 창, 시간 창, 창이 열리는 시각)
+  B 영어 낱말을 따옴표째 문장 성분으로 끼운 말("likely"로 쓴 추정, "slow" 반응)
+  C 주어나 목적어와 함께 쓰지 않는 서술어, 비유로 써서 무슨 일인지 둘 이상으로 읽히는 서술어, 영어 동사나 관용구를 그대로 옮긴 말(새로운 문제가 열렸다, 문제가 닫혔다, 오버헤드를 도입했다, 변화가 남아 있다, 손으로 계산한다, 회로를 흔들다). 파일이나 연결을 열고 닫는 말, 가능성을 열어 두다, 문제가 남다는 이 유형이 아니다
+  D 그 분야에서 쓰지 않는 번역어나 다른 뜻으로 먼저 읽히는 번역어(reporter를 "보고자"로, docstring을 "설명 문자열"로)
+  E 예스럽거나 딱딱한 말(옛 값, 수치적으로 거의 0, 제시된)
+  F 한 번 읽어서 뜻이 안 들어오거나 두 뜻으로 읽히는 문장(수식어가 걸리는 범위, 비교 대상, 부정의 범위, 명사를 쌓은 구, 주어와 서술어가 어긋남, 영어 어순)
+  G 번역투(~에 의해, ~를 가질 수 있다, ~하게 되다, 그것은, 중요한 역할을 하다)
+  H 숫자나 영어 낱말 뒤 조사가 읽는 소리와 맞지 않음(0.7717예요, 0.512이에요)
+  J 헤딩이나 질문 문장의 비유와 직역(무엇이 남을까, 흔들어 보면)
+  K 문장 부호 오류(가운뎃점, en dash, em dash, 쉼표로 바꾼 짝이 나열로 읽힘)
+  L 자료의 말을 옮기는 동사의 직역(저자들은 "..."고 써요, ~라고 적었어요). 따옴표 뒤의 "고"와 "라고"는 둘 다 맞다
+  N 호응이 어긋난 말(짝이 없는 "결코", "비록", "만약", "왜냐하면", 묶은 말 모두와 어울리지 않는 서술어)
+  O 피동이나 사동을 겹치거나 필요 없이 쓴 말(보여지다, 되어지다, 연결시키다)
+  P 같은 뜻을 두 번 쓴 말(약 3억 건 정도, 다시 재시작, 과반수 이상)
+  Q 헷갈리기 쉬운 말과 맞춤법(다르다를 틀리다로, 맞히다를 맞추다로, 되요, 몇일)
+  R 같은 뜻에 사람이 쓴 정보 글이 더 자주 쓰는 말이 있는 동사('사용' 뜻의 쓰다는 사용하다, 재다는 측정하다, 값을 정하는 두다는 설정하다, 판단을 옮기는 "~라고 봅니다"는 추정합니다나 예상합니다)
+기술 용어를 영어로 쓴 것(latency, token bucket)과 용어 설명이 없는 것은 이 판정의 이유가 아닙니다(용어 설명은 다른 판정에서 봅니다). 바로 앞 문장을 읽어야 무엇에 대한 말인지 아는 것도 이 판정의 이유가 아닙니다(다른 판정에서 봅니다). natural이면 type과 reason은 빈 문자열로 둡니다."""
+
+KOREAN_CHUNK = 80  # judge 한 번에 보여 줄 문장 수. 모든 문장을 판정하므로 글 하나를 여러 번에 나눠 묻는다.
+
+
+def call_judge(prompt, schema, cwd, model, extra_tools=None, timeout=1800):
+    tools = ["Read"] + (extra_tools or [])
+    cmd = [shutil.which("claude") or "claude", "-p", prompt, "--model", model, "--output-format", "json",
+           "--json-schema", json.dumps(schema, ensure_ascii=False), "--tools", ",".join(tools),
+           "--disable-slash-commands", "--no-session-persistence", "--strict-mcp-config",
+           "--allowedTools", ",".join(tools)]
+    env = dict(os.environ)
+    env.update({"CLAUDE_CODE_DISABLE_CLAUDE_MDS": "1", "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"})
+    p = subprocess.run(cmd, cwd=cwd, env=env, stdin=subprocess.DEVNULL, capture_output=True, timeout=timeout)
+    out = p.stdout.decode("utf-8", "replace")
+    try:
+        data = json.loads(out)
+    except ValueError:
+        return {"error": out[:800] + p.stderr.decode("utf-8", "replace")[:400]}
+    so = data.get("structured_output")
+    if so is None:
+        return {"error": str(data.get("result"))[:800], "cost": data.get("total_cost_usd")}
+    so["_cost"] = data.get("total_cost_usd")
+    return so
+
+
+def _norm(s):
+    return re.sub(r"\s+", " ", L.normalize_text(s)).strip()
+
+
+def human_md(work, aid):
+    """measure.py collect로 모은 사람 글 원문 경로."""
+    return os.path.join(HUMAN_CACHE or os.path.join(work, "baseline", "cache"), "md", aid + ".md")
+
+
+def human_controls(work, tone, n, seed):
+    """baseline 캐시에서 같은 어투, 비슷한 길이의 사람 글을 고른다."""
+    stats = json.load(open(os.path.join(ROOT, "dev", "baseline", "stats.json"), encoding="utf-8"))
+    pool = [a for a in stats["articles"] if a["group"] == tone and 3500 <= a["chars"] <= 10000]
+    rnd = random.Random(seed)
+    rnd.shuffle(pool)
+    out = []
+    for a in pool:
+        path = human_md(work, a["id"])
+        if os.path.exists(path):
+            out.append((a["id"], path))
+        if len(out) == n:
+            break
+    if len(out) < n:
+        raise SystemExit(f"사람 글 대조군({tone})이 캐시에 {len(out)}편뿐이다. measure.py collect를 먼저 실행한다.")
+    return out
+
+
+def run_style(iter_dir, work, model, runs=2):
+    cases = [d for d in sorted(os.listdir(iter_dir)) if os.path.isfile(os.path.join(iter_dir, d, "article.md"))]
+    results = {}
+    for r in range(runs):
+        for tone in ("default", "casual"):
+            items = []
+            for c in cases:
+                meta = json.load(open(os.path.join(iter_dir, c, "meta.json"), encoding="utf-8"))
+                if meta["case"].get("tone", "default") == tone:
+                    items.append((c, os.path.join(iter_dir, c, "article.md"), False))
+            if not items:
+                continue
+            for hid, hpath in human_controls(work, tone, 2, seed=f"{iter_dir}-{tone}-{r}"):
+                items.append((hid, hpath, True))
+            rnd = random.Random(f"{iter_dir}-{tone}-{r}")
+            rnd.shuffle(items)
+            jdir = os.path.join(iter_dir, "_judge", f"style-{tone}-{r}")
+            os.makedirs(jdir, exist_ok=True)
+            labels = {}
+            for i, (name, path, human) in enumerate(items, 1):
+                label = f"T{i}"
+                shutil.copyfile(path, os.path.join(jdir, label + ".md"))
+                labels[label] = (name, human, path)
+            files = ", ".join(f"{k}.md" for k in labels)
+            res = call_judge(STYLE_PROMPT.format(files=files), STYLE_SCHEMA, jdir, model)
+            json.dump({"labels": {k: [v[0], v[1]] for k, v in labels.items()}, "result": res},
+                      open(os.path.join(jdir, "result.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+            for t in res.get("texts", []):
+                if t.get("label") not in labels:
+                    continue
+                name, human, path = labels[t["label"]]
+                body = _norm(L.read_text(path))
+                chars = L.analyze(L.read_text(path))["stats"]["chars"] or 1
+                valid = [q for q in t["ai_like"] if _norm(q["quote"]) and _norm(q["quote"]) in body]
+                rec = results.setdefault(name, {"human": human, "runs": []})
+                rec["runs"].append({"scores": t["scores"], "ai_like": valid, "invalid_quotes": len(t["ai_like"]) - len(valid),
+                                    "j7_per_1k": round(len(valid) * 1000 / chars, 2), "comment": t.get("comment", "")})
+    return results
+
+
+def run_fidelity(iter_dir, model, only=None):
+    out = {}
+    for c in sorted(os.listdir(iter_dir)):
+        d = os.path.join(iter_dir, c)
+        if not os.path.isfile(os.path.join(d, "article.md")) or (only and c not in only):
+            continue
+        meta = json.load(open(os.path.join(d, "meta.json"), encoding="utf-8"))
+        src = meta["case"].get("source", "")
+        if meta["case"].get("mode") == "retone":
+            continue
+        jdir = os.path.join(iter_dir, "_judge", f"fidelity-{c}")
+        os.makedirs(jdir, exist_ok=True)
+        shutil.copyfile(os.path.join(d, "article.md"), os.path.join(jdir, "article.md"))
+        extra = []
+        if src.startswith("http"):
+            source_desc = src
+            extra = ["WebFetch"]
+        else:
+            ext = os.path.splitext(src)[1]
+            cand = os.path.join(d, "input" + ext)
+            if not os.path.exists(cand):
+                # pasted 케이스는 자료를 프롬프트에 붙여넣고 실행 폴더의 사본을 지운다. 원본 경로에서 가져온다.
+                cand = src.replace("{work}", os.path.dirname(os.path.dirname(iter_dir))).replace("{root}", ROOT)
+                if not os.path.isabs(cand):
+                    cand = os.path.join(ROOT, cand)
+            if os.path.exists(cand):
+                shutil.copyfile(cand, os.path.join(jdir, "source" + ext))
+            source_desc = "source" + ext
+        res = call_judge(FIDELITY_PROMPT.format(source=source_desc), FIDELITY_SCHEMA, jdir, model, extra)
+        body = _norm(L.read_text(os.path.join(d, "article.md")))
+        claims = res.get("claims", [])
+        bad = [x for x in claims if x["verdict"] in ("unsupported", "contradicted")]
+        out[c] = {"j1": res.get("j1"), "coverage": res.get("coverage"), "missing": res.get("missing"),
+                  "claims": len(claims), "interpretation": sum(1 for x in claims if x["verdict"] == "interpretation"),
+                  "general_knowledge": [x for x in claims if x["verdict"] == "general_knowledge"],
+                  "unsupported": [x for x in bad if x["verdict"] == "unsupported"],
+                  "contradicted": [x for x in bad if x["verdict"] == "contradicted"],
+                  "quote_not_found": sum(1 for x in claims if _norm(x["article_quote"]) not in body),
+                  "cost": res.get("_cost"), "error": res.get("error")}
+    return out
+
+
+def run_pairwise(iter_dir, cmp_dir, model):
+    out = {}
+    if not cmp_dir or not os.path.isdir(cmp_dir):
+        return out
+    for c in sorted(os.listdir(iter_dir)):
+        a = os.path.join(iter_dir, c, "article.md")
+        key = c.split("-")[0]
+        match = [d for d in os.listdir(cmp_dir) if d.split("-")[0] == key or d.split("-")[0] == key + "0"]
+        if not os.path.isfile(a) or not match:
+            continue
+        b = os.path.join(cmp_dir, match[0], "article.md")
+        if not os.path.isfile(b):
+            continue
+        votes = []
+        for order in (0, 1):
+            jdir = os.path.join(iter_dir, "_judge", f"pair-{c}-{order}")
+            os.makedirs(jdir, exist_ok=True)
+            x, y = (a, b) if order == 0 else (b, a)
+            shutil.copyfile(x, os.path.join(jdir, "X.md"))
+            shutil.copyfile(y, os.path.join(jdir, "Y.md"))
+            res = call_judge(PAIR_PROMPT, PAIR_SCHEMA, jdir, model)
+            w = res.get("winner")
+            cur = {"X": "current", "Y": "compare", "tie": "tie"}.get(w) if order == 0 else \
+                {"X": "compare", "Y": "current", "tie": "tie"}.get(w)
+            votes.append({"winner": cur, "reasons": res.get("reasons"), "error": res.get("error")})
+        final = votes[0]["winner"] if votes[0]["winner"] == votes[1]["winner"] else "split"
+        out[c] = {"against": os.path.basename(cmp_dir) + "/" + match[0], "result": final, "votes": votes}
+    return out
+
+
+def _restore_inline(sentences, codes):
+    """clean_inline이 바꾼 placeholder를 judge가 읽을 수 있는 글자로 되돌린다."""
+    out, ci = [], 0
+    for s in sentences:
+        def rep(m):
+            nonlocal ci
+            if m.group(0) == L.PH_CODE:
+                ci += 1
+                return "`" + codes[ci - 1] + "`" if ci <= len(codes) else ""
+            return "URL" if m.group(0) == L.PH_URL else ""
+        out.append(L.PH_RE.sub(rep, s).strip())
+    return out
+
+
+def _check_sentences(text):
+    """lint 점검 후보(A18)로 걸린 문장의 앞부분 목록. lint에 A18이 없으면 빈 집합."""
+    keys = set()
+    for mid, m in L.analyze(text)["metrics"].items():
+        if mid.startswith("A18."):
+            for h in m["hits"]:
+                keys.add(_norm(h["text"])[:60])
+    return keys
+
+
+def clarity_items(text):
+    """문단의 첫 문장, 수치가 든 문장, A18 후보 문장을 헤딩과 바로 앞 문장과 함께 뽑는다."""
+    flagged = _check_sentences(text)
+    items, heading, prev, in_refs = [], "(헤딩 없음)", None, False
+    for b in L.parse_blocks(L.normalize_text(text)):
+        if b.type == "heading":
+            heading, _, _ = L.clean_inline(b.text)
+            in_refs = bool(L.REF_HEADING_RE.search(heading)) and b.level >= 2
+            prev = None
+            continue
+        if in_refs:
+            continue
+        if b.type in ("table", "code", "blockquote"):
+            prev = {"table": "(바로 앞은 표)", "code": "(바로 앞은 코드 블록)"}.get(b.type, "(바로 앞은 인용문)")
+            continue
+        if b.type not in ("paragraph", "list_item"):
+            continue
+        clean, _, codes = L.clean_inline(b.text)
+        sents = _restore_inline(L.split_sentences(clean), codes)
+        for i, s in enumerate(sents):
+            if not s or len(re.findall(r"[가-힣]", s)) < 4:
+                continue  # 목록 번호("1.")나 영어 조각은 판정하지 않는다
+            first = b.type == "paragraph" and i == 0
+            numeric = bool(L.NUM_RE.search(s))
+            check = _norm(s)[:60] in flagged
+            if first or numeric or check:
+                items.append({"heading": heading, "prev": prev or "(절의 첫 문장)", "sentence": s,
+                              "first": first, "numeric": numeric, "check": check})
+            prev = s
+    return items
+
+
+def judge_clarity(path, jdir, model):
+    os.makedirs(jdir, exist_ok=True)
+    text = L.read_text(path)
+    items = clarity_items(text)
+    lines = []
+    for n, it in enumerate(items, 1):
+        lines += [f"## {n}", f"- 헤딩: {it['heading']}", f"- 바로 앞 문장: {it['prev']}", f"- 판정할 문장: {it['sentence']}", ""]
+    with open(os.path.join(jdir, "items.md"), "w", encoding="utf-8") as f:
+        f.write("\n".join(lines))
+    res = call_judge(CLARITY_PROMPT, CLARITY_SCHEMA, jdir, model)
+    verdict = {x["id"]: x for x in res.get("items", []) if isinstance(x.get("id"), int)}
+    flagged = []  # needs_prev 또는 unclear
+    for n, it in enumerate(items, 1):
+        v = verdict.get(n)
+        if v is not None and v["verdict"] != "self_contained":
+            flagged.append(dict(it, verdict=v["verdict"], question=v.get("question", "")))
+    answered = sum(1 for n in range(1, len(items) + 1) if n in verdict)
+    unclear = [x for x in flagged if x["verdict"] == "unclear"]
+    all_items = [{"sentence": it["sentence"], "prev": it["prev"], "verdict": verdict[n]["verdict"]}
+                 for n, it in enumerate(items, 1) if n in verdict]
+    chars = L.analyze(text)["stats"]["chars"] or 1
+
+    def share(sel):
+        tot = [n for n, it in enumerate(items, 1) if sel(it) and n in verdict]
+        dep = [n for n in tot if verdict[n]["verdict"] != "self_contained"]
+        return [len(dep), len(tot)]
+    return {"checked": len(items), "answered": answered,
+            "dependent": len(flagged), "unclear": len(unclear),
+            "rate": round(len(flagged) / answered, 3) if answered else None,
+            "unclear_rate": round(len(unclear) / answered, 3) if answered else None,
+            "first_dep": share(lambda it: it["first"]), "numeric_dep": share(lambda it: it["numeric"]),
+            "per_1k": round(len(flagged) * 1000 / chars, 2), "chars": chars,
+            "check_hits": sum(1 for it in items if it["check"]),
+            "check_flagged": sum(1 for it in flagged if it["check"]),
+            "unclear_items": flagged, "items_all": all_items, "cost": res.get("_cost"), "error": res.get("error")}
+
+
+def clarity_controls(work, tones=("default", "casual")):
+    """사람 글 대조군: 어투마다 길이가 비슷한 글을 고정 seed로 고른다. 원문이 캐시에 없으면 멈춘다."""
+    stats = json.load(open(os.path.join(ROOT, "dev", "baseline", "stats.json"), encoding="utf-8"))
+    out = []
+    for tone in tones:
+        pool = sorted((a for a in stats["articles"] if a["group"] == tone and 3500 <= a["chars"] <= 10000),
+                      key=lambda a: a["id"])
+        random.Random(f"clarity-controls-{tone}").shuffle(pool)
+        picked = []
+        for a in pool:
+            path = human_md(work, a["id"])
+            if os.path.exists(path):
+                picked.append((a["id"], path))
+            if len(picked) == CLARITY_CONTROLS:
+                break
+        if len(picked) < CLARITY_CONTROLS:
+            raise SystemExit(f"사람 글 대조군({tone})이 캐시에 부족하다: {len(picked)}편. measure.py collect를 먼저 실행한다.")
+        out += picked
+    return out
+
+
+def human_clarity(work, model, tones=("default", "casual")):
+    cache_path = os.path.join(work, "dogfood", "_clarity_humans.json")
+    key = hashlib.sha1((CLARITY_PROMPT + model).encode("utf-8")).hexdigest()[:12]
+    cache = json.load(open(cache_path, encoding="utf-8")) if os.path.exists(cache_path) else {}
+    out = {}
+    for hid, hpath in clarity_controls(work, tones):
+        ck = f"{key}:{hid}"
+        if ck not in cache or "items_all" not in cache[ck]:
+            cache[ck] = judge_clarity(hpath, os.path.join(work, "dogfood", "_clarity_humans", hid), model)
+            with open(cache_path, "w", encoding="utf-8") as f:
+                json.dump(cache, f, ensure_ascii=False, indent=1)
+        out[hid] = dict(cache[ck], human=True)
+    return out
+
+
+def run_clarity(iter_dir, work, model, extras=()):
+    out = {}
+    for c in sorted(os.listdir(iter_dir)):
+        path = os.path.join(iter_dir, c, "article.md")
+        if os.path.isfile(path):
+            out[c] = dict(judge_clarity(path, os.path.join(iter_dir, "_judge", f"clarity-{c}"), model), human=False)
+    for spec in extras:
+        name, path = spec.split("=", 1)
+        path = path if os.path.isabs(path) else os.path.join(ROOT, path)
+        out[name] = dict(judge_clarity(path, os.path.join(iter_dir, "_judge", f"clarity-{name}"), model), human=False)
+    cache_path = os.path.join(work, "dogfood", "_clarity_humans.json")
+    key = hashlib.sha1((CLARITY_PROMPT + model).encode("utf-8")).hexdigest()[:12]
+    cache = json.load(open(cache_path, encoding="utf-8")) if os.path.exists(cache_path) else {}
+    for hid, hpath in clarity_controls(work):
+        ck = f"{key}:{hid}"
+        if ck not in cache:
+            cache[ck] = judge_clarity(hpath, os.path.join(work, "dogfood", "_clarity_humans", hid), model)
+            with open(cache_path, "w", encoding="utf-8") as f:
+                json.dump(cache, f, ensure_ascii=False, indent=1)
+        out[hid] = dict(cache[ck], human=True)
+    return out
+
+
+# ---------------------------------------------------------------- korean: 문장 단위 J5
+
+def korean_items(text):
+    """헤딩과 한글 4자 이상인 모든 문장을, 그 문장이 속한 절의 헤딩과 바로 앞 문장과 함께 뽑는다.
+    참고자료 절, 표, 코드 블록, 인용문은 뺀다."""
+    items, heading, prev, in_refs = [], "(헤딩 없음)", None, False
+    for b in L.parse_blocks(L.normalize_text(text)):
+        if b.type == "heading":
+            heading, _, _ = L.clean_inline(b.text)
+            in_refs = bool(L.REF_HEADING_RE.search(heading)) and b.level >= 2
+            if not in_refs and len(re.findall(r"[가-힣]", heading)) >= 2:
+                items.append({"heading": "(헤딩)", "prev": "(없음)", "sentence": heading})
+            prev = None
+            continue
+        if in_refs:
+            continue
+        if b.type in ("table", "code", "blockquote"):
+            prev = {"table": "(바로 앞은 표)", "code": "(바로 앞은 코드 블록)"}.get(b.type, "(바로 앞은 인용문)")
+            continue
+        if b.type not in ("paragraph", "list_item"):
+            continue
+        clean, _, codes = L.clean_inline(b.text)
+        for s in _restore_inline(L.split_sentences(clean), codes):
+            if not s or len(re.findall(r"[가-힣]", s)) < 4:
+                continue
+            items.append({"heading": heading, "prev": prev or "(절의 첫 문장)", "sentence": s})
+            prev = s
+    return items
+
+
+def judge_korean(path, jdir, model):
+    """글 한 편의 모든 헤딩과 문장을 KOREAN_CHUNK개씩 나눠 판정한다."""
+    os.makedirs(jdir, exist_ok=True)
+    text = L.read_text(path)
+    items = korean_items(text)
+    verdict, cost, errors = {}, 0.0, []
+    for start in range(0, len(items), KOREAN_CHUNK):
+        chunk = items[start:start + KOREAN_CHUNK]
+        cdir = os.path.join(jdir, f"part{start // KOREAN_CHUNK + 1}")
+        os.makedirs(cdir, exist_ok=True)
+        lines = []
+        for n, it in enumerate(chunk, 1):
+            lines += [f"## {n}", f"- 헤딩: {it['heading']}", f"- 바로 앞 문장: {it['prev']}",
+                      f"- 판정할 문장: {it['sentence']}", ""]
+        with open(os.path.join(cdir, "items.md"), "w", encoding="utf-8") as f:
+            f.write("\n".join(lines))
+        res = call_judge(KOREAN_PROMPT, KOREAN_SCHEMA, cdir, model)
+        for x in res.get("items", []):
+            if isinstance(x.get("id"), int) and 1 <= x["id"] <= len(chunk):
+                verdict[start + x["id"]] = x
+        cost += res.get("_cost") or res.get("cost") or 0
+        if res.get("error"):
+            errors.append(str(res["error"])[:200])
+    awkward = [dict(items[n - 1], type=v.get("type", ""), reason=v.get("reason", ""))
+               for n, v in sorted(verdict.items()) if v.get("verdict") == "awkward"]
+    by_type = {}
+    for a in awkward:
+        by_type[a["type"] or "?"] = by_type.get(a["type"] or "?", 0) + 1
+    chars = L.analyze(text)["stats"]["chars"] or 1
+    answered = len(verdict)
+    return {"checked": len(items), "answered": answered, "awkward": len(awkward),
+            "rate": round(len(awkward) / answered, 3) if answered else None,
+            "per_1k": round(len(awkward) * 1000 / chars, 2), "chars": chars, "by_type": by_type,
+            "awkward_items": awkward, "cost": round(cost, 3), "error": "; ".join(errors) or None}
+
+
+def run_korean(iter_dir, work, model, extras=(), only=None):
+    """케이스의 최종 글(article.md), --extra로 준 글, 어투마다 사람 글 3편을 판정한다. 어투는 lint로 정한다.
+    --only를 주면 그 케이스만 판정한다(--extra로 준 글은 항상 판정한다)."""
+    out = {}
+    targets = []
+    if os.path.isdir(iter_dir):
+        for c in sorted(os.listdir(iter_dir)):
+            path = os.path.join(iter_dir, c, "article.md")
+            if os.path.isfile(path) and (not only or c in only):
+                targets.append((c, path))
+    for spec in extras:
+        name, path = spec.split("=", 1)
+        targets.append((name, path if os.path.isabs(path) else os.path.join(ROOT, path)))
+    for name, path in targets:
+        tone = L.detect_tone(L.analyze(L.read_text(path)))
+        out[name] = dict(judge_korean(path, os.path.join(iter_dir, "_judge", f"korean-{name}"), model),
+                         human=False, file=path, tone=tone)
+    cache_path = os.path.join(work, "dogfood", "_korean_humans.json")
+    key = hashlib.sha1((KOREAN_PROMPT + model).encode("utf-8")).hexdigest()[:12]
+    cache = json.load(open(cache_path, encoding="utf-8")) if os.path.exists(cache_path) else {}
+    for hid, hpath in clarity_controls(work):
+        ck = f"{key}:{hid}"
+        if ck not in cache:
+            cache[ck] = judge_korean(hpath, os.path.join(work, "dogfood", "_korean_humans", hid), model)
+            os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+            with open(cache_path, "w", encoding="utf-8") as f:
+                json.dump(cache, f, ensure_ascii=False, indent=1)
+        out[hid] = dict(cache[ck], human=True, tone=L.detect_tone(L.analyze(L.read_text(hpath))))
+    return out
+
+
+# ---------------------------------------------------------------- terms: 용어 설명 J10
+
+TERMS_MISSING = ["what", "does", "name", "words", "list_only"]
+TERMS_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "central": {"type": "object", "properties": {
+            "subject": {"type": "string"}, "defined_in_one_place": {"type": "boolean"}, "quote": {"type": "string"}},
+            "required": ["subject", "defined_in_one_place", "quote"]},
+        "terms": {"type": "array", "items": {"type": "object", "properties": {
+            "term": {"type": "string"}, "first_quote": {"type": "string"}, "explanation_quote": {"type": "string"},
+            "missing": {"type": "array", "items": {"type": "string", "enum": TERMS_MISSING}}},
+            "required": ["term", "first_quote", "explanation_quote", "missing"]}}},
+    "required": ["central", "terms"]}
+
+TERMS_PROMPT = """현재 폴더의 article.md는 자료 하나를 정리한 한국어 기술 블로그 글입니다. Read 도구로 끝까지 읽고, 이 글의 독자가 모를 수 있는 말을 모두 적으세요. 독자는 자료 분야의 지식이 충분하지 않거나 없을 수 있는 사람이고, 자료를 읽지 않았습니다.
+
+적을 말은 그 분야를 공부하거나 그 분야에서 일해야 아는 말입니다. 일상 한국어와, 분야를 공부하지 않은 사람도 생활과 뉴스로 아는 말(컴퓨터, 인터넷, 앱, 유전자)은 적지 않습니다. 자료가 소프트웨어 분야면 캐시, API, latency 같은 말도 적습니다. 본문, 헤딩, 표, 목록, 그림 설명에 나온 말과 다른 말을 설명하는 데 쓴 말도 적습니다. 같은 말은 한 번만 적습니다.
+
+말마다 아래를 적으세요.
+- term: 글에 쓰인 그대로의 말
+- first_quote: 그 말이 처음 나온 문장. 글에 있는 문자열과 정확히 같아야 하고 한 문장 이내입니다.
+- explanation_quote: 글에서 그 말을 설명한 부분(괄호 설명, 설명 문장)을 그대로 인용합니다. 설명이 없으면 빈 문자열입니다.
+- missing: 글의 설명으로 답할 수 없는 질문을 모두 고릅니다. 없으면 빈 목록입니다.
+  - what: 무엇인지(어떤 종류의 대상이고 같은 종류의 다른 대상과 무엇이 다른지)
+  - does: 무엇을 하는 대상(세포, 리듬, 장치, 방법, 알고리즘)인데 그 대상이 하는 일
+  - name: 원어로 둔 이름이 낱말 뜻으로 대상을 가리킬 때(pyloric은 '유문의') 그 이름의 뜻
+  - words: 설명에 쓴 말 가운데 독자가 모를 말이 설명 없이 있다
+  - list_only: 여럿을 나열한 문장에서만 소개하고 뒤에서 혼자 다시 쓴다
+판정은 글의 문장만으로 합니다. 당신이 그 말을 알아도 글에 설명이 없으면 빠진 것입니다. 이름을 한국어로 옮긴 말이나 약어의 풀네임만 쓴 것은 what에 답한 것이 아닙니다.
+
+central에는 글의 중심 대상(제목과 도입이 다루는 대상)을 subject에, 그 대상을 도입이나 첫 절에서 한곳에 정의했는지를 defined_in_one_place에, 정의한 문장을 quote에 적습니다(없으면 빈 문자열)."""
+
+
+def j10_score(n_missing, central_ok):
+    """rubric.md의 J10: 2 = 중심 대상을 한곳에 정의했고 설명이 빠진 말이 없다, 1 = 1~2개, 0 = 3개 이상이거나 정의가 없다."""
+    if not central_ok or n_missing >= 3:
+        return 0
+    return 1 if n_missing else 2
+
+
+def _term_key(term):
+    return re.sub(r"\s+", " ", term).strip().lower()
+
+
+def terms_summary(res, text):
+    """terms judge 한 번의 답을 정리한다. 처음 나온 문장이 본문에 없는 말은 판정에서 뺀다."""
+    body = _norm(text)
+    terms, invalid = [], 0
+    for t in res.get("terms", []):
+        q = _norm(t.get("first_quote", ""))
+        if q and q in body:
+            terms.append(t)
+        else:
+            invalid += 1
+    missing = [t for t in terms if t.get("missing")]
+    central = res.get("central") or {}
+    chars = L.analyze(text)["stats"]["chars"] or 1
+    return {"j10": j10_score(len(missing), bool(central.get("defined_in_one_place"))),
+            "terms": len(terms), "missing": len(missing),
+            "missing_ratio": round(len(missing) / len(terms), 3) if terms else None,
+            "missing_per_1k": round(len(missing) * 1000 / chars, 2),
+            "by_missing": {k: sum(1 for t in terms if k in t.get("missing", [])) for k in TERMS_MISSING},
+            "central": central, "invalid_quotes": invalid,
+            "invalid_explanations": sum(1 for t in terms if t.get("explanation_quote")
+                                        and _norm(t["explanation_quote"]) not in body),
+            "missing_terms": [{"term": t["term"], "missing": t["missing"], "first_quote": t["first_quote"][:200]}
+                              for t in missing]}
+
+
+def terms_agreement(runs):
+    """두 실행이 빠졌다고 적은 말의 겹침(Jaccard)과 두 실행이 모두 적은 말."""
+    sets = [{_term_key(t["term"]) for t in r["missing_terms"]} for r in runs]
+    if len(sets) < 2:
+        return {"jaccard": None, "both": sorted(sets[0]) if sets else []}
+    inter, union = sets[0] & sets[1], sets[0] | sets[1]
+    return {"jaccard": round(len(inter) / len(union), 3) if union else 1.0, "both": sorted(inter)}
+
+
+def judge_terms(path, jdir, model, runs=2):
+    text = L.read_text(path)
+    out, cost = [], 0.0
+    for r in range(runs):
+        rdir = os.path.join(jdir, f"run{r}")
+        os.makedirs(rdir, exist_ok=True)
+        shutil.copyfile(path, os.path.join(rdir, "article.md"))
+        res = call_judge(TERMS_PROMPT, TERMS_SCHEMA, rdir, model)
+        with open(os.path.join(rdir, "result.json"), "w", encoding="utf-8") as f:
+            json.dump(res, f, ensure_ascii=False, indent=1)
+        out.append(dict(terms_summary(res, text), error=res.get("error")))
+        cost += res.get("_cost") or res.get("cost") or 0
+    agree = terms_agreement(out)
+    central_both = all(s["central"].get("defined_in_one_place") for s in out)
+    return {"runs": out, "j10": [s["j10"] for s in out], "agreement": agree,
+            "j10_both": j10_score(len(agree["both"]), central_both), "cost": round(cost, 3)}
+
+
+def run_terms(iter_dir, work, model, extras=(), only=None):
+    """케이스의 최종 글, --extra로 준 글, 사람 글 대조군 6편을 판정한다. 사람 글 결과는 _terms_humans.json에 둔다."""
+    out = {}
+    targets = []
+    if os.path.isdir(iter_dir):
+        for c in sorted(os.listdir(iter_dir)):
+            path = os.path.join(iter_dir, c, "article.md")
+            if os.path.isfile(path) and (not only or c in only):
+                targets.append((c, path))
+    for spec in extras:
+        name, path = spec.split("=", 1)
+        targets.append((name, path if os.path.isabs(path) else os.path.join(ROOT, path)))
+    for name, path in targets:
+        out[name] = dict(judge_terms(path, os.path.join(iter_dir, "_judge", f"terms-{name}"), model), human=False,
+                         file=path)
+    cache_path = os.path.join(work, "dogfood", "_terms_humans.json")
+    key = hashlib.sha1((TERMS_PROMPT + model).encode("utf-8")).hexdigest()[:12]
+    cache = json.load(open(cache_path, encoding="utf-8")) if os.path.exists(cache_path) else {}
+    for hid, hpath in clarity_controls(work):
+        ck = f"{key}:{hid}"
+        if ck not in cache:
+            cache[ck] = judge_terms(hpath, os.path.join(work, "dogfood", "_terms_humans", hid), model)
+            os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+            with open(cache_path, "w", encoding="utf-8") as f:
+                json.dump(cache, f, ensure_ascii=False, indent=1)
+        out[hid] = dict(cache[ck], human=True)
+    return out
+
+
+# ---------------------------------------------------------------- within: 초안 사본 대 후처리를 마친 글
+
+SECTION_SCHEMA = {
+    "type": "object",
+    "properties": {"sections": {"type": "array", "items": {"type": "object", "properties": {
+        "id": {"type": "integer"}, "winner": {"type": "string", "enum": ["A", "B", "tie"]},
+        "reason": {"type": "string"}}, "required": ["id", "winner", "reason"]}}},
+    "required": ["sections"]}
+
+SECTION_PROMPT = """현재 폴더의 sections.md에는 같은 자료를 정리한 한국어 기술 블로그 글의 두 버전에서 내용이 다른 절만 모아 두었습니다. 절마다 A안과 B안이 있습니다. Read 도구로 끝까지 읽고, 절마다 한국 테크 기업 기술 블로그 편집자의 관점에서 더 나은 쪽을 고르세요.
+기준(앞의 것이 더 중요): 1) 독자가 이해하기 쉬운가(문장을 따로 읽어도 무엇에 대한 말인지, 수치가 무엇을 잰 값이고 무엇과 비교한 값인지 알 수 있는가) 2) 사람이 쓴 것처럼 자연스러운 한국어인가(불필요한 반복, 같은 문형의 연속, 강조 문장, 부정 대구, 요약 표지, 번역투, 기계적인 리듬이 적은가) 3) 자료의 내용을 정확하고 구체적으로 전달하는가.
+두 안의 차이가 판단에 영향을 주지 않을 만큼 작으면 tie를 고르세요. reason에는 판단 근거를 한두 문장으로 적고, 두 안의 문장을 인용하세요. id는 절 번호입니다."""
+
+WITHIN_STYLE_SCHEMA = copy.deepcopy(STYLE_SCHEMA)
+_item = WITHIN_STYLE_SCHEMA["properties"]["texts"]["items"]
+_item["properties"]["repetitive"] = {"type": "array", "items": {"type": "object", "properties": {
+    "quote": {"type": "string"}}, "required": ["quote"]}}
+_item["required"] = _item["required"] + ["repetitive"]
+WITHIN_STYLE_PROMPT = STYLE_PROMPT + """
+그리고 같은 정보나 같은 문형이 되풀이돼 단조롭게 읽히는 문장을 repetitive에 원문 그대로 인용하세요. 인용은 한 문장 이내이고 글에 있는 문자열과 정확히 같아야 합니다. 그런 문장이 없으면 빈 목록으로 둡니다."""
+
+
+def _meta(case_dir):
+    return json.load(open(os.path.join(case_dir, "meta.json"), encoding="utf-8"))
+
+
+def final_default(case_dir, tone):
+    if tone == "casual" and os.path.isfile(os.path.join(case_dir, "article.draft.md")):
+        return os.path.join(case_dir, "article.draft.md")
+    return os.path.join(case_dir, "article.md")
+
+
+def within_cases(iter_dir, only=None):
+    out = []
+    for c in sorted(os.listdir(iter_dir)):
+        d = os.path.join(iter_dir, c)
+        snap = os.path.join(d, "article.unrevised.md")
+        if not os.path.isfile(snap) or not os.path.isfile(os.path.join(d, "meta.json")) or (only and c not in only):
+            continue
+        meta = _meta(d)
+        out.append((c, d, meta, snap, final_default(d, meta["case"].get("tone", "default"))))
+    return out
+
+
+def pair_vote(a, b, jdir_base, model, prompt=PAIR_PROMPT, schema=PAIR_SCHEMA):
+    """a를 current, b를 compare로 두고 순서를 바꿔 두 번 묻는다."""
+    votes = []
+    for order in (0, 1):
+        jdir = f"{jdir_base}-{order}"
+        os.makedirs(jdir, exist_ok=True)
+        x, y = (a, b) if order == 0 else (b, a)
+        shutil.copyfile(x, os.path.join(jdir, "X.md"))
+        shutil.copyfile(y, os.path.join(jdir, "Y.md"))
+        res = call_judge(prompt, schema, jdir, model)
+        w = res.get("winner")
+        cur = {"X": "current", "Y": "compare", "tie": "tie"}.get(w) if order == 0 else \
+            {"X": "compare", "Y": "current", "tie": "tie"}.get(w)
+        votes.append({"winner": cur, "reasons": res.get("reasons"), "error": res.get("error")})
+    final = votes[0]["winner"] if votes[0]["winner"] == votes[1]["winner"] else "split"
+    return {"result": final, "votes": votes}
+
+
+def h2_sections(text):
+    lines = L.normalize_text(text).split("\n")
+    secs, cur, title, in_code = [], [], "(도입)", False
+    for line in lines:
+        if L.FENCE_RE.match(line):
+            in_code = not in_code
+        m = None if in_code else re.match(r"^##\s+(.*?)\s*#*\s*$", line)
+        if m:
+            secs.append((title, "\n".join(cur).strip()))
+            title, cur = m.group(1).strip(), []
+        else:
+            cur.append(line)
+    secs.append((title, "\n".join(cur).strip()))
+    return secs
+
+
+def section_ab(pre, post, jdir_base, model):
+    sp, sq = h2_sections(L.read_text(pre)), h2_sections(L.read_text(post))
+    if [t for t, _ in sp] != [t for t, _ in sq]:
+        post_by = dict(sq)
+        pairs = [(t, a, post_by.get(t)) for t, a in sp if t in post_by]
+    else:
+        pairs = [(t, a, b) for (t, a), (_, b) in zip(sp, sq)]
+    changed = [(t, a, b) for t, a, b in pairs if b is not None and _norm(a) != _norm(b)]
+    if not changed:
+        return {"sections": 0, "votes": [], "post": 0, "pre": 0, "tie": 0}
+    votes = []
+    for order in (0, 1):
+        jdir = f"{jdir_base}-{order}"
+        os.makedirs(jdir, exist_ok=True)
+        lines = []
+        for k, (t, a, b) in enumerate(changed, 1):
+            first, second = (b, a) if order == 0 else (a, b)  # order 0: A안이 후처리 글
+            lines += [f"# 절 {k}: {t}", "", "## A안", "", first, "", "## B안", "", second, "", "---", ""]
+        with open(os.path.join(jdir, "sections.md"), "w", encoding="utf-8") as f:
+            f.write("\n".join(lines))
+        res = call_judge(SECTION_PROMPT, SECTION_SCHEMA, jdir, model)
+        for it in res.get("sections", []):
+            k = it.get("id")
+            if not isinstance(k, int) or not 1 <= k <= len(changed):
+                continue
+            w = it.get("winner")
+            if w == "tie":
+                who = "tie"
+            else:
+                post_is_a = order == 0
+                who = "post" if (w == "A") == post_is_a else "pre"
+            votes.append({"section": changed[k - 1][0], "order": order, "vote": who, "reason": it.get("reason", "")})
+        if res.get("error"):
+            votes.append({"section": None, "order": order, "vote": "error", "reason": res["error"][:300]})
+    cnt = {k: sum(1 for v in votes if v["vote"] == k) for k in ("post", "pre", "tie")}
+    return dict({"sections": len(changed), "votes": votes}, **cnt)
+
+
+def align_clarity(pre_c, post_c):
+    """문장과 바로 앞 문장이 같은 항목은 판정 잡음(뒤집힌 비율)을, 나머지는 바뀐 항목으로 센다."""
+    def key(it):
+        return (_norm(it["sentence"]), _norm(it["prev"]))
+    a = {key(it): it["verdict"] for it in pre_c.get("items_all", [])}
+    b = {key(it): it["verdict"] for it in post_c.get("items_all", [])}
+    same = [k for k in a if k in b]
+    flips = sum(1 for k in same if a[k] != b[k])
+
+    def dist(d, keys):
+        out = {"self_contained": 0, "needs_prev": 0, "unclear": 0}
+        for k in keys:
+            out[d[k]] = out.get(d[k], 0) + 1
+        return out
+    return {"unchanged_items": len(same), "flips": flips,
+            "flip_rate": round(flips / len(same), 3) if same else None,
+            "pre_only": dist(a, [k for k in a if k not in b]), "post_only": dist(b, [k for k in b if k not in a])}
+
+
+def fidelity_one(article, case_dir, meta, jdir, model, work):
+    os.makedirs(jdir, exist_ok=True)
+    shutil.copyfile(article, os.path.join(jdir, "article.md"))
+    case = meta["case"]
+    src = case.get("source", "")
+    extra = []
+    local = case.get("source_local")
+    if local:
+        local = local.replace("{work}", work)
+        shutil.copyfile(local, os.path.join(jdir, "source" + os.path.splitext(local)[1]))
+        source_desc = "source" + os.path.splitext(local)[1]
+    elif src.startswith("http"):
+        source_desc, extra = src, ["WebFetch"]
+    else:
+        ext = os.path.splitext(src)[1]
+        cand = os.path.join(case_dir, "input" + ext)
+        if not os.path.exists(cand):
+            cand = src.replace("{work}", work).replace("{root}", ROOT)
+            if not os.path.isabs(cand):
+                cand = os.path.join(ROOT, cand)
+        if os.path.exists(cand):
+            shutil.copyfile(cand, os.path.join(jdir, "source" + ext))
+        source_desc = "source" + ext
+    res = call_judge(FIDELITY_PROMPT.format(source=source_desc), FIDELITY_SCHEMA, jdir, model, extra)
+    claims = res.get("claims", [])
+    body = _norm(L.read_text(article))
+    return {"j1": res.get("j1"), "coverage": res.get("coverage"), "missing": res.get("missing"), "claims": len(claims),
+            "general_knowledge": [x for x in claims if x["verdict"] == "general_knowledge"],
+            "unsupported": [x for x in claims if x["verdict"] == "unsupported"],
+            "contradicted": [x for x in claims if x["verdict"] == "contradicted"],
+            "quote_not_found": sum(1 for x in claims if _norm(x["article_quote"]) not in body),
+            "cost": res.get("_cost"), "error": res.get("error")}
+
+
+def within_style(case, pre, post, jdir_base, work, model, runs=2):
+    out = {"pre": [], "post": []}
+    for r in range(runs):
+        items = [("pre", pre), ("post", post)] + [(hid, hp) for hid, hp in
+                                                 human_controls(work, "default", 2, seed=f"within-{case}-{r}")]
+        rnd = random.Random(f"within-{case}-{r}")
+        rnd.shuffle(items)
+        jdir = f"{jdir_base}-{r}"
+        os.makedirs(jdir, exist_ok=True)
+        labels = {}
+        for i, (name, path) in enumerate(items, 1):
+            shutil.copyfile(path, os.path.join(jdir, f"T{i}.md"))
+            labels[f"T{i}"] = (name, path)
+        res = call_judge(WITHIN_STYLE_PROMPT.format(files=", ".join(f"{k}.md" for k in labels)), WITHIN_STYLE_SCHEMA,
+                         jdir, model)
+        json.dump({"labels": {k: v[0] for k, v in labels.items()}, "result": res},
+                  open(os.path.join(jdir, "result.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+        for t in res.get("texts", []):
+            if t.get("label") not in labels:
+                continue
+            name, path = labels[t["label"]]
+            body = _norm(L.read_text(path))
+            chars = L.analyze(L.read_text(path))["stats"]["chars"] or 1
+            ai = [q for q in t.get("ai_like", []) if _norm(q["quote"]) and _norm(q["quote"]) in body]
+            rp = [q for q in t.get("repetitive", []) if _norm(q["quote"]) and _norm(q["quote"]) in body]
+            rec = {"scores": t["scores"], "j7_per_1k": round(len(ai) * 1000 / chars, 2), "ai_like": ai,
+                   "repetitive": rp, "repetitive_per_1k": round(len(rp) * 1000 / chars, 2), "comment": t.get("comment", "")}
+            out.setdefault(name if name in ("pre", "post") else "human", []).append(rec)
+    return out
+
+
+def run_within(iter_dir, work, model, skip=(), only=None):
+    out = {}
+    path = os.path.join(iter_dir, "judge.json")
+    for c, d, meta, pre, post in within_cases(iter_dir, only):
+        rec = {"pre": os.path.basename(pre), "post": os.path.basename(post)}
+        jb = os.path.join(iter_dir, "_judge", "within", c)
+        if "pairwise" not in skip:
+            rec["pairwise"] = pair_vote(post, pre, os.path.join(jb, "pair"), model)
+        if "sections" not in skip:
+            rec["sections"] = section_ab(pre, post, os.path.join(jb, "sections"), model)
+        if "clarity" not in skip:
+            cp = judge_clarity(pre, os.path.join(jb, "clarity-pre"), model)
+            cq = judge_clarity(post, os.path.join(jb, "clarity-post"), model)
+            rec["clarity"] = {"pre": cp, "post": cq, "aligned": align_clarity(cp, cq)}
+        if "fidelity" not in skip and meta["case"].get("mode") != "retone":
+            fp = fidelity_one(pre, d, meta, os.path.join(jb, "fidelity-pre"), model, work)
+            fq = fidelity_one(post, d, meta, os.path.join(jb, "fidelity-post"), model, work)
+            pre_body = _norm(L.read_text(pre))
+            for x in fq["unsupported"] + fq["contradicted"]:
+                x["in_unchanged_text"] = _norm(x["article_quote"]) in pre_body
+            rec["fidelity"] = {"pre": fp, "post": fq,
+                               "introduced": sum(1 for x in fq["unsupported"] + fq["contradicted"]
+                                                 if not x["in_unchanged_text"])}
+        if "style" not in skip:
+            rec["style"] = within_style(c, pre, post, os.path.join(jb, "style"), work, model)
+        out[c] = rec
+        # 케이스마다 저장해서 중간에 멈춰도 결과가 남게 한다
+        latest = json.load(open(path, encoding="utf-8")) if os.path.exists(path) else {}
+        latest.setdefault("within", {})[c] = rec
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(latest, f, ensure_ascii=False, indent=1)
+    if "clarity" not in skip:
+        hum = human_clarity(work, model, tones=("default",))
+        latest = json.load(open(path, encoding="utf-8")) if os.path.exists(path) else {}
+        latest["within_humans"] = hum
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(latest, f, ensure_ascii=False, indent=1)
+    return out
+
+
+def run_cross(iter_dir, other_dir, model, only=None):
+    out = {}
+    for c, d, meta, pre, post in within_cases(iter_dir, only):
+        od = os.path.join(other_dir, c)
+        if not os.path.isfile(os.path.join(od, "meta.json")):
+            continue
+        other = final_default(od, _meta(od)["case"].get("tone", "default"))
+        if not os.path.isfile(other):
+            continue
+        r = pair_vote(post, other, os.path.join(iter_dir, "_judge", "cross", os.path.basename(other_dir), c), model)
+        out[c] = dict(r, against=f"{os.path.basename(other_dir)}/{c}/{os.path.basename(other)}")
+    return out
+
+
+def print_within(report):
+    for c, r in report.get("within", {}).items():
+        line = [f"[within] {c}"]
+        if "pairwise" in r:
+            line.append(f"pairwise={r['pairwise']['result']}")
+        if "sections" in r:
+            sx = r["sections"]
+            line.append(f"절 A/B {sx['sections']}절: 후처리 {sx['post']} 초안 {sx['pre']} 무 {sx['tie']}")
+        if "clarity" in r:
+            cp, cq, al = r["clarity"]["pre"], r["clarity"]["post"], r["clarity"]["aligned"]
+            line.append(f"J9 {cp['dependent']}/{cp['answered']}→{cq['dependent']}/{cq['answered']} "
+                        f"unclear {cp['unclear']}→{cq['unclear']} 잡음 {al['flips']}/{al['unchanged_items']}")
+        if "fidelity" in r:
+            fp, fq = r["fidelity"]["pre"], r["fidelity"]["post"]
+            line.append(f"fidelity {len(fp['unsupported'])}/{len(fp['contradicted'])}→"
+                        f"{len(fq['unsupported'])}/{len(fq['contradicted'])} 후처리로 생김 {r['fidelity']['introduced']}")
+        if "style" in r:
+            def avg(recs, k):
+                v = [x["scores"][k] for x in recs]
+                return round(sum(v) / len(v), 2) if v else None
+
+            def rp(recs):
+                return [x["repetitive_per_1k"] for x in recs]
+            st = r["style"]
+            line.append(f"J5 {avg(st['pre'], 'J5')}→{avg(st['post'], 'J5')} J8 {avg(st['pre'], 'J8')}→{avg(st['post'], 'J8')} "
+                        f"반복 인용/1k {rp(st['pre'])}→{rp(st['post'])}")
+        print(" | ".join(line))
+    for hid, h in report.get("within_humans", {}).items():
+        print(f"[within] HUMAN {hid}: J9 {h['dependent']}/{h['answered']} unclear {h['unclear']}")
+    for c, r in report.get("cross", {}).items():
+        print(f"[cross] {c} vs {r['against']}: {r['result']}")
+
+
+def main():
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except AttributeError:
+        pass
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--iter", required=True)
+    ap.add_argument("--compare", help="pairwise 비교 대상 iteration(예: iter-0)")
+    ap.add_argument("--work", default=DEFAULT_WORK)
+    ap.add_argument("--model", default="sonnet")
+    ap.add_argument("--skip", nargs="*", default=[])
+    ap.add_argument("--only", nargs="*")
+    ap.add_argument("--extra", action="append", default=[], help="clarity, korean, terms만 판정할 추가 글: 이름=경로")
+    ap.add_argument("--human-cache", help="사람 글 캐시 폴더(measure.py collect --cache). 없으면 {work}/baseline/cache")
+    ap.add_argument("--within", action="store_true", help="초안 사본과 후처리를 마친 글을 비교한다")
+    ap.add_argument("--cross", help="다른 iteration의 같은 케이스와 후처리를 마친 글끼리 비교한다")
+    args = ap.parse_args()
+    global HUMAN_CACHE
+    HUMAN_CACHE = args.human_cache
+    iter_dir = os.path.join(args.work, "dogfood", args.iter)
+    report_path = os.path.join(iter_dir, "judge.json")
+    if args.within or args.cross:
+        if args.within:
+            run_within(iter_dir, args.work, args.model, args.skip, args.only)
+        if args.cross:
+            res = run_cross(iter_dir, os.path.join(args.work, "dogfood", args.cross), args.model, args.only)
+            latest = json.load(open(report_path, encoding="utf-8")) if os.path.exists(report_path) else {}
+            latest.setdefault("cross", {}).update(res)
+            with open(report_path, "w", encoding="utf-8") as f:
+                json.dump(latest, f, ensure_ascii=False, indent=1)
+        print_within(json.load(open(report_path, encoding="utf-8")))
+        return
+    # 이미 판정한 단계는 남기고 이번에 실행한 단계만 덮어쓴다.
+    report = json.load(open(report_path, encoding="utf-8")) if os.path.exists(report_path) else {}
+    if "style" not in args.skip:
+        report["style"] = run_style(iter_dir, args.work, args.model)
+    if "fidelity" not in args.skip:
+        report["fidelity"] = run_fidelity(iter_dir, args.model, args.only)
+    if "pairwise" not in args.skip and args.compare:
+        report["pairwise"] = run_pairwise(iter_dir, os.path.join(args.work, "dogfood", args.compare), args.model)
+    if "clarity" not in args.skip:
+        report["clarity"] = run_clarity(iter_dir, args.work, args.model, args.extra)
+    if "korean" not in args.skip:
+        report["korean"] = run_korean(iter_dir, args.work, args.model, args.extra, args.only)
+    if "terms" not in args.skip:
+        report["terms"] = run_terms(iter_dir, args.work, args.model, args.extra, args.only)
+    # 같은 iteration에 judge를 동시에 돌려도 서로의 결과를 덮어쓰지 않게, 저장 직전에 파일을 다시 읽고
+    # 이번에 실행한 단계만 바꾼다.
+    os.makedirs(iter_dir, exist_ok=True)
+    ran = [k for k in ("style", "fidelity", "pairwise", "clarity", "korean", "terms")
+           if k in report and k not in args.skip]
+    latest = json.load(open(report_path, encoding="utf-8")) if os.path.exists(report_path) else {}
+    latest.update({k: report[k] for k in ran})
+    report = latest
+    with open(report_path, "w", encoding="utf-8") as f:
+        json.dump(report, f, ensure_ascii=False, indent=1)
+    # 요약
+    for name, rec in report.get("style", {}).items():
+        sc = {}
+        for r in rec["runs"]:
+            for k, v in r["scores"].items():
+                sc.setdefault(k, []).append(v)
+        avg = {k: round(sum(v) / len(v), 2) for k, v in sc.items()}
+        j7 = [r["j7_per_1k"] for r in rec["runs"]]
+        print(f"[style] {'HUMAN ' if rec['human'] else ''}{name}: {avg} J7/1k={j7}")
+        for r in rec["runs"]:
+            for q in r["ai_like"][:6]:
+                print(f"    - ({q['move']}) {q['quote'][:90]}")
+    for name, f in report.get("fidelity", {}).items():
+        print(f"[fidelity] {name}: j1={f['j1']} claims={f['claims']} unsupported={len(f['unsupported'])} "
+              f"contradicted={len(f['contradicted'])} general_knowledge={len(f.get('general_knowledge', []))} "
+              f"coverage={f['coverage']} missing={f['missing']}")
+        for x in (f["unsupported"] + f["contradicted"])[:6]:
+            print(f"    - {x['verdict']}: {x['article_quote'][:90]} | {x['note'][:120]}")
+    for name, p in report.get("pairwise", {}).items():
+        print(f"[pairwise] {name} vs {p['against']}: {p['result']}")
+    for name, c in report.get("clarity", {}).items():
+        print(f"[clarity] {'HUMAN ' if c['human'] else ''}{name}: 앞 문장 필요 {c['dependent']}/{c['answered']} "
+              f"(rate {c['rate']}), unclear {c['unclear']}, 문단 첫 문장 {c['first_dep']}, 수치 문장 {c['numeric_dep']}, "
+              f"check_hits={c['check_hits']} check_flagged={c['check_flagged']}"
+              + (f" error={c['error'][:80]}" if c.get("error") else ""))
+        for it in c["unclear_items"][:6]:
+            print(f"    - ({it['verdict']}) {it['sentence'][:80]} | {it['question'][:60]}")
+    for name, k in report.get("korean", {}).items():
+        print(f"[korean] {'HUMAN ' if k['human'] else ''}{name} ({k.get('tone')}): 어색한 문장 {k['awkward']}/{k['answered']} "
+              f"(1,000자당 {k['per_1k']}, 본문 {k['chars']:,}자) 유형 {k['by_type']}"
+              + (f" error={k['error'][:80]}" if k.get("error") else ""))
+        for it in k["awkward_items"][:8]:
+            print(f"    - ({it['type']}) {it['sentence'][:80]} | {it['reason'][:70]}")
+    for name, t in report.get("terms", {}).items():
+        runs = t["runs"]
+        print(f"[terms] {'HUMAN ' if t['human'] else ''}{name}: J10 {t['j10']} (두 실행 공통 {t['j10_both']}), "
+              f"설명이 빠진 말 {[r['missing'] for r in runs]}/{[r['terms'] for r in runs]} "
+              f"(1,000자당 {[r['missing_per_1k'] for r in runs]}), Jaccard {t['agreement']['jaccard']}, "
+              f"중심 대상 정의 {[bool(r['central'].get('defined_in_one_place')) for r in runs]}, "
+              f"인용 없음 {[r['invalid_quotes'] for r in runs]}"
+              + (f" error={runs[0]['error'][:80]}" if runs and runs[0].get("error") else ""))
+        if not t["human"]:
+            print(f"    - 두 실행이 모두 적은 말: {', '.join(t['agreement']['both'][:20])}")
+
+
+if __name__ == "__main__":
+    main()

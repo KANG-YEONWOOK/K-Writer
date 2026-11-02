@@ -1,0 +1,45 @@
+---
+name: techblog
+description: 전달받은 자료(논문 PDF, 문서 PDF, 마크다운, URL, 붙여넣은 텍스트)를 한국어 기술 블로그 글로 정리하거나 기존 글의 어투를 바꾼다. 토스, 카카오, 당근 기술 블로그 문체를 참고하고 사실 대조와 검사 스크립트로 AI 문체 패턴을 줄인다. Default(합니다체)와 Casual(해요체)을 지원하며 어투만 바꿀 때 내용은 보존한다. short 모드는 짧은 영어 글(Slack 글)을 구조 그대로 옮긴다. "$techblog", "/techblog", "기술 블로그 글로 정리해줘", "아티클로 써줘", "블로그 포스트로 요약해줘" 같은 요청에 쓴다.
+license: MIT
+allowed-tools: Read Write Edit Glob Grep WebFetch WebSearch Agent Bash(python "${CLAUDE_SKILL_DIR}/scripts/*) Bash(python ${CLAUDE_SKILL_DIR}/scripts/*) Bash(python3 "${CLAUDE_SKILL_DIR}/scripts/*) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/*)
+metadata:
+  version: "0.1.0"
+  repository: https://github.com/KANG-YEONWOOK/K-Writer
+---
+
+# techblog
+
+이 스킬은 자료를 읽고 그 핵심을 한국어 기술 블로그 아티클로 쓴다. 기본 독자는 자료 분야의 지식이 충분하지 않거나 없을 수 있는 사람이고, 글은 토스, 카카오, 당근 기술 블로그 글처럼 읽혀야 한다. 중심 대상과 생소한 용어는 처음 나올 때 무엇인지 설명한다. 글의 모든 문장은 따로 읽어도 무엇에 대한 말이고 누구의 주장인지 알 수 있어야 한다. 영어 자료를 옮긴 문장도 사람이 쓴 한국어 기술 블로그 글에서 사용하는 말로 쓴다. 서술어는 그 주어, 목적어와 사람이 쓴 한국어 글에서 함께 쓰는 말로 쓰고, 독자가 무슨 일이 일어났는지 한 가지로 읽을 수 있게 쓴다.
+
+1~5단계에서는 모든 글에 같은 규칙으로 초안을 쓰고 점검한다. 6단계에서는 글만 읽는 독자 점검으로 용어와 구절의 설명 누락을 찾고, 초안을 고친 뒤 한국어 표현과 수정 후 문맥을 검토한다. 필요한 주어, 목적어, 조건은 반복하며, 요청하지 않은 길이 상한으로 생략하지 않는다.
+
+Claude Code와 Codex에서 사용한다. 먼저 [실행 환경 안내](references/runtime.md)를 읽고 현재 환경의 입력, 도구, 스킬 경로를 확인한다.
+
+Claude Code 호출 인자: $ARGUMENTS
+
+Codex에서는 `$techblog`와 함께 보낸 사용자 요청을 입력으로 삼는다. `$ARGUMENTS`가 치환되지 않았거나 자연어로 호출했다면 현재 사용자 요청에서 자료와 옵션을 읽는다.
+
+## 인자와 설정
+
+먼저 [settings.md](references/settings.md)를 읽고 인자(`short`, `casual`/`default`, `-o`, `--retone`, `--keep-work`, `--defaults`)를 해석한다. 요청에 없는 설정값(새 글은 독자, 어투, 분량)은 subagent를 띄우기 전에 사용자에게 묻고, 값을 정한 뒤 자료를 읽는다. 질문할 수 없으면 기본값을 쓰고 보고한다. `short`나 `--short`가 있으면 [short.md](references/short.md)만 따른다.
+
+## 파일
+
+- 글은 `<이름>.md`에 저장한다.
+- 작업 파일은 출력 파일과 같은 폴더에 만든다. fact sheet는 `<이름>.facts.md`이고, Casual 글을 쓸 때만 만드는 Default 초안은 `<이름>.draft.md`다. 6단계를 시작할 때 스크립트가 후처리 전 초안을 `<이름>.unrevised.md`에 복사하고 반복 후보를 `<이름>.repeats.md`에 적는다. 독자 점검 결과는 `<이름>.reader.md`다. 작업 파일은 8단계에서 지운다.
+- 후처리 대상은 합니다체 글이다. Default 글이면 출력 파일 `<이름>.md`, Casual 글이면 Default 초안 `<이름>.draft.md`다.
+
+## 작업 순서와 필수 문서
+
+아래 문서는 각 단계의 실행 지침이다. 해당 단계에 들어가기 전에 지정한 문서를 끝까지 읽는다. 도구 출력이 잘리면 나머지를 나눠 읽는다. 모든 `references/`와 `scripts/`는 이 `SKILL.md`가 있는 디렉터리 기준이다. 검사 명령과 실행 오류 처리도 [runtime.md](references/runtime.md)를 따른다.
+
+### 새 글
+
+1. [drafting.md](references/drafting.md)를 읽고 1~4단계를 수행한다. 자료 전체 읽기, fact sheet 작성, 개요, Default 초안 작성 순서다. Casual도 먼저 합니다체 초안을 쓴다. [style-guide.md](references/style-guide.md)는 3단계에서 읽고, AI 패턴 문서는 초안을 쓰기 전에 읽지 않는다.
+2. [validation.md](references/validation.md)를 읽고 5단계를 수행한다. 문체 검사, 문장별 단독 읽기, fact sheet 대조, [rubric.md](references/rubric.md)의 J1~J10 점검을 한다. [ai-patterns.md](references/ai-patterns.md)는 이 단계에서 읽는다.
+3. [finalization.md](references/finalization.md)를 읽고 6~8단계를 수행한다. [reader-check.md](references/reader-check.md)에 따른 독자 점검, [revision.md](references/revision.md)에 따른 독립 후처리와 [korean-review.md](references/korean-review.md)에 따른 한국어 문장 점검(도구가 없으면 직접 수행), Casual 어투 적용, 작업 파일 정리와 결과 보고 순서다. 어투를 적용할 때 [tone.md](references/tone.md)를 읽는다.
+
+### 완성된 글의 어투만 변환
+
+`--retone` 또는 같은 뜻의 요청이면 [finalization.md](references/finalization.md)의 7~8단계와 [tone.md](references/tone.md)를 따른다. 1~6단계는 수행하지 않는다. 입력은 수정하거나 삭제하지 않고 fact sheet와 후처리 파일을 만들지 않는다. 원문의 어투 외 lint 문제는 보고만 한다. 종결부는 문장마다 바꾸고 정규식이나 스크립트로 일괄 치환하지 않는다.
