@@ -4,6 +4,24 @@
 
 이 문서는 techblog skill이 쓴 글을 같은 자료로 skill 없이 쓴 글, 사람이 쓴 기술 블로그 글과 비교한 결과를 정리한다. 0.2.0 버전의 글은 skill 없이 쓴 글과 비교했고, 0.3.0 버전의 글은 0.2.0 버전의 글과 비교했다. 0.4.0 버전은 같은 실행에서 후처리 전 초안과 후처리를 마친 글을 비교했다. 0.6.0 버전은 같은 자료로 0.5.1 버전이 쓴 글과 비교하고, 문장마다 한국어 표현을 판정했다. 0.8.0 버전은 사용자가 지적한 용어 설명, 출처와 인용 동사, 다의어 문제를 이전 노트, 사람 글, 같은 자료로 쓴 새 글에서 쟀다. 0.11.0 버전은 서술어 직역을 심은 초안으로 0.10.0과 비교하고, 영어 비유 동사가 많은 자료로 새 글을 써서 fact sheet부터 최종 글까지 서술어를 쟀다. 측정 방법과 iteration별 기록은 [`dev/dogfood/README.md`](dev/dogfood/README.md)와 [`dev/dogfood/REPORT.md`](dev/dogfood/REPORT.md)에 있다.
 
+## K-Writer 0.3.1 확인 검토와 6단계 전체 실행 (2026-11-03)
+
+0.3.0에서 끝내지 못한 두 가지를 확인했다. 첫 검토가 낸 낮음 7건을 고친 문장이 맞게 고쳐졌는지 다시 검토했고, 0.3.0의 dogfood에서 뜨지 않은 6단계 subagent 셋이 실제로 뜨는지 예산을 늘려 실행했다.
+
+- 확인 검토: 0.2.0과 고친 뒤의 techblog 문서, 7건의 목록을 새 독립 subagent에게 주고, 7건이 해결됐는지와 고친 문장이 techblog의 동작을 바꾸지 않았는지 보게 했다.
+  - 6건은 해결됐다. 고친 문장은 6단계를 subagent로 할 때와 상위 agent가 직접 할 때 모두 0.2.0과 동작, 조건, 범위, 파일, 보고 항목이 같았다. 새로 찾은 문제는 없었다.
+  - 남긴 1건(genre.md가 style-guide.md보다 우선한다는 규칙)은 지금 동작에 닿을 수 있는 곳을 짚었다. genre.md의 도입 예와 마무리 예는 5문장 문단이라 style-guide.md의 "문단은 2~3문장 단위로 나눈다"와 다르다. 예문까지 우선 규칙으로 읽으면 도입과 마무리의 긴 문단을 허용할 수 있다. 0.2.0에는 우선 규칙이 없었다.
+- 0.3.1에서 바꾼 것
+  - style-guide.md의 우선 규칙을 "genre.md가 이 가이드의 어느 규칙을 바꾼다고 밝혀 적은 곳만 genre.md를 따른다"로 좁혔다. techblog의 genre.md에는 그렇게 밝혀 적은 문장이 없어서, 0.2.0처럼 두 문서 사이에 우선순위가 생기지 않는다. 새 skill의 genre.md 템플릿과 ARCHITECTURE.md도 같은 규칙으로 고쳤다.
+  - "독립 점검" 뒤 괄호의 목록을 맞췄다. runtime.md의 도구 표와 tone.md는 네 점검을 모두 적고, revision.md의 근거 문장은 "후처리나 한국어 문장 점검"으로 썼다.
+- dogfood: junction 없이, 설치한 0.3.0 plugin(`~/.claude/plugins/cache/k-writer/k-writer/0.3.0`)으로 `C-epanorthosis-default`를 예산 $30으로 실행했다. 70.1분, $24.27이 들었고 최종 글(공백 제외 14,559자)의 lint는 Gate 0, FAIL 0, WARN 0, 권한 거부는 0이었다.
+  - 6단계의 독자 점검, 후처리, 한국어 문장 점검, 수정 후 검토가 모두 대화를 이어받지 않는 subagent로 실행됐다. 수정 후 검토의 확인도 subagent 하나가 맡았다. 처음 검토자를 다시 부를 수 없어서 새 검토자에게 맡겼다고 보고했다. 모든 subagent는 background 없이 실행됐다.
+  - 후처리 subagent와 한국어 문장 점검 subagent의 prompt에는 0.3.0에서 더한 "이 글의 기준 글은 사람이 쓴 한국어 기술 블로그 글이다"가 들어 있었다. 후처리 subagent는 runtime.md, revision.md, style-guide.md를 읽고 `revise_ko.py check`, `audit`와 lint를 실행했다. 한국어 문장 점검 subagent는 runtime.md와 korean-review.md를 읽고 lint를 세 번 실행했다.
+  - 보고: 후처리는 초안 237문장 가운데 58문장을 고치고 93문장을 새로 썼다. 한국어 문장 점검은 23줄(26건)을 고쳤고 되돌린 수정은 없었다. 수정 후 검토의 지적 6건은 모두 고쳤고, 확인에서 나온 새 지적 1건도 고쳤다.
+  - 상위 agent는 예산 때문에 한국어 문장 점검과 수정 후 검토(확인 포함) subagent의 추론 강도를 한 단계 낮췄다고 보고했다. runtime.md는 subagent에 별도 모델을 지정하지 않는다고만 정한다.
+  - 이 실행은 0.3.1의 문구 수정 전 문서로 했다. 0.3.1에서 바꾼 문장은 위의 우선 규칙과 괄호 목록이고, finalization.md의 subagent prompt와 검사 스크립트는 바꾸지 않았다.
+  - 실행 기록: 로컬 `docs/dogfood/k030b-C-epanorthosis-default-2026-11-03/`(gitignore).
+
 ## K-Writer 0.3.0 공통 core 분리와 techblog 동일성 확인 (2026-11-03)
 
 K-Writer를 여러 글쓰기 skill이 공통 core(한국어 문장 규칙, 어투 규칙, 검사 스크립트)를 쓰는 구조로 바꾸고, techblog가 0.2.0(commit 49fd2d2)과 같게 동작하는지 확인했다. 구조는 [`ARCHITECTURE.md`](ARCHITECTURE.md)에 있다.
@@ -16,7 +34,7 @@ K-Writer를 여러 글쓰기 skill이 공통 core(한국어 문장 규칙, 어�
   - 명령 191개의 stdout, stderr, 종료 코드와 만든 파일이 모두 같았다. 입력은 예시 글 2편과 `evals/`의 Markdown 파일 13개(원문, 글, 결과 글, 검토 기록)이고, 명령은 lint의 text, JSON, `--facts`, `--short` 출력, `tone_check.py`의 비교와 `--cleanup`, `revise_ko.py`의 start부터 audit까지, 입력 오류다.
   - 사람 글 cache 1,408편에서 `lint_ko.run()`의 JSON 출력과 text 출력(`--all`) 2,816개가 모두 같았다.
 - 기준치: `rules.json`과 techblog `thresholds.json`을 합친 값은 0.2.0 `thresholds.json`과 metric 114개의 순서와 값이 같았다. 다른 곳은 최상위 키 `skill`과, metric 9개의 `note`에 든 `dev/baseline/` 경로다. `calibrate.py`를 새 위치에서 쓰기 없이 다시 실행해 얻은 보정값은 committed 값과 같았다(`generated_at`, `basis` 제외).
-- 지시 문서: 0.2.0 techblog 문서 14개에서 비어 있지 않은 줄 1,801개 가운데 90줄이 바뀌었고 108줄이 새로 생겼다. 이 목록과 두 버전의 원문을 독립 subagent에게 주고 techblog가 따르는 지시의 뜻이 바뀐 곳을 찾게 했다. 심각도 높음과 중간은 없었고, 낮음 7건은 실행 결과를 바꾸지 않는 문구였다(상위 agent가 직접 점검할 때 기준 글을 찾을 곳, 참고자료로도 읽히는 "마지막 절", 정의하지 않은 "skill의 작업 문서" 등). 그중 6건의 문구를 고쳤다. `genre.md`가 `style-guide.md`보다 우선한다는 새 규칙은 새 skill이 장르 규칙을 정하는 방법이라 남겼고, 지금 두 문서가 서로 다르게 정한 곳은 없다.
+- 지시 문서: 0.2.0 techblog 문서 14개에서 비어 있지 않은 줄 1,801개 가운데 90줄이 바뀌었고 108줄이 새로 생겼다. 이 목록과 두 버전의 원문을 독립 subagent에게 주고 techblog가 따르는 지시의 뜻이 바뀐 곳을 찾게 했다. 심각도 높음과 중간은 없었고, 낮음 7건은 실행 결과를 바꾸지 않는 문구였다(상위 agent가 직접 점검할 때 기준 글을 찾을 곳, 참고자료로도 읽히는 "마지막 절", 정의하지 않은 "skill의 작업 문서" 등). 그중 6건의 문구를 고쳤다. `genre.md`가 `style-guide.md`보다 우선한다는 새 규칙은 새 skill이 장르 규칙을 정하는 방법이라 0.3.0에서는 남겼다(0.3.1에서 범위를 좁혔다. 아래 절).
 - 테스트: `python -m unittest discover -s tests` 180개 통과(0.2.0의 167개, `tests/test_core.py` 12개, `test_portability.py`의 skill 목록 검사 1개). `claude plugin validate .` 통과(경고는 아이콘이 없다는 것 하나).
 - 실행 확인
   - Claude Code: 저장소 사본을 junction으로 연결해 `dev/dogfood/run.py`의 `C-epanorthosis-default`(Default, 논문 PDF, 예산 $15)를 실행했다. 37.8분, $11.96이 들었고 최종 글의 lint는 Gate 0, FAIL 0, WARN 0, 권한 거부는 0이었다. 상위 agent는 runtime.md, settings.md, settings-protocol.md, drafting.md, fact-sheet.md를 읽은 뒤 자료를 읽고 fact sheet를 썼고, style-guide.md와 genre.md를 읽은 뒤 초안을 썼다. 그다음 validation.md, ai-patterns.md, rubric.md, finalization.md 순서로 읽었다.

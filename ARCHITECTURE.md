@@ -29,7 +29,7 @@ K-Writer는 한국어 글쓰기 skill을 여러 개 담는 plugin이다. 모든 
 |---|---|
 | `SKILL.md` | frontmatter(`name`은 폴더 이름, `description`은 1,024자 이하, `allowed-tools`, `metadata.version`은 plugin 버전), 장르와 기준 글, 기본 독자, 작업 순서와 단계마다 읽을 문서. Codex는 plugin skill의 SKILL.md를 8,000바이트까지만 읽으므로 LF와 CRLF 모두 6,000바이트 이하로 둔다 |
 | `references/settings.md` | 인자, 설정값 표(묻는 모드, 기본값, 선택지), AskUserQuestion 질문 표, 정한 값을 쓰는 곳 |
-| `references/genre.md` | 독자와 화자, 글의 구성, 분량, 장르 표현 규칙과 예. style-guide.md와 다르게 정한 곳은 genre.md가 우선한다 |
+| `references/genre.md` | 독자와 화자, 글의 구성, 분량, 장르 표현 규칙과 예. genre.md가 style-guide.md의 규칙을 바꾼다고 밝혀 적은 곳만 genre.md가 우선한다 |
 | `references/rubric.md` | 합격 조건, 판정 항목, 기준치의 근거 |
 | `scripts/thresholds.json` | `skill.standard`(기준 글 이름)와 기준 글로 보정한 값 |
 | 작업 문서 | 이름은 skill이 정한다. techblog는 `drafting.md`, `validation.md`, `finalization.md`, `short.md`다 |
