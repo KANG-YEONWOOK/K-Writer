@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""techblog 후처리 보조: 초안 사본 만들기, 다시 읽을 반복 후보 찾기, 후처리 전후 비교, 고친 문장 점검.
+"""K-Writer 후처리 보조: 초안 사본 만들기, 다시 읽을 반복 후보 찾기, 후처리 전후 비교, 고친 문장 점검.
+
+이 파일의 원본은 저장소의 core/scripts/revise_ko.py이고, dev/sync_core.py가 skill마다 skills/<이름>/scripts/에 복사한다.
+출력 머리말의 이름은 스크립트가 든 skill 폴더 이름이다.
 
 사용법
   python revise_ko.py start ARTICLE [--force]
@@ -12,7 +15,7 @@ ARTICLE은 후처리할 합니다체 글이다. Default 글이면 출력 파일(
 (<이름>.draft.md)이다. 초안 사본(<이름>.unrevised.md), 수정 전 사본(<이름>.pre-fix.md), fact sheet(<이름>.facts.md)의
 경로는 ARTICLE 이름에서 정한다.
 
-- start: ARTICLE을 초안 사본으로 복사하고, 반복 후보를 <이름>.repeats.md에 적는다. 6단계를 맡은 subagent에
+- start: ARTICLE을 초안 사본으로 복사하고, 반복 후보를 <이름>.repeats.md에 적는다. 후처리를 맡은 subagent에
   Bash 권한이 없어도 후보를 Read로 볼 수 있게 하려는 파일이다. 사본이 이미 있으면 --force 없이는 덮어쓰지 않는다.
   이전 후처리에서 남은 수정 전 사본은 지운다.
 - repeats: 다시 읽을 위치(반복 후보)를 출력한다. 판정은 하지 않는다. 후보마다 이 글의 독자에게 필요한
@@ -42,6 +45,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import lint_ko as L  # noqa: E402
+
+SKILL_NAME = os.path.basename(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 SNAPSHOT_SUFFIX = ".unrevised.md"
 FACTS_SUFFIX = ".facts.md"
@@ -312,7 +317,7 @@ def find_repeats(text):
 
 def render_repeats(path, res, show_all=False):
     cands = res["candidates"]
-    lines = [f"techblog repeats | {os.path.basename(path)} | {res['sentences']}문장"]
+    lines = [f"{SKILL_NAME} repeats | {os.path.basename(path)} | {res['sentences']}문장"]
     if not cands:
         lines.append("반복 후보 없음. 글을 읽으며 적은 곳만 고친다.")
         return "\n".join(lines)
@@ -357,7 +362,7 @@ def _connectives(masked):
 
 def _lint(text, facts_text):
     analysis = L.analyze(text, facts_text=facts_text)
-    ev = L.evaluate(analysis, L.load_json(L.THRESHOLDS_PATH), "default", max_hits=3)
+    ev = L.evaluate(analysis, L.load_thresholds(), "default", max_hits=3)
     return analysis, ev
 
 
@@ -426,7 +431,7 @@ def _fmt_metric(r):
 def render_check(snap, path, res):
     st = res["structure"]
     lb, la = res["lint_before"], res["lint_after"]
-    lines = [f"techblog check | 초안 사본 {os.path.basename(snap)} → {os.path.basename(path)}"]
+    lines = [f"{SKILL_NAME} check | 초안 사본 {os.path.basename(snap)} → {os.path.basename(path)}"]
     lines.append(f"문장: 초안 {res['sentences'][0]}문장 중 {res['kept']}문장 그대로, {res['changed']}문장 고치거나 지움"
                  f"({res['changed_share'] * 100:.1f}%), 새로 쓴 문장 {res['written']}개")
     if res["changed_share"] > CHANGED_SHARE_RECHECK:
@@ -486,7 +491,7 @@ def render_check(snap, path, res):
 
 # ---------------------------------------------------------------- 고친 문장 점검(audit)
 #
-# 수정 후 검토(finalization.md 6단계 7)에서 검토자가 찾은 문제의 대부분은 앞 수정이 새로 만든 문장에 있었다.
+# 수정 후 검토(skill의 작업 문서가 정한 검토)에서 검토자가 찾은 문제의 대부분은 앞 수정이 새로 만든 문장에 있었다.
 # 2026-11-02 README 작업에서 검토에서 지적된 곳을 고친 문장은 다음 다섯 가지 이유로 다시 지적됐다. 조건을 줄여 옮김,
 # fact sheet에 없는 이유와 인과를 더함, 지시어와 한 이름이 두 대상을 가리킴, 문장을 나누거나 합치며 주어와
 # 서술어가 어긋남, 같은 사실을 쓴 다른 줄을 고치지 않음. audit는 고친 문장마다 이 다섯 가지를 확인할 자리를
@@ -1015,7 +1020,7 @@ def audit(before, after, facts_text=None):
             "worse_ai": cmp["worse_ai"], "worse_dist": cmp["worse_dist"], "must_fix": cmp["must_fix"]}
 
 
-# 수정 후 검토자(finalization.md 6단계 7)가 바뀐 문장마다 묻는 질문. 고친 사람이 같은 질문에 먼저 답하게 하려고
+# 수정 후 검토자가 바뀐 문장마다 묻는 질문. 고친 사람이 같은 질문에 먼저 답하게 하려고
 # 출력 맨 위에 둔다. 괄호 안은 그 질문에 답할 때 볼 출력 줄이다.
 AUDIT_GUIDE = (
     "확인할 것(판정 아님). 바뀐 단위마다 수정 후 검토자가 묻는 아래 질문에 먼저 답한다. 답할 수 없으면 그 단위를 고친 뒤 "
@@ -1041,7 +1046,7 @@ def _q(text, n=None):
 
 
 def render_audit(base, path, res):
-    lines = [f"techblog audit | 기준 {os.path.basename(base)} → {os.path.basename(path)} | "
+    lines = [f"{SKILL_NAME} audit | 기준 {os.path.basename(base)} → {os.path.basename(path)} | "
              f"단위 {res['units'][0]}개 → {res['units'][1]}개, 바뀌거나 새로 쓴 단위 {res['changed']}개, "
              f"바뀐 곳 {len(res['groups'])}곳"]
     if not res["groups"]:
@@ -1219,7 +1224,7 @@ def cmd_check(args):
 
 def main(argv=None):
     L.setup_stdio()
-    ap = argparse.ArgumentParser(description="techblog 후처리 보조")
+    ap = argparse.ArgumentParser(description=f"{SKILL_NAME} 후처리 보조")
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("start", help="초안 사본을 만든다")
     p.add_argument("article")

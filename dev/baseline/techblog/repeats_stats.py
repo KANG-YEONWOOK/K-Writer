@@ -6,7 +6,7 @@
 후보가 몇 개 나오는지 잰다.
 
 사용법
-  python dev/baseline/repeats_stats.py --cache DIR [--stats PATH] [--group default] [--extra 이름=경로 ...]
+  python dev/baseline/techblog/repeats_stats.py --cache DIR [--stats PATH] [--group default] [--extra 이름=경로 ...]
 """
 
 import argparse
@@ -15,7 +15,7 @@ import os
 import statistics
 import sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 sys.path.insert(0, os.path.join(ROOT, "skills", "techblog", "scripts"))
 import lint_ko as L  # noqa: E402
 import revise_ko as RV  # noqa: E402
@@ -44,7 +44,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--cache", required=True)
     ap.add_argument("--group", default="default")
-    ap.add_argument("--stats", default=os.path.join(ROOT, "dev", "baseline", "stats.json"))
+    ap.add_argument("--stats", default=os.path.join(ROOT, "dev", "baseline", "techblog", "stats.json"))
     ap.add_argument("--extra", action="append", default=[], help="비교할 글: 이름=경로")
     args = ap.parse_args()
     stats = json.load(open(args.stats, encoding="utf-8"))

@@ -22,9 +22,9 @@ python dev/dogfood/judge.py --iter iter-11 --within  # 같은 실행의 초안 �
 python dev/dogfood/report.py --iter iter-11 --within # 위 비교의 표
 python dev/dogfood/run.py --iter iter-11r --revise-from iter-11 --jobs 1   # 같은 초안을 새 세션에서 후처리만
 python dev/dogfood/judge.py --iter iter-11 --cross iter-11r                # 같은 초안의 두 후처리 결과 비교
-python dev/baseline/repeats_stats.py --cache <사람 글 캐시>                # 사람 글의 반복 후보 수 분포
+python dev/baseline/techblog/repeats_stats.py --cache <사람 글 캐시>                # 사람 글의 반복 후보 수 분포
 python dev/dogfood/judge.py --iter iter-13 --skip style fidelity pairwise clarity   # 문장 단위 J5(korean)만
-python dev/baseline/ko_stats.py --cache <사람 글 캐시> --pairs <수정 전후 쌍 폴더>    # 한국어 점검 항목의 오탐과 recall
+python dev/baseline/techblog/ko_stats.py --cache <사람 글 캐시> --pairs <수정 전후 쌍 폴더>    # 한국어 점검 항목의 오탐과 recall
 python dev/dogfood/judge.py --iter iter-090 --skip style fidelity pairwise clarity korean --human-cache <사람 글 캐시>   # 용어 설명 J10(terms)만
 ```
 

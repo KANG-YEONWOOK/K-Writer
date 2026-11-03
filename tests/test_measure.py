@@ -1,4 +1,4 @@
-"""dev/baseline/measure.py의 사이트별 parser, 기간과 그룹, 번역 글 필터, 저자 키.
+"""dev/baseline/techblog/measure.py의 사이트별 parser, 기간과 그룹, 번역 글 필터, 저자 키.
 
 실제 블로그 글의 문장은 쓰지 않고 짧은 합성 응답만 쓴다.
 """
@@ -8,7 +8,7 @@ import os
 import unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SPEC = importlib.util.spec_from_file_location("measure", os.path.join(ROOT, "dev", "baseline", "measure.py"))
+SPEC = importlib.util.spec_from_file_location("measure", os.path.join(ROOT, "dev", "baseline", "techblog", "measure.py"))
 M = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(M)
 

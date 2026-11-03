@@ -157,7 +157,7 @@ class AdjacentPredicateTest(unittest.TestCase):
         self.assertEqual(self.metric('첫 표현은 "들어요". 둘째 표현은 "들어요".')["value"], 0)
 
     def test_candidate_and_distribution_never_change_verdict(self):
-        source = L.load_json(L.THRESHOLDS_PATH)
+        source = L.load_thresholds()
         th = {"metrics": {key: source["metrics"][key] for key in
                           ("A8.ending_run4", "A8.same_predicate_adjacent")}}
         a = L.analyze("입력을 받아요. 출력을 받아요. 자료를 받아요. 기록을 받아요.")
@@ -175,7 +175,7 @@ class AdjacentPredicateTest(unittest.TestCase):
 
 class DistributionReferenceTest(unittest.TestCase):
     def test_sentence_length_mean_never_imposes_a_length_limit(self):
-        th = L.load_json(L.THRESHOLDS_PATH)
+        th = L.load_thresholds()
         metric_id = "A8.sent_len_mean"
         only_mean = {"metrics": {metric_id: th["metrics"][metric_id]}}
         long_sentence = (
@@ -193,12 +193,12 @@ class DistributionReferenceTest(unittest.TestCase):
                 self.assertEqual(result["summary"]["verdict"], "PASS")
 
     def test_calibration_preserves_distribution_reference_metrics(self):
-        path = os.path.join(ROOT, "dev", "baseline", "calibrate.py")
+        path = os.path.join(ROOT, "dev", "baseline", "techblog", "calibrate.py")
         spec = importlib.util.spec_from_file_location("baseline_calibration_test", path)
         calibration = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(calibration)
-        thresholds = L.load_json(L.THRESHOLDS_PATH)
-        stats = L.load_json(os.path.join(ROOT, "dev", "baseline", "stats.json"))
+        thresholds = L.load_thresholds()
+        stats = L.load_json(os.path.join(ROOT, "dev", "baseline", "techblog", "stats.json"))
         calibrated, _ = calibration.calibrate(stats, thresholds)
         for metric_id in ("A8.sent_len_mean", "A8.ending_run4"):
             with self.subTest(metric_id=metric_id):
@@ -310,7 +310,7 @@ class PatternTest(unittest.TestCase):
     def test_check_status_not_in_verdict(self):
         text = "\n\n".join(["기존 설정과 비교하면 최대 5배입니다.", "입력/출력 길이를 따로 측정했습니다."] * 3)
         a = L.analyze(text)
-        ev = L.evaluate(a, L.load_json(L.THRESHOLDS_PATH), "default")
+        ev = L.evaluate(a, L.load_thresholds(), "default")
         st = {r["id"]: r["status"] for r in ev["results"]}
         self.assertEqual(st["A18.number_predicate"], "CHECK")
         self.assertEqual(st["A18.bundle"], "INFO")  # 사람 글과 비율이 비슷한 후보는 참고 지표로만 센다
@@ -320,7 +320,7 @@ class PatternTest(unittest.TestCase):
     def test_single_para_ratio_lower_bound(self):
         dense = "\n\n".join("첫 문장입니다. 둘째 문장입니다. 셋째 문장입니다. 넷째 문장입니다." for _ in range(5))
         short = "\n\n".join(["첫 문장입니다. 둘째 문장입니다.", "한 문장 문단입니다."] * 3)
-        th = L.load_json(L.THRESHOLDS_PATH)["metrics"]["A8.single_para_ratio"]
+        th = L.load_thresholds()["metrics"]["A8.single_para_ratio"]
         self.assertEqual(th["kind"], "lower")
         v_dense = L.analyze(dense)["metrics"]["A8.single_para_ratio"]["value"]
         v_short = L.analyze(short)["metrics"]["A8.single_para_ratio"]["value"]
@@ -559,7 +559,7 @@ class KoreanPatternTest(unittest.TestCase):
         hits = L.combined_row_hits(facts)
         self.assertEqual([(h["line"], h["match"]) for h in hits], [(0, "수평 세포 / 양극 세포 / amacrine 세포")])
         a = L.analyze("양극 세포가 있습니다.\n", facts_text=facts)
-        ev = L.evaluate(a, L.load_json(L.THRESHOLDS_PATH), "default")
+        ev = L.evaluate(a, L.load_thresholds(), "default")
         self.assertIn("fact sheet «수평 세포 / 양극 세포 / amacrine 세포»", L.render_text("x.md", "default", a, ev))
 
     def test_term_first_lists_every_first_appearance(self):
@@ -569,7 +569,7 @@ class KoreanPatternTest(unittest.TestCase):
         facts = self.TERM_HEADER + "".join(f"| x{i} | {n} | 교과서 | - | 설명 {i}(자료 1쪽) |\n" for i, n in enumerate(names))
         a = L.analyze("\n\n".join(f"{n}이 있습니다." for n in names) + "\n", facts_text=facts)
         self.assertEqual(a["metrics"]["A20.term_first"]["value"], 12)
-        ev = L.evaluate(a, L.load_json(L.THRESHOLDS_PATH), "default")
+        ev = L.evaluate(a, L.load_thresholds(), "default")
         r = next(r for r in ev["results"] if r["id"] == "A20.term_first")
         self.assertEqual((len(r["hits"]), len(r["more"])), (5, 7))
         out = L.render_text("x.md", "default", a, ev)
@@ -624,7 +624,7 @@ class KoreanPatternTest(unittest.TestCase):
 
     def test_term_checks_render_in_own_group(self):
         a = L.analyze("C. elegans라는 선충입니다.\n")
-        ev = L.evaluate(a, L.load_json(L.THRESHOLDS_PATH), "default")
+        ev = L.evaluate(a, L.load_thresholds(), "default")
         st = {r["id"]: r for r in ev["results"]}
         self.assertEqual(st["A20.species_first"]["status"], "CHECK")
         self.assertEqual(st["A20.species_first"]["group"], "term")
@@ -668,7 +668,7 @@ class KoreanPatternTest(unittest.TestCase):
     def test_quote_go_is_not_checked(self):
         # 처음에는 따옴표 뒤의 "고"를 FAIL로 셌다(A14.quote_go). 사용자 검토(2026-10-18)에서 직접 인용 뒤에도
         # "고"를 쓴다고 해서 2026-10-18에 뺐다. 사람 글 224편 중 19편도 이 형태를 쓴다.
-        thresholds = L.load_json(L.THRESHOLDS_PATH)
+        thresholds = L.load_thresholds()
         for text in ('Herting et al.(2012)은 "각각 관련된다"고 말해요.', '“구조가 기능을 풀어 주지는 않는다”고 정리했어요.'):
             a = L.analyze(text)
             self.assertNotIn("A14.quote_go", a["metrics"], text)
@@ -717,13 +717,13 @@ class KoreanPatternTest(unittest.TestCase):
         for text in ("이 방법을 C. elegans에 썼어요. 확률을 세기로 써요.",
                      "Kim(2020)은 로그를 모았어요. 이 값을 기준으로 써요."):
             self.assertEqual(self.m(text)["A21.sseuda_senses"]["value"], 0, text)
-        ev = L.evaluate(L.analyze(text), L.load_json(L.THRESHOLDS_PATH), "casual")
+        ev = L.evaluate(L.analyze(text), L.load_thresholds(), "casual")
         self.assertEqual({r["id"]: r["group"] for r in ev["results"] if r["id"] == "A21.sseuda_senses"},
                          {"A21.sseuda_senses": "ko"})
 
     def test_general_expressions(self):
         # "쓰다"만이 아니라 글쓰기에서 일반적으로 점검하는 표현(사용자 2차 검토). 사람 글 측정은
-        # dev/baseline/README.md의 "동사 격식과 일반 표현 항목" 절.
+        # dev/baseline/techblog/README.md의 "동사 격식과 일반 표현 항목" 절.
         cases = {
             "A14.doeeojida": (["개선되어졌습니다.", "Go로 쓰여진 코드가 있습니다.", "흔히 보여지는 오류입니다.",
                                "두 그룹으로 나뉘어집니다.", "문이 열려집니다."],
@@ -752,7 +752,7 @@ class KoreanPatternTest(unittest.TestCase):
                 self.assertEqual(self.m(text)[mid]["value"], 1, (mid, text))
             for text in neg:
                 self.assertEqual(self.m(text)[mid]["value"], 0, (mid, text))
-        th = L.load_json(L.THRESHOLDS_PATH)
+        th = L.load_thresholds()
         st = {r["id"]: r for r in L.evaluate(L.analyze("안 되요. 흔히 보여지는 오류입니다. 두 서비스를 연결시켰습니다."),
                                              th, "default")["results"]}
         self.assertEqual((st["G11.spelling"]["status"], st["A14.doeeojida"]["status"]), ("GATE", "FAIL"))
@@ -761,7 +761,7 @@ class KoreanPatternTest(unittest.TestCase):
 
     def test_native_verbs_and_see_judgment(self):
         # 정보 전달 글은 같은 뜻에 한자어 동사를 더 많이 쓴다(사용자 2차 검토). 사람 글에서 걸린 문장을 모두 읽고
-        # 고친 오탐은 dev/baseline/README.md의 "동사 항목의 기준치".
+        # 고친 오탐은 dev/baseline/techblog/README.md의 "동사 항목의 기준치".
         cases = {
             "A5.native_verbs": (["Redis를 쓰고 있습니다.", "Orca가 쓰는 iteration-level scheduling은 끝난 요청을 뺍니다.",
                                  "KV cache에 쓸 수 있는 메모리는 20GB입니다.", "Shuffle Partition이 쓰입니다.",
@@ -794,7 +794,7 @@ class KoreanPatternTest(unittest.TestCase):
         for mid in ("A5.native_verbs", "A7.see_judgment"):
             self.assertEqual(self.m(default)[mid]["value"], self.m(casual)[mid]["value"], mid)
         # 사람 글 합산 비율의 Poisson 상한으로 판정하고, 짧은 글 모드에서는 판정하지 않는다
-        th = L.load_json(L.THRESHOLDS_PATH)
+        th = L.load_thresholds()
         body = "\n\n".join(["배치 크기를 10으로 줄이자 p99 지연이 4.2초에서 0.8초로 줄었습니다. " * 4] * 20)
         many = body + "\n\n" + " ".join(f"Redis {i}개를 썼습니다." for i in range(8))
         st = {r["id"]: r for r in L.evaluate(L.analyze(many), th, "default")["results"]}
@@ -809,7 +809,7 @@ class KoreanPatternTest(unittest.TestCase):
     def test_korean_checks_render_in_own_group(self):
         text = "모든 영역이 한 값에 머물지 않았습니다.\n\n기존 설정과 비교하면 최대 5배입니다.\n"
         a = L.analyze(text)
-        ev = L.evaluate(a, L.load_json(L.THRESHOLDS_PATH), "default")
+        ev = L.evaluate(a, L.load_thresholds(), "default")
         st = {r["id"]: r for r in ev["results"]}
         self.assertEqual(st["A18.negation_scope"]["status"], "CHECK")
         self.assertEqual(st["A18.negation_scope"]["group"], "ko")
@@ -820,7 +820,7 @@ class KoreanPatternTest(unittest.TestCase):
 
     def test_window_and_quoted_english_fail_the_draft(self):
         a = L.analyze('저자들은 "likely"로 쓴 적분 창을 씁니다.')
-        ev = L.evaluate(a, L.load_json(L.THRESHOLDS_PATH), "default")
+        ev = L.evaluate(a, L.load_thresholds(), "default")
         st = {r["id"]: r["status"] for r in ev["results"]}
         self.assertEqual(st["A6.window_range"], "FAIL")
         self.assertEqual(st["A14.quoted_english_token"], "FAIL")
@@ -831,7 +831,7 @@ class ExampleRegressionTest(unittest.TestCase):
     지금 기준치 전체(A5.native_verbs, A7.see_judgment 포함)로 PASS여야 한다."""
 
     def test_examples_pass_new_checks(self):
-        thresholds = L.load_json(L.THRESHOLDS_PATH)
+        thresholds = L.load_thresholds()
         for name, tone in (("paged-attention.default.md", "default"), ("paged-attention.casual.md", "casual")):
             a = L.analyze(L.read_text(os.path.join(ROOT, "examples", name)))
             ev = L.evaluate(a, thresholds, tone)
@@ -850,13 +850,14 @@ class SkillTextTest(unittest.TestCase):
         patterns = L.load_json(L.PATTERNS_PATH)
         rxs = [re.compile(r) for pid in ("A6.open_close", "A6.open_close_check")
                for r in patterns["patterns"][pid]["regex"]]
+        # 0.3.0에서 style-guide.md의 장르 절은 genre.md로, drafting.md의 fact sheet 항목은 fact-sheet.md로 옮겼다.
         texts = {name: L.read_text(os.path.join(SCRIPTS, "..", "references", name))
-                 for name in ("style-guide.md", "drafting.md")}
+                 for name in ("style-guide.md", "genre.md", "drafting.md", "fact-sheet.md")}
         # 이 두 항목의 hint는 걸린 형태와 그대로 둘 쓰임(면담의 열린 질문 등)을 설명해야 해서 뺀다.
         skip = {"A6.open_close", "A6.open_close_check"}
         texts.update({f"patterns_ko.json hint {pid}": p.get("hint", "")
                       for pid, p in patterns["patterns"].items() if pid not in skip})
-        thresholds = L.load_json(L.THRESHOLDS_PATH)
+        thresholds = L.load_thresholds()
         texts.update({f"thresholds.json hint {mid}": s.get("hint", "")
                       for mid, s in thresholds["metrics"].items() if mid not in skip})
         self.assertIn("자료가 밝힌 한계", texts["patterns_ko.json hint G9.cliche_outro"])

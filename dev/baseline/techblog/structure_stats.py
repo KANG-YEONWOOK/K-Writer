@@ -5,7 +5,7 @@ style-guide.md의 글 골격 관례(제목 형태, 도입, 절 수, 절 첫 문�
 사람 글 분포로 다시 확인하는 데 쓴다. 저장소에는 글 ID와 지표 값만 남기고 원문은 남기지 않는다.
 
 사용법
-  python dev/baseline/structure_stats.py --cache DIR [--stats PATH] [--out JSON] [--extra 이름=경로 ...]
+  python dev/baseline/techblog/structure_stats.py --cache DIR [--stats PATH] [--out JSON] [--extra 이름=경로 ...]
 """
 
 import argparse
@@ -14,7 +14,7 @@ import os
 import re
 import sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 sys.path.insert(0, os.path.join(ROOT, "skills", "techblog", "scripts"))
 import lint_ko as L  # noqa: E402
 
@@ -165,7 +165,7 @@ def main():
     L.setup_stdio()
     ap = argparse.ArgumentParser()
     ap.add_argument("--cache", required=True)
-    ap.add_argument("--stats", default=os.path.join(ROOT, "dev", "baseline", "stats.json"))
+    ap.add_argument("--stats", default=os.path.join(ROOT, "dev", "baseline", "techblog", "stats.json"))
     ap.add_argument("--out", help="글별 값과 그룹별 요약을 저장할 JSON")
     ap.add_argument("--extra", action="append", default=[], help="비교할 글: 이름=경로")
     args = ap.parse_args()

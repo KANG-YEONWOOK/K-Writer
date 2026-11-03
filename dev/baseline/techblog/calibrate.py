@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""사람 글 측정값(stats.json)으로 lint 기준치(thresholds.json)를 다시 만든다.
+"""사람 글 측정값(stats.json)으로 techblog의 lint 기준치(skills/techblog/scripts/thresholds.json)를 다시 만든다.
+
+- 계산은 core 규칙 정의(rules.json)와 techblog 보정값을 합친 기준치(lint_ko.load_thresholds)로 하고, --write는
+  보정값(lint_ko.split_thresholds)만 thresholds.json에 쓴다. 규칙 정의는 core/scripts/rules.json에서 고친다.
 
 - 기준치는 holdout이 아닌 사람 글에서 잡는다(holdout은 글 ID 해시로 20%).
 - 기간 가중치: base(2018-01~2022-11) 1.0, mid(2022-12~2024-12) 0.5, drift(2025~) 0. 2018~2022년 글에
@@ -14,10 +17,10 @@
 - poisson: 사람 글 전체의 가중 1,000자당 비율(pooled rate).
 - 어투별 지표(tone 지정)는 해당 어투만, 나머지는 두 어투를 합쳐서 잡는다.
 - 만든 기준치로 base holdout 사람 글을 판정해 통과율을 보고하고, 보고서를 calibration.md에 쓴다.
-  dev/baseline/README.md는 사람이 쓴 측정 기록이라 덮어쓰지 않는다.
+  dev/baseline/techblog/README.md는 사람이 쓴 측정 기록이라 덮어쓰지 않는다.
 
 사용법
-  python dev/baseline/calibrate.py [--stats dev/baseline/stats.json] [--write]
+  python dev/baseline/techblog/calibrate.py [--stats dev/baseline/techblog/stats.json] [--write]
 """
 
 import argparse
@@ -28,12 +31,12 @@ import subprocess
 import sys
 import time
 
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 sys.path.insert(0, os.path.join(ROOT, "skills", "techblog", "scripts"))
 import lint_ko as L  # noqa: E402
 
 THRESHOLDS = os.path.join(ROOT, "skills", "techblog", "scripts", "thresholds.json")
-REPORT = os.path.join(ROOT, "dev", "baseline", "calibration.md")
+REPORT = os.path.join(ROOT, "dev", "baseline", "techblog", "calibration.md")
 TONES = ("default", "casual")
 PERIOD_WEIGHT = {"base": 1.0, "mid": 0.5, "drift": 0.0}
 SITE_CAP = 0.40
@@ -208,7 +211,7 @@ def calibrate(stats, template):
             for p in ("base", "mid") for t in TONES}
     new["version"] = "v2"
     new["generated_at"] = time.strftime("%Y-%m-%d")
-    new["basis"] = (f"사람 글 baseline(dev/baseline/stats.json, holdout 제외). 기준 기간(2018-01~2022-11, 가중치 1.0) "
+    new["basis"] = (f"사람 글 baseline(dev/baseline/techblog/stats.json, holdout 제외). 기준 기간(2018-01~2022-11, 가중치 1.0) "
                     f"Default {n_by[('base', 'default')]}편, Casual {n_by[('base', 'casual')]}편. "
                     f"중간 기간(2022-12~2024-12, 가중치 {PERIOD_WEIGHT['mid']}) Default {n_by[('mid', 'default')]}편, "
                     f"Casual {n_by[('mid', 'casual')]}편. 기준 기간 전용 항목(A1~A7, A9 굵은 글씨·목록, A10, A12~A14)은 "
@@ -271,7 +274,7 @@ def report(stats, thresholds, notes, old=None):
     groups = stats["groups"]
     sites = sorted({s for g in groups.values() for s in g["sites"]})
     lines = ["# 기준치 계산 보고서", "",
-             "`dev/baseline/calibrate.py --write`가 만든 문서다. 손으로 고치지 않는다. 측정 기록과 해석은 "
+             "`dev/baseline/techblog/calibrate.py --write`가 만든 문서다. 손으로 고치지 않는다. 측정 기록과 해석은 "
              "[README.md](README.md)에 있다.", "",
              "- 기간과 그룹: base(2018-01-01~2022-11-30)는 default/casual, mid(2022-12-01~2024-12-31)는 "
              "mid-default/mid-casual, drift(2025-01-01~)는 drift-default/drift-casual이다.",
@@ -368,17 +371,17 @@ def report(stats, thresholds, notes, old=None):
 def main():
     L.setup_stdio()
     ap = argparse.ArgumentParser()
-    ap.add_argument("--stats", default=os.path.join(ROOT, "dev", "baseline", "stats.json"))
+    ap.add_argument("--stats", default=os.path.join(ROOT, "dev", "baseline", "techblog", "stats.json"))
     ap.add_argument("--write", action="store_true", help="thresholds.json과 calibration.md를 덮어쓴다")
     args = ap.parse_args()
     stats = json.load(open(args.stats, encoding="utf-8"))
-    template = json.load(open(THRESHOLDS, encoding="utf-8"))
+    template = L.load_thresholds(THRESHOLDS)
     new, notes = calibrate(stats, template)
     text, rate = report(stats, new, notes, old=template)
     print(text)
     if args.write:
         with open(THRESHOLDS, "w", encoding="utf-8", newline="\n") as f:
-            f.write(json.dumps(new, ensure_ascii=False, indent=2) + "\n")
+            f.write(json.dumps(L.split_thresholds(new), ensure_ascii=False, indent=2) + "\n")
         with open(REPORT, "w", encoding="utf-8", newline="\n") as f:
             f.write(text)
         print(f"[write] {THRESHOLDS}, {REPORT}")

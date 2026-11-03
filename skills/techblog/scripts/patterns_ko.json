@@ -7,8 +7,8 @@
     "headings가 true면 제목과 헤딩에도, tables가 true면 표의 행에도 적용한다.",
     "max_len이 있으면 그 글자 수 이하인 문장에만 적용한다(내용 없는 짧은 문장 판별용).",
     "G6.emdash, G6.punct_policy, G10.num_particle, A19.term_mix, A19.term_avoid, A20.term_first, A20.species_first, A20.abbr_first, A20.term_in_list, A20.untabled, A20.table_combined_row, A18.bare_author, A21.sseuda_senses는 정규식 하나로 판정할 수 없어서 lint_ko.py 안의 함수가 센다.",
-    "일반 표현 항목: A14.doeeojida(이중 피동, policy), G11.spelling(맞춤법, policy Gate), A14.causative, A5.pleonasm, A14.adverb_pair, A21.jeokda_as(한국어 점검 후보). 사람 글 측정은 dev/baseline/README.md의 \"동사 격식과 일반 표현 항목\" 절. 동사 항목: A5.native_verbs와 A7.see_judgment는 정규식 하나로 뜻을 가릴 수 없어서 lint_ko.py의 native_verb_hits, see_judgment_hits가 센다.",
-    "서술어 항목: A6.open_close(사용자 검토 2026-11-02에서 지적한 \"문제, 질문 + 열리다, 닫히다\")와 A6.open_close_check(같은 직역을 다른 명사와 관형형으로 넓힌 한국어 점검 후보). 정규식은 명사와 조사에 붙은 활용형만 보므로 열거, 열람, 열심히, 열 개 같은 낱말은 걸리지 않는다. 사람 글 측정은 dev/baseline/README.md의 \"주어, 목적어와 어울리지 않는 서술어\" 절."
+    "일반 표현 항목: A14.doeeojida(이중 피동, policy), G11.spelling(맞춤법, policy Gate), A14.causative, A5.pleonasm, A14.adverb_pair, A21.jeokda_as(한국어 점검 후보). 사람 글 측정은 dev/baseline/techblog/README.md의 \"동사 격식과 일반 표현 항목\" 절. 동사 항목: A5.native_verbs와 A7.see_judgment는 정규식 하나로 뜻을 가릴 수 없어서 lint_ko.py의 native_verb_hits, see_judgment_hits가 센다.",
+    "서술어 항목: A6.open_close(사용자 검토 2026-11-02에서 지적한 \"문제, 질문 + 열리다, 닫히다\")와 A6.open_close_check(같은 직역을 다른 명사와 관형형으로 넓힌 한국어 점검 후보). 정규식은 명사와 조사에 붙은 활용형만 보므로 열거, 열람, 열심히, 열 개 같은 낱말은 걸리지 않는다. 사람 글 측정은 dev/baseline/techblog/README.md의 \"주어, 목적어와 어울리지 않는 서술어\" 절."
   ],
   "patterns": {
     "G2.experience": {

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """사람 글 baseline, 스킬 없는 Claude, 스킬 Default, 스킬 Casual의 지표를 한 표로 모은다(README 비교표).
 
-- 사람 글: dev/baseline/stats.json의 default, casual 그룹(기준 기간 2018-01~2022-11 글) 중앙값
+- 사람 글: dev/baseline/techblog/stats.json의 default, casual 그룹(기준 기간 2018-01~2022-11 글) 중앙값
 - 생성 글: article.md를 lint_ko.py로 다시 잰 값, eval.json의 lint 판정, judge.json(style, fidelity). 케이스 값의 중앙값
   케이스는 `<iteration>/<case>` 형식으로 지정한다. mode가 baseline이면 "스킬 없음", 아니면 tone별로 묶는다.
 
@@ -56,7 +56,7 @@ def main():
 
     cols = {k: {"metrics": {}, "n": 0, "lint_pass": 0, "fid": [], "style": [], "j7": [], "j9": [], "cases": []}
             for k, _ in COLUMNS}
-    stats = json.load(open(os.path.join(ROOT, "dev", "baseline", "stats.json"), encoding="utf-8"))
+    stats = json.load(open(os.path.join(ROOT, "dev", "baseline", "techblog", "stats.json"), encoding="utf-8"))
     for a in stats["articles"]:
         if a.get("included") and a.get("group") in ("default", "casual"):
             col = cols["human-" + a["group"]]

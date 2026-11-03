@@ -12,8 +12,8 @@
 그룹 이름은 base가 default/casual, mid가 mid-default/mid-casual, drift가 drift-default/drift-casual이다.
 
 사용법
-  python -I -X utf8 dev/baseline/measure.py collect --cache DIR [--only d2 woowahan ...]
-  python -I -X utf8 dev/baseline/measure.py measure --cache DIR [--out dev/baseline/stats.json] [--urls dev/baseline/urls.json]
+  python -I -X utf8 dev/baseline/techblog/measure.py collect --cache DIR [--only d2 woowahan ...]
+  python -I -X utf8 dev/baseline/techblog/measure.py measure --cache DIR [--out dev/baseline/techblog/stats.json] [--urls dev/baseline/techblog/urls.json]
 """
 
 import argparse
@@ -31,7 +31,7 @@ from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from html.parser import HTMLParser
 
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 sys.path.insert(0, os.path.join(ROOT, "skills", "techblog", "scripts"))
 import lint_ko as L  # noqa: E402
 
@@ -764,8 +764,8 @@ def main():
     c.add_argument("--only", nargs="*")
     m = sub.add_parser("measure")
     m.add_argument("--cache", required=True)
-    m.add_argument("--out", default=os.path.join(ROOT, "dev", "baseline", "stats.json"))
-    m.add_argument("--urls", default=os.path.join(ROOT, "dev", "baseline", "urls.json"))
+    m.add_argument("--out", default=os.path.join(ROOT, "dev", "baseline", "techblog", "stats.json"))
+    m.add_argument("--urls", default=os.path.join(ROOT, "dev", "baseline", "techblog", "urls.json"))
     r = sub.add_parser("reconvert")
     r.add_argument("--cache", required=True)
     args = ap.parse_args()

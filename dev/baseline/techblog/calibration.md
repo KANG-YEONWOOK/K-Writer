@@ -1,6 +1,6 @@
 # 기준치 계산 보고서
 
-`dev/baseline/calibrate.py --write`가 만든 문서다. 손으로 고치지 않는다. 측정 기록과 해석은 [README.md](README.md)에 있다.
+`dev/baseline/techblog/calibrate.py --write`가 만든 문서다. 손으로 고치지 않는다. 측정 기록과 해석은 [README.md](README.md)에 있다.
 
 - 기간과 그룹: base(2018-01-01~2022-11-30)는 default/casual, mid(2022-12-01~2024-12-31)는 mid-default/mid-casual, drift(2025-01-01~)는 drift-default/drift-casual이다.
 - 가중치: base 1.0, mid 0.5(기준 기간 전용 항목 A1., A2., A3., A4., A5., A6., A7., A9.bold, A9.label_list, A9.list_ratio, A10., A12., A13., A14.은 0), drift 0.0. 지표 pool마다 한 사이트의 가중치는 40% 이하(글 5편 이상인 사이트가 3개 이상일 때).

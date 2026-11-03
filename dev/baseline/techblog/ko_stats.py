@@ -17,10 +17,10 @@
   holdout 글의 통과율(policy 항목과 어투 Gate는 뺀다)을 낸다. 새 항목이 사람 글 통과율을 떨어뜨리는지 볼 때 쓴다.
 
 - --by-site: 그룹마다 사이트별 표를 함께 낸다. 새 사이트에서 기존 사이트보다 훨씬 많이 걸리는 항목(오탐 후보)을 찾을 때 쓴다.
-- --stats PATH: 읽을 stats.json. 기본값은 dev/baseline/stats.json이다.
+- --stats PATH: 읽을 stats.json. 기본값은 dev/baseline/techblog/stats.json이다.
 
 사용법
-  python dev/baseline/ko_stats.py --cache DIR [--stats PATH]
+  python dev/baseline/techblog/ko_stats.py --cache DIR [--stats PATH]
                                   [--groups default casual mid-default mid-casual drift-default drift-casual]
                                   [--extra 이름=경로 ...] [--notes GLOB] [--pairs DIR] [--samples N]
                                   [--no-holdout] [--rates] [--verbs] [--verdicts ID ...] [--by-site]
@@ -34,7 +34,7 @@ import os
 import re
 import sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 sys.path.insert(0, os.path.join(ROOT, "skills", "techblog", "scripts"))
 import lint_ko as L  # noqa: E402
 
@@ -216,7 +216,7 @@ def report_verbs(groups):
 
 def report_verdicts(arts, cache, ids):
     """지금 thresholds.json으로 사람 글을 판정한다. 주어진 항목의 WARN, FAIL 수와 holdout 통과율."""
-    th = L.load_json(L.THRESHOLDS_PATH)
+    th = L.load_thresholds()
     skip = {mid for mid, spec in th["metrics"].items() if spec.get("policy")} | set(TONE_RULES)
     th_judged = dict(th, metrics={mid: spec for mid, spec in th["metrics"].items() if mid not in skip})
     per = {mid: {"WARN": 0, "FAIL": 0, "GATE": 0} for mid in ids}
@@ -286,7 +286,7 @@ def main():
     L.setup_stdio()
     ap = argparse.ArgumentParser()
     ap.add_argument("--cache", help="measure.py collect의 캐시 폴더")
-    ap.add_argument("--stats", default=os.path.join(ROOT, "dev", "baseline", "stats.json"))
+    ap.add_argument("--stats", default=os.path.join(ROOT, "dev", "baseline", "techblog", "stats.json"))
     ap.add_argument("--groups", nargs="*", default=["default", "casual", "mid-default", "mid-casual",
                                                     "drift-default", "drift-casual"])
     ap.add_argument("--by-site", action="store_true", help="그룹마다 사이트별 표를 함께 낸다")

@@ -4,6 +4,26 @@
 
 이 문서는 techblog skill이 쓴 글을 같은 자료로 skill 없이 쓴 글, 사람이 쓴 기술 블로그 글과 비교한 결과를 정리한다. 0.2.0 버전의 글은 skill 없이 쓴 글과 비교했고, 0.3.0 버전의 글은 0.2.0 버전의 글과 비교했다. 0.4.0 버전은 같은 실행에서 후처리 전 초안과 후처리를 마친 글을 비교했다. 0.6.0 버전은 같은 자료로 0.5.1 버전이 쓴 글과 비교하고, 문장마다 한국어 표현을 판정했다. 0.8.0 버전은 사용자가 지적한 용어 설명, 출처와 인용 동사, 다의어 문제를 이전 노트, 사람 글, 같은 자료로 쓴 새 글에서 쟀다. 0.11.0 버전은 서술어 직역을 심은 초안으로 0.10.0과 비교하고, 영어 비유 동사가 많은 자료로 새 글을 써서 fact sheet부터 최종 글까지 서술어를 쟀다. 측정 방법과 iteration별 기록은 [`dev/dogfood/README.md`](dev/dogfood/README.md)와 [`dev/dogfood/REPORT.md`](dev/dogfood/REPORT.md)에 있다.
 
+## K-Writer 0.3.0 공통 core 분리와 techblog 동일성 확인 (2026-11-03)
+
+K-Writer를 여러 글쓰기 skill이 공통 core(한국어 문장 규칙, 어투 규칙, 검사 스크립트)를 쓰는 구조로 바꾸고, techblog가 0.2.0(commit 49fd2d2)과 같게 동작하는지 확인했다. 구조는 [`ARCHITECTURE.md`](ARCHITECTURE.md)에 있다.
+
+- 바꾼 것
+  - `core/references/`에 장르와 무관한 문서 9개를 두었다. `runtime.md`, `tone.md`, `ai-patterns.md`, `reader-check.md`, `revision.md`, `korean-review.md`는 techblog 문서를 옮기면서 techblog의 단계 번호를 단계 이름으로, "사람이 쓴 한국어 기술 블로그 글"을 "skill이 정한 기준 글"로 바꿨다. `style-guide.md`에는 문장 규칙만 남기고 독자와 화자, 글 골격, 분량과 밀도, 도입 예, 마무리 예는 techblog의 `genre.md`로 옮겼다. `fact-sheet.md`는 `drafting.md`의 2단계에서, `settings-protocol.md`는 `settings.md`의 "묻는 순서"와 "지킬 것"에서 나왔다.
+  - `core/scripts/`에 검사 스크립트 3개와 `patterns_ko.json`, `rules.json`을 두었다. `thresholds.json`의 metric 114개 가운데 규칙 정의, Gate, policy, 고정 기준은 `rules.json`으로 옮기고, techblog의 `thresholds.json`에는 사람 글 600편으로 보정한 값(metric 65개의 필드 141개)과 `skill.standard`만 남겼다.
+  - `dev/sync_core.py`가 core 파일 14개를 `skills/techblog/`의 같은 이름 자리에 복사한다. 사람 글 측정 도구와 측정값은 `dev/baseline/techblog/`로 옮겼다.
+- 검사 스크립트 출력: 0.2.0과 새 `skills/techblog/scripts`를 같은 입력에 실행했다.
+  - 명령 191개의 stdout, stderr, 종료 코드와 만든 파일이 모두 같았다. 입력은 예시 글 2편과 `evals/`의 Markdown 파일 13개(원문, 글, 결과 글, 검토 기록)이고, 명령은 lint의 text, JSON, `--facts`, `--short` 출력, `tone_check.py`의 비교와 `--cleanup`, `revise_ko.py`의 start부터 audit까지, 입력 오류다.
+  - 사람 글 cache 1,408편에서 `lint_ko.run()`의 JSON 출력과 text 출력(`--all`) 2,816개가 모두 같았다.
+- 기준치: `rules.json`과 techblog `thresholds.json`을 합친 값은 0.2.0 `thresholds.json`과 metric 114개의 순서와 값이 같았다. 다른 곳은 최상위 키 `skill`과, metric 9개의 `note`에 든 `dev/baseline/` 경로다. `calibrate.py`를 새 위치에서 쓰기 없이 다시 실행해 얻은 보정값은 committed 값과 같았다(`generated_at`, `basis` 제외).
+- 지시 문서: 0.2.0 techblog 문서 14개에서 비어 있지 않은 줄 1,801개 가운데 90줄이 바뀌었고 108줄이 새로 생겼다. 이 목록과 두 버전의 원문을 독립 subagent에게 주고 techblog가 따르는 지시의 뜻이 바뀐 곳을 찾게 했다. 심각도 높음과 중간은 없었고, 낮음 7건은 실행 결과를 바꾸지 않는 문구였다(상위 agent가 직접 점검할 때 기준 글을 찾을 곳, 참고자료로도 읽히는 "마지막 절", 정의하지 않은 "skill의 작업 문서" 등). 그중 6건의 문구를 고쳤다. `genre.md`가 `style-guide.md`보다 우선한다는 새 규칙은 새 skill이 장르 규칙을 정하는 방법이라 남겼고, 지금 두 문서가 서로 다르게 정한 곳은 없다.
+- 테스트: `python -m unittest discover -s tests` 180개 통과(0.2.0의 167개, `tests/test_core.py` 12개, `test_portability.py`의 skill 목록 검사 1개). `claude plugin validate .` 통과(경고는 아이콘이 없다는 것 하나).
+- 실행 확인
+  - Claude Code: 저장소 사본을 junction으로 연결해 `dev/dogfood/run.py`의 `C-epanorthosis-default`(Default, 논문 PDF, 예산 $15)를 실행했다. 37.8분, $11.96이 들었고 최종 글의 lint는 Gate 0, FAIL 0, WARN 0, 권한 거부는 0이었다. 상위 agent는 runtime.md, settings.md, settings-protocol.md, drafting.md, fact-sheet.md를 읽은 뒤 자료를 읽고 fact sheet를 썼고, style-guide.md와 genre.md를 읽은 뒤 초안을 썼다. 그다음 validation.md, ai-patterns.md, rubric.md, finalization.md 순서로 읽었다.
+  - 같은 실행의 6단계에서 독립 subagent로 띄운 것은 독자 점검 하나였다. 후처리, 한국어 문장 점검(15곳 수정), 수정 후 검토(`revise_ko.py audit`)는 상위 agent가 직접 했다고 보고했다. 독자 점검 subagent 한 번에 약 $3.2가 들어 남은 예산(약 $5)으로는 세 subagent를 띄울 수 없다고 판단했다. 0.2.0의 같은 케이스 실행(예산 $8)도 독자 점검 subagent 하나만 띄웠고, 후처리, 한국어 문장 점검, 수정 후 검토는 하지 않았다. 0.3.0 실행의 상위 agent는 후처리를 직접 하면서 `revision.md`를 읽지 않았다(finalization.md는 직접 할 때 reader-check.md, revision.md, korean-review.md를 차례로 읽으라고 한다). 6단계의 subagent 네 개를 모두 띄우는 실행은 이 케이스에서 $15보다 큰 예산이 필요하다.
+  - Codex: `dev/codex/smoke.py --installation plugin --case retone-casual`을 실행했다(Codex 0.162.1, 144초). 설치본은 `plugins/cache/k-writer/k-writer/0.3.0`이었고 SKILL.md 5,942바이트를 잘림 경고 없이 읽었다. 읽은 문서는 runtime.md, settings.md, finalization.md, tone.md였다. `tone_check.py`는 207쌍에서 불일치 0이었고, Casual 글의 lint는 Gate 0, FAIL 0, WARN 0이었다.
+- 실행 기록: dogfood 실행의 글, 작업 파일, transcript는 로컬 `docs/dogfood/k030-C-epanorthosis-default-2026-11-03/`에 있다(gitignore).
+
 ## K-Writer 0.2.0 수정 후 검토의 점검 목록과 수정 절차 (2026-11-02)
 
 이 저장소의 README를 techblog로 고치는 동안 수정 후 검토(finalization.md 6단계 7)는 지적된 곳을 고칠 때마다 같은 검토자의 확인을 다시 거쳤고, 확인할 때마다 새 지적이 나왔다. 사용자는 확인 횟수를 제한하는 대신, 고친 문장이 새 지적을 만들지 않게 원인을 고치라고 했다.
@@ -37,7 +57,7 @@
   - 경계: WARN 경계를 표본의 최댓값과 최솟값 대신 가중 p99.5(여유 +1회 또는 ×1.2)와 가중 p0.5×0.8로 바꿨다. 한 사이트의 가중치는 지표마다 40% 이하로 줄였다. 기준 기간 합니다체 글의 절반이 우아한형제들 글이기 때문이다.
   - 제외 필터: 번역 글(4편), D2 news 분류와 우아한형제들의 문화, 교육, 행사, 공지, 기획, 디자인 분류(497편), 산문 문단이 5개 미만인 글(3편)을 뺐다. 산문 문단이 없는 글 1편이 한 문장 문단 비율의 WARN 하한을 0으로 만들어서 더한 조건이다.
   - lint 오탐 3건: 새 사이트 글에서 G3.placeholder가 "[그림 2]", "[출처: …]"를, A6.calque가 "~을 토대로"와 "사용자 여정"을, A14.report_write가 "'ES2026'이라고도 씁니다"(표기를 알려 주는 말)를 잡았다. 세 항목 모두 그 형태를 빼고 양성 문장과 음성 문장 시험을 더했다.
-  - 서술 방식: 기준 기간 글 50편을 읽고 145편의 글 골격을 쟀다. 도입은 배경이나 구체 장면에서 시작하게 하고(50편 중 배경으로 시작한 글 30편, 구체 장면 2편), 도입에는 중심 대상 말고 설명이 필요한 용어를 되도록 꺼내지 않게 했다(사람 글 도입 중앙값 181자, 예시 글 1,503자). 표, 그림, 코드의 앞뒤 문장과 짧은 결과 문장에 관한 지침도 더했다. [측정 절차와 값](dev/baseline/README.md)
+  - 서술 방식: 기준 기간 글 50편을 읽고 145편의 글 골격을 쟀다. 도입은 배경이나 구체 장면에서 시작하게 하고(50편 중 배경으로 시작한 글 30편, 구체 장면 2편), 도입에는 중심 대상 말고 설명이 필요한 용어를 되도록 꺼내지 않게 했다(사람 글 도입 중앙값 181자, 예시 글 1,503자). 표, 그림, 코드의 앞뒤 문장과 짧은 결과 문장에 관한 지침도 더했다. [측정 절차와 값](dev/baseline/techblog/README.md)
 - 결과
   - 기준 기간 holdout 31편 중 28편이 통과했다(90%, 목표 85%). holdout이 10편 이상인 사이트는 카카오 12/14(86%), 우아한형제들 9/10(90%)이다. 중간 기간 holdout은 30편 중 19편(63%)이었다.
   - 기준치가 크게 바뀐 항목은 A9.bold_per_1k(PASS 4.62에서 8.718), A9.list_ratio(0.305에서 0.395), A10.triad_per_1k(1.617에서 1.63, rubric 표의 2.21도 바로잡음), A6.calque(PASS 1에서 0)다. 굵은 글씨와 목록은 우아한형제들 글이 올렸다. 우아한형제들 기준 기간 글 55편(holdout 제외)은 문장 안의 굵은 글씨가 글당 12.7곳, 카카오 글 37편은 6.2곳이었다.
@@ -52,7 +72,7 @@
 사용자 3차 검토는 "새로운 문제가 열렸다", "문제가 닫혔다"처럼 주어, 목적어와 함께 쓰지 않는 서술어와 여러 뜻으로 읽히는 표현을 skill의 모든 단계에서 막아 달라고 했다. 0.10.0의 유형 C는 자료의 영어 구절에 대응하는 직역으로 정의되어 있어서, 모델이 스스로 쓴 비유 동사를 문장마다 확인하지 않았다. style-guide.md, drafting.md, G9.cliche_outro의 hint는 open question을 옮긴 "열린 질문"을 직접 썼다.
 
 - 바뀐 것: style-guide.md의 "주어, 목적어, 부사와 맞는 서술어"(서술어마다 묻는 세 질문, 전할 일과 서술어 표, 영어 비유 동사 대응표, 그대로 두는 쓰임), fact sheet "뜻"과 "한계"의 서술어 규칙, korean-review.md 유형 C의 확장과 읽는 순서 3의 서술어별 질문, reader-check.md의 "이 서술어는 무슨 일이 일어났다는 말인가", 후처리와 수정 후 검토, 되돌림 규칙, short 모드, lint 두 항목(A6.open_close, A6.open_close_check).
-- 사람 글 측정: 224편 중 222편을 다시 받았다. 두 항목 모두 0곳이라 A6.open_close는 policy(1회부터 FAIL)로 두었다. 사람 글에서 열다, 닫다가 나온 113곳은 포트, PR, 커넥션처럼 실제로 열고 닫는 대상, 모임과 학회, "가능성을 열어 두다" 같은 굳은 말이었다. [측정 절차와 값](dev/baseline/README.md)
+- 사람 글 측정: 224편 중 222편을 다시 받았다. 두 항목 모두 0곳이라 A6.open_close는 policy(1회부터 FAIL)로 두었다. 사람 글에서 열다, 닫다가 나온 113곳은 포트, PR, 커넥션처럼 실제로 열고 닫는 대상, 모임과 학회, "가능성을 열어 두다" 같은 굳은 말이었다. [측정 절차와 값](dev/baseline/techblog/README.md)
 - `python -m unittest discover -s tests`: 143개 통과. 새 시험은 두 lint 항목의 양성 10문장, 음성 21문장, 제목과 헤딩과 표 행, 예시 글 회귀, 초안 전에 읽는 문서와 lint hint에 "열린 질문"이 없는지다.
 
 ### eval A: 결함을 심은 초안의 6단계
@@ -96,7 +116,7 @@ StudyNote의 사용자 보강안에서 지적한 인접 서술어 반복, 대상
 
 - 같은 마지막 어절의 인접 반복은 `A8.same_predicate_adjacent` CHECK로 표시한다. 목록, 표, 인용, 문단 경계와 중간에 끼어 있는 다른 문장을 건너뛰지 않는지 두 어투로 시험했다. 앞뒤 문장을 출력하고 `revise_ko.py`의 R7 후보와 후처리 검사에도 연결했다.
 - `A8.ending_run4`와 평균 문장 길이는 INFO다. 서로 다른 해요체 현재형과 같은 서술어를 구분하고, 길이 때문에 필요한 성분을 지우지 않도록 했다. calibration을 다시 실행해도 INFO/CHECK가 유지되는 회귀 테스트를 포함했다.
-- 기존 사람 글 224편 중 223편을 다시 확보했다. 기준용 66편(holdout 제외)은 모두 확보했으며 새 후보가 259쌍이었다. 자연스러운 반복도 많아 자동 수정 임계값을 만들지 않았다. [측정 절차와 분포](dev/baseline/README.md), [글별 측정값](dev/baseline/predicate-stats.json)을 남겼다.
+- 기존 사람 글 224편 중 223편을 다시 확보했다. 기준용 66편(holdout 제외)은 모두 확보했으며 새 후보가 259쌍이었다. 자연스러운 반복도 많아 자동 수정 임계값을 만들지 않았다. [측정 절차와 분포](dev/baseline/techblog/README.md), [글별 측정값](dev/baseline/techblog/predicate-stats.json)을 남겼다.
 - `python -m unittest discover -s tests`: 139개 통과. 기존 어투 변환, short 모드, 설치 폴더의 경로·인코딩·파일 링크 검사도 포함한다. `quick_validate.py`는 Windows UTF-8 모드로 통과했다.
 - 지침의 독립 검토에서 그림 읽기 제한, 원자료 오류 수정의 원복, 설명용 예시 금지, 항목 개수 예고 금지, 평균 길이 상한과 새 규칙의 충돌을 찾아 수정했다.
 
@@ -346,7 +366,7 @@ judge가 사용자의 판단을 얼마나 따라가는지 보려고 사용자 �
 ### 측정 방법
 
 - 이전 출력: 3주차 노트 14편의 본문(frontmatter, import, 컴포넌트, 각주 정의, 참고 자료 절을 뺀 사본)에 0.8.0 lint를 돌렸다.
-- 사람 글: 기준치에 쓴 사람 글 88편과 2025년 이후 글 136편에 새 항목을 돌려 걸린 글을 셌다([`dev/baseline/README.md`](dev/baseline/README.md)).
+- 사람 글: 기준치에 쓴 사람 글 88편과 2025년 이후 글 136편에 새 항목을 돌려 걸린 글을 셌다([`dev/baseline/techblog/README.md`](dev/baseline/techblog/README.md)).
 - 실제 실행: Bargmann & Marder(2013) "From the connectome to brain function"(Nature Methods)을 0.8.0(commit 3c1e486)으로 Claude Code에서 Casual 글로 1회 썼다. 이 논문은 3주차 3편 노트의 주 자료다. 다만 3편 노트는 StudyNote의 노트 작성 가이드와 구성 문서를 함께 따랐고 자료도 여럿이라, 두 글은 같은 조건의 비교가 아니다. 결과 글은 직접 읽었고, style judge의 J10과 문장 단위 J5 judge(유형 L 포함)로 판정했다.
 
 ### 결과
@@ -394,7 +414,7 @@ style judge는 같은 글에 J10을 0과 2로 매겼다. 0을 준 판정은 설�
 
 ### 측정 방법
 
-- 사람 글: 2026-10-18에 다시 받은 사람 글 218편으로 같은 뜻의 고유어 동사와 한자어 동사의 비율, 새 항목에 걸린 문장을 측정했다. 걸린 사람 글 문장은 모두 읽고 오탐을 정규식과 함수에서 뺐다([`dev/baseline/README.md`](dev/baseline/README.md)의 0.9.0 절).
+- 사람 글: 2026-10-18에 다시 받은 사람 글 218편으로 같은 뜻의 고유어 동사와 한자어 동사의 비율, 새 항목에 걸린 문장을 측정했다. 걸린 사람 글 문장은 모두 읽고 오탐을 정규식과 함수에서 뺐다([`dev/baseline/techblog/README.md`](dev/baseline/techblog/README.md)의 0.9.0 절).
 - 다시 채점한 이전 글: 0.8.0 실행 글(W3, Bargmann & Marder 2013)과 0.4.0 예시 글(PagedAttention)을 0.9.0 lint와 judge로 다시 판정했다. J5 judge에는 유형 N~R을 더했고, J10은 terms judge(글만 읽고 독자가 모를 말을 모두 적게 하고 코드가 점수를 계산)로 바꿨기 때문에 0.8.0의 J5, J10 값과 바로 비교하지 않는다.
 - 실제 실행: 0.9.0(commit ffef9af)으로 세 자료를 Claude Code 2.1.302, `--model opus --effort xhigh`로 1회씩 실행했다. W3(Bargmann & Marder 2013, Casual)와 S1(PagedAttention, Casual)은 `--defaults`로 독자와 분량을 기본값으로 정했다. N3(rate limiter 노트)은 어투 인자와 `--defaults` 없이, AskUserQuestion을 막고 실행해 질문할 수 없을 때의 동작을 봤다. judge는 Claude Sonnet이다.
 
@@ -473,7 +493,7 @@ style judge는 같은 글에 J10을 0과 2로 매겼다. 0을 준 판정은 설�
 - 0.3.0과 0.2.0의 비교는 자료 4건을 버전마다 한 번씩 실행한 결과다. 같은 Discord 블로그 글을 여섯 번 정리하게 했을 때 본문 글자 수는 5,264~7,428자로 실행마다 달랐다.
 - 같은 Discord 블로그 글을 두 번 정리하게 했을 때 fidelity judge가 찾은 문제는 0건과 6건이었다. 6건 중 3건은 글의 실제 오류였다. 실제 오류는 자료에 없는 "수십만 명"이라는 수치, 글쓴이의 추론을 사실처럼 단정한 문장, 두 수치의 기준을 혼동한 문장이었다. 나머지 3건은 judge가 웹 페이지 요약본에서 인용문을 찾지 못한 경우였다.
 - 0.6.0과 0.5.1의 비교는 자료마다 버전별 1회 실행이다. 한국어 문장 점검은 모델이 문장을 읽고 판단하므로 실행마다 찾는 문장이 다르고, 0.6.0 글에도 "역시간 상수", "색 지도" 같은 표현이 남았다.
-- lint에 넣은 한국어 항목은 사용자 검토 노트에서 사용자가 고친 문장 447개 중 16곳에만 걸렸다([`dev/baseline/README.md`](dev/baseline/README.md)). 나머지는 6단계의 한국어 문장 점검에 맡긴다.
+- lint에 넣은 한국어 항목은 사용자 검토 노트에서 사용자가 고친 문장 447개 중 16곳에만 걸렸다([`dev/baseline/techblog/README.md`](dev/baseline/techblog/README.md)). 나머지는 6단계의 한국어 문장 점검에 맡긴다.
 - 문장 단위 J5 judge는 사용자가 고친 문장의 22.5~26.9%만 어색하다고 판정했다. J5 값이 낮다고 글에 고칠 문장이 없다는 뜻은 아니다.
 - 0.8.0의 효과는 같은 자료로 1회 실행한 글로만 확인했다. 비교한 3편 노트는 StudyNote의 가이드와 구성 문서를 함께 따르고 자료도 여럿이라 조건이 다르다. J10 judge는 같은 글에 0과 2를 줬다.
 - lint는 학명과 약어의 첫 등장을 보여 줄 뿐, 그 자리의 설명이 무엇인지를 쓴 설명인지는 판단하지 못한다. 다의어 lint는 "쓰다"(A21.sseuda_senses)와 "X를 Y로 적다"(A21.jeokda_as)만 본다. 보다, 나오다, 두다는 6단계 한국어 문장 점검이 읽어서 찾는다.

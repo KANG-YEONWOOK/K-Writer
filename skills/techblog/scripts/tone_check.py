@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""techblog tone check: Casual 글이 Default 초안에서 종결부만 바꾼 결과인지 확인한다.
+"""K-Writer tone check: Casual 글이 Default 초안에서 종결부만 바꾼 결과인지 확인한다.
+
+이 파일의 원본은 저장소의 core/scripts/tone_check.py이고, dev/sync_core.py가 skill마다 skills/<이름>/scripts/에 복사한다.
 
 사용법
   python tone_check.py DEFAULT.md CASUAL.md [--json]
@@ -25,6 +27,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import lint_ko as L  # noqa: E402
+
+SKILL_NAME = os.path.basename(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 K_TAIL = 2
 FROZEN = ("heading", "code", "table", "blockquote", "html")
@@ -180,7 +184,7 @@ def cleanup(paths):
 
 def main(argv=None):
     L.setup_stdio()
-    ap = argparse.ArgumentParser(description="techblog 어투 불변성 검사")
+    ap = argparse.ArgumentParser(description=f"{SKILL_NAME} 어투 불변성 검사")
     ap.add_argument("files", nargs="+")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--cleanup", action="store_true", help="주어진 작업 파일(" + ", ".join(WORK_SUFFIXES) + ")을 지운다")

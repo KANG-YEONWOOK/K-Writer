@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
-"""techblog lint: 한국어 기술 블로그 글에서 rubric의 자동 측정 항목(G, A)을 센다.
+"""K-Writer lint: 한국어 글에서 skill의 rubric이 정한 자동 측정 항목(G, A)을 센다.
 
 사용법
   python lint_ko.py ARTICLE.md [--tone default|casual|auto] [--facts FACTS.md]
                     [--thresholds PATH] [--json] [--all] [--max-hits N]
   python lint_ko.py KO.md --short [--source EN.md] [--terms TERMS.json] [--tone ...]
 
---short는 짧은 글 모드(SKILL.md의 short)다. thresholds.json의 short 프로필대로
+이 파일의 원본은 저장소의 core/scripts/lint_ko.py이고, dev/sync_core.py가 skill마다 skills/<이름>/scripts/에
+복사한다. 기준치는 같은 폴더의 rules.json(core의 규칙 정의)과 thresholds.json(그 skill이 기준 글로 보정한
+값)을 합친 값이다(load_thresholds). 출력 머리말의 이름은 스크립트가 든 skill 폴더 이름이다.
+
+--short는 짧은 글 모드다. thresholds.json의 short 프로필대로
 문장 단위 문체 검사만 보고, --source가 있으면 원문과 구조, 코드, URL, 숫자, 멘션,
 자리표시자가 같은지 대조한다(F 항목, 어기면 Gate).
 
@@ -23,9 +27,20 @@ import sys
 import unicodedata
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+SKILL_NAME = os.path.basename(os.path.dirname(HERE))
 PATTERNS_PATH = os.path.join(HERE, "patterns_ko.json")
+RULES_PATH = os.path.join(HERE, "rules.json")
 THRESHOLDS_PATH = os.path.join(HERE, "thresholds.json")
 LINT_SCHEMA = 1
+# skill의 thresholds.json에 두는 보정 필드. gate도 fixed도 아닌 metric에서만 skill 쪽 값이다.
+# dev/baseline/<skill>/calibrate.py가 이 필드를 사람 글 측정값으로 다시 계산한다.
+CALIBRATED_FIELDS = ("by_tone", "human", "rate_per_1k", "pass_max", "warn_max", "pass_min", "warn_min",
+                     "pass", "warn", "n", "n_eff", "exclude_sites")
+# 판정에 필요한 기준값. 없으면 그 skill의 기준 글로 아직 보정하지 않은 metric이다.
+LIMIT_FIELDS = {"poisson": ("rate_per_1k",), "upper": ("pass_max", "warn_max"),
+                "lower": ("pass_min", "warn_min"), "range": ("pass", "warn")}
+UNCALIBRATED_NOTE = "이 skill의 기준 글로 보정한 기준치가 없어 판정하지 않음"
+DEFAULT_STANDARD = "skill이 정한 기준 글"
 
 
 # ---------------------------------------------------------------- 입출력
@@ -52,6 +67,50 @@ def read_text(path):
 def load_json(path):
     with open(path, encoding="utf-8-sig") as f:
         return json.load(f)
+
+
+def _dropped(mid, drops):
+    """drop 목록의 항목이 "."으로 끝나면 그 접두어로 시작하는 metric을 모두 가리킨다."""
+    return any(mid.startswith(d) if d.endswith(".") else mid == d for d in drops)
+
+
+def load_thresholds(path=None, rules_path=None):
+    """core의 규칙 정의(rules.json)와 skill의 보정값(thresholds.json)을 합친 기준치를 돌려준다.
+
+    metric 순서는 rules.json을 따르고, metric마다 skill 쪽 필드가 rules.json의 필드를 덮어쓴다. rules.json에 없는
+    metric은 뒤에 붙는다. 최상위 키도 skill 쪽이 덮어쓴다. skill 파일의 drop(metric ID 또는 "."으로 끝나는
+    접두어)에 든 metric은 뺀다."""
+    rules = load_json(rules_path or RULES_PATH)
+    skill = load_json(path or THRESHOLDS_PATH)
+    merged = {k: v for k, v in rules.items() if k != "metrics"}
+    merged.update({k: v for k, v in skill.items() if k != "metrics"})
+    own = skill.get("metrics") or {}
+    metrics = {mid: dict(spec, **own.get(mid, {})) for mid, spec in (rules.get("metrics") or {}).items()}
+    for mid, spec in own.items():
+        if mid not in metrics:
+            metrics[mid] = dict(spec)
+    drops = merged.get("drop") or []
+    merged["metrics"] = {mid: spec for mid, spec in metrics.items() if not _dropped(mid, drops)}
+    return merged
+
+
+def split_thresholds(merged, rules=None):
+    """load_thresholds의 반대. 합친 기준치에서 rules.json과 다른 값, 곧 skill의 thresholds.json에 둘 내용만 돌려준다."""
+    rules = load_json(RULES_PATH) if rules is None else rules
+    base = rules.get("metrics") or {}
+    out = {k: v for k, v in merged.items() if k != "metrics" and (k not in rules or rules[k] != v)}
+    metrics = {}
+    for mid, spec in (merged.get("metrics") or {}).items():
+        diff = {k: v for k, v in spec.items() if mid not in base or k not in base[mid] or base[mid][k] != v}
+        if diff:
+            metrics[mid] = diff
+    out["metrics"] = metrics
+    return out
+
+
+def standard_text(thresholds):
+    """skill의 thresholds.json에 적힌 기준 글. 출력 문구에 쓴다."""
+    return (thresholds.get("skill") or {}).get("standard") or DEFAULT_STANDARD
 
 
 # ---------------------------------------------------------------- markdown 블록
@@ -1801,7 +1860,7 @@ def detect_tone(analysis):
 def tone_metrics(analysis, tone, imperative_ok=False, inga_ok=False):
     """G4 어투 혼용과 Casual 허용 변형 비율. 참고자료 절의 서지 항목("공개 URL 없음")은 문장이 아니라서 보지 않는다.
     imperative_ok(짧은 글 모드)면 Default 글의 요청문 "~해 주세요", "~하세요"도 어투에 맞는 것으로 본다.
-    inga_ok(짧은 글 모드)면 Default 글의 질문 "~인가요?"도 어투에 맞는 것으로 본다(references/short.md 4번)."""
+    inga_ok(짧은 글 모드)면 Default 글의 질문 "~인가요?"도 어투에 맞는 것으로 본다(짧은 글 모드에서 읽는 사람에게 하는 질문)."""
     off = []
     banned = []
     for s in analysis["_sentences"]:
@@ -1858,6 +1917,9 @@ def judge(value, spec, chars):
         return ("CHECK" if value > 0 else "PASS"), {}
     if kind == "gate":
         return ("GATE" if value > 0 else "PASS"), {"max": 0}
+    if any(k not in spec for k in LIMIT_FIELDS.get(kind, ())):
+        # 새 skill의 분포 지표처럼 기준 글로 보정한 값이 아직 없으면 값만 보고한다
+        return "INFO", {"note": UNCALIBRATED_NOTE}
     if kind == "poisson":
         lam = spec["rate_per_1k"] * chars / 1000.0
         floor = spec.get("_floor", 0)
@@ -1913,7 +1975,7 @@ def evaluate(analysis, thresholds, tone, max_hits=5, patterns_spec=None):
         if status not in ("PASS", "INFO") or max_hits < 0:
             r["hits"] = m["hits"][:max_hits] if max_hits >= 0 else m["hits"]
             # compact 항목(용어 설명 점검 후보)은 잘린 hit도 줄 번호와 걸린 말만 남긴다. 처음 규칙은 앞의 5개만 보여 줘서
-            # 뒤 절의 용어가 5단계 점검 목록에 오르지 않았다.
+            # 뒤 절의 용어가 초안 점검의 점검 목록에 오르지 않았다.
             if spec.get("compact") and 0 <= max_hits < len(m["hits"]):
                 r["more"] = [{"line": h["line"], "match": h.get("match", "")} for h in m["hits"][max_hits:]]
         if hint and status not in ("PASS", "INFO"):
@@ -1946,11 +2008,11 @@ def _fmt_limit(lim):
     return ""
 
 
-def render_text(path, tone, analysis, ev, show_all=False):
+def render_text(path, tone, analysis, ev, show_all=False, standard=DEFAULT_STANDARD):
     st = analysis["stats"]
     sm = ev["summary"]
     lines = [
-        f"techblog lint | {os.path.basename(path)} | tone={tone} | {st['chars']:,}자, {st['sentences']}문장, "
+        f"{SKILL_NAME} lint | {os.path.basename(path)} | tone={tone} | {st['chars']:,}자, {st['sentences']}문장, "
         f"{st['paragraphs']}문단, 헤딩 {st['headings']}개",
         f"판정: {sm['verdict']} (Gate 위반 {sm['gate_fail']}, FAIL {sm['fail']}, WARN {sm['warn']})",
     ]
@@ -1974,7 +2036,7 @@ def render_text(path, tone, analysis, ev, show_all=False):
          "필요한 주어와 목적어는 남기고, 남긴 후보의 문맥과 이유를 기록한다."),
         ([r for r in checks if r.get("group") == "ko"], True,
          "한국어 점검 후보 (판정에 들어가지 않음): 걸린 말이 references/ai-patterns.md의 \"과교정하지 않기\"에 "
-         "있는 쓰임이면 그대로 두고, 아니면 사람이 쓴 한국어 기술 블로그 글에서 사용하는 말로 고친다."),
+         f"있는 쓰임이면 그대로 두고, 아니면 {standard}에서 사용하는 말로 고친다."),
         ([r for r in checks if r.get("group") == "term"], True,
          "용어 설명 점검 후보 (판정에 들어가지 않음): 걸린 말이 처음 나온 이 문장이나 바로 다음 문장에 그 말이 "
          "무엇인지 쓴 설명이 있으면 그대로 둔다. 이름을 옮긴 말이나 약어의 풀네임뿐이면 references/style-guide.md의 "
@@ -2128,7 +2190,7 @@ def run(path, tone="auto", facts=None, thresholds_path=None, as_json=False, show
         short=False, source=None, terms=None):
     text = read_text(path)
     facts_text = read_text(facts) if facts else None
-    thresholds = load_json(thresholds_path or THRESHOLDS_PATH)
+    thresholds = load_thresholds(thresholds_path)
     patterns_spec = load_json(PATTERNS_PATH)
     if short:
         thresholds, patterns_spec = short_profile(thresholds, patterns_spec)
@@ -2143,12 +2205,12 @@ def run(path, tone="auto", facts=None, thresholds_path=None, as_json=False, show
         out = {"schema": LINT_SCHEMA, "file": path, "tone": tone, "stats": analysis["stats"],
                "endings": analysis["endings"], "results": ev["results"], "summary": ev["summary"]}
         return json.dumps(out, ensure_ascii=False, indent=1), ev["summary"]["verdict"]
-    return render_text(path, tone, analysis, ev, show_all), ev["summary"]["verdict"]
+    return render_text(path, tone, analysis, ev, show_all, standard_text(thresholds)), ev["summary"]["verdict"]
 
 
 def main(argv=None):
     setup_stdio()
-    ap = argparse.ArgumentParser(description="techblog 한국어 문체 lint")
+    ap = argparse.ArgumentParser(description=f"{SKILL_NAME} 한국어 문체 lint")
     ap.add_argument("article")
     ap.add_argument("--tone", choices=("default", "casual", "auto"), default="auto")
     ap.add_argument("--facts", help="fact sheet 경로(A15 수치 대조)")
