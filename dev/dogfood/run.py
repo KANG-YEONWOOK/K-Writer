@@ -9,7 +9,7 @@
 사용법
   python dev/dogfood/run.py --cases dev/dogfood/cases.json --iter iter-1 [--only A B] [--jobs 2]
   python dev/dogfood/run.py --iter iter-11r --revise-from iter-11 [--only B] [--jobs 1]
-    (iter-11 케이스의 초안 사본에 새 세션으로 6단계 후처리만 한다. 결과 케이스 이름은 원래 케이스와 같다.)
+    (iter-11 케이스의 초안 복사본에 새 세션으로 6단계 후처리만 한다. 결과 케이스 이름은 원래 케이스와 같다.)
 """
 
 import argparse
@@ -35,7 +35,7 @@ REVISE_PROMPT = """현재 폴더의 article.md는 techblog skill이 1~5단계(�
 
 
 def build_revise(case, run_dir, skill_dir=SKILL_DIR):
-    """다른 iteration 케이스의 초안 사본, fact sheet, 자료를 복사하고 후처리만 하는 프롬프트를 만든다."""
+    """다른 iteration 케이스의 초안 복사본, fact sheet, 자료를 복사하고 후처리만 하는 프롬프트를 만든다."""
     work = os.path.dirname(os.path.dirname(os.path.dirname(run_dir)))
     src_dir = os.path.join(work, "dogfood", case["revise_from"])
     shutil.copyfile(os.path.join(src_dir, "article.unrevised.md"), os.path.join(run_dir, "article.md"))
@@ -147,7 +147,7 @@ def main():
     # $6.75를 쓰고, 8달러 안에서는 남은 subagent 셋을 띄울 수 없다고 판단해 6단계를 줄였다.
     ap.add_argument("--budget", type=float, default=15.0)
     ap.add_argument("--timeout", type=int, default=45 * 60)
-    ap.add_argument("--revise-from", help="이 iteration의 초안 사본으로 revise 모드 케이스를 만든다")
+    ap.add_argument("--revise-from", help="이 iteration의 초안 복사본으로 revise 모드 케이스를 만든다")
     ap.add_argument("--skill-dir", help="revise 모드에서 읽을 skill 폴더(지침 버전을 고정할 때 쓴다)")
     args = ap.parse_args()
     with open(args.cases, encoding="utf-8") as f:

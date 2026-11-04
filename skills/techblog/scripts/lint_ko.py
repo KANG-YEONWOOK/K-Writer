@@ -662,7 +662,7 @@ EMDASH_CHAR_RE = re.compile("[—―]")
 SPACED_HYPHEN_RE = re.compile(r"[가-힣][)\]'\"”’]?\s+-{1,2}\s+\S|\S\s+-{1,2}\s+[가-힣]")
 POLICY_CHAR_RE = re.compile("[·•‧∙・･–‒−]")
 PAGE_RANGE_RE = re.compile(r"\d\s?[–‒—―−]\s?\d")
-# 참고자료 절의 헤딩. 헤딩 전체가 참고자료를 뜻하는 낱말일 때만 참고자료 절로 본다
+# 참고자료 절의 헤딩. 헤딩 전체가 참고자료를 뜻하는 단어일 때만 참고자료 절로 본다
 # ("데이터 출처와 전처리", "참고할 설정"은 본문 절이다).
 REF_STRONG = r"(?:참고|레퍼런스|references?|bibliography|출처|각주|(?:더\s*)?읽을\s*거리)"
 REF_HEADING_RE = re.compile(r"^\s*(?:\d+[.)]?\s*)?(?=.*" + REF_STRONG + r")"
@@ -673,7 +673,7 @@ QUESTION_HEADING_RE = re.compile(r"(\?|을까|를까|할까|일까|될까|볼까
 NUM_PARTICLE_RE = re.compile(
     r"(?<![\w.,\-/@])(\d[\d,]*(?:\.\d+)?)(%p|%)?"
     r"(?:(이에요|예요|이|가|을|를|은|는|과|와|으로|로)(?=[\s.,?!:;)\]」』”’\"']|$)|(였)(?=[가-힣]))")
-# 영문과 숫자로만 된 낱말 바로 뒤의 숫자는 영어로 읽는 이름이나 버전으로 보고 건너뛴다(Llama 3, Windows 11).
+# 영문과 숫자로만 된 단어 바로 뒤의 숫자는 영어로 읽는 이름이나 버전으로 보고 건너뛴다(Llama 3, Windows 11).
 LATIN_TOKEN_BEFORE_RE = re.compile(r"(?:^|\s)[A-Za-z][A-Za-z0-9.+\-]*\s$")
 DIGIT_FINAL = {"0": "ㅇ", "1": "ㄹ", "2": "", "3": "ㅁ", "4": "", "5": "", "6": "ㄱ", "7": "ㄹ", "8": "ㄹ", "9": ""}
 PARTICLE_ALT = {"이에요": "예요", "예요": "이에요", "이": "가", "가": "이", "을": "를", "를": "을", "은": "는",
@@ -695,13 +695,13 @@ SPECIES_ABBR_RE = re.compile(r"(?<![A-Za-z0-9_.])[A-Z]\.\s[a-z]{3,}(?![A-Za-z])"
 SPECIES_ITALIC_RE = re.compile(r"(?<![*_A-Za-z0-9])[*_]([A-Z][a-z]+ [a-z]{3,})[*_](?![*_A-Za-z0-9])")
 LATIN_PHRASES = frozenset(("In vivo", "In vitro", "In silico", "In situ", "Ex vivo", "De novo"))
 ABBR_RE = re.compile(r"(?<![A-Za-z0-9_\-])[A-Z]{2}[A-Z0-9]{0,5}(?![A-Za-z0-9_\-])")
-# 처음 나올 때 풀네임이 없어도 후보로 보여 주지 않는 대문자 낱말. 독자를 개발자로 가정하지 않으므로
+# 처음 나올 때 풀네임이 없어도 후보로 보여 주지 않는 대문자 단어. 독자를 개발자로 가정하지 않으므로
 # API, CPU, HTTP 같은 분야 약어는 넣지 않는다(자료 분야의 지식이 없을 수 있는 독자는 이 약어도 모른다).
 # GENERAL_ABBR: 분야를 공부하지 않은 사람도 생활과 뉴스에서 설명 없이 접하는 약어와 회사 이름
 GENERAL_ABBR = frozenset((
     "AI", "IT", "PC", "TV", "USB", "PDF", "DNA", "CEO", "SNS", "GPS", "ID", "OK", "ON", "OFF", "FAQ", "CCTV", "LED",
     "QR", "SMS", "MRI", "CT", "ATM", "VR", "GPT", "AMD", "IBM", "NVIDIA", "LG", "SK", "KT"))
-# CODE_WORDS: 약어가 아니라 대문자로 쓰는 낱말(SQL과 HTTP 키워드, 로그 레벨), 용량 단위, 시간대, 로마 숫자
+# CODE_WORDS: 약어가 아니라 대문자로 쓰는 단어(SQL과 HTTP 키워드, 로그 레벨), 용량 단위, 시간대, 로마 숫자
 CODE_WORDS = frozenset((
     "ALTER", "AND", "AS", "ASC", "BY", "CREATE", "DELETE", "DESC", "DISTINCT", "DROP", "EXISTS", "FALSE", "FORCE",
     "FROM", "GET", "GROUP", "HAVING", "HEAD", "IN", "INDEX", "INNER", "INSERT", "INTO", "IS", "JOIN", "LEFT", "LIKE",
@@ -754,7 +754,7 @@ def _hit(sent, match=None):
 
 
 def same_predicate_adjacent_hits(paragraphs):
-    """같은 문단의 이웃한 서술문이 같은 마지막 어절로 끝나는 검토 후보.
+    """같은 문단의 인접한 서술문이 같은 마지막 어절로 끝나는 검토 후보.
 
     형태소 분석이나 어미 분포(C_PRES 등)가 아니라 표면 어절을 비교한다. 따라서
     '점도 들어요', '라고도 말해요'도 잡되 활용이 다른 동사와 문장 안 반복은 판정하지 않는다.
@@ -850,7 +850,7 @@ def term_pairs(text):
         ko, en = m.group(1), m.group(2).strip()
         words = ko.split(" ")
         if len(words) == 2 and GLOSS_PARTICLE_RE.search(words[0]):
-            ko = words[1]  # "이 글의 망막(retina)"에서 앞 낱말은 용어가 아니다
+            ko = words[1]  # "이 글의 망막(retina)"에서 앞 단어는 용어가 아니다
         if ACRONYM_RE.match(en) or IDENTIFIER_RE.search(en) or len(en.split()) > 3 or PHRASE_END_RE.search(ko):
             continue  # 약어 정의("다중 버전 동시성 제어(MVCC)"), 식별자, 구절의 원문("시냅스 밖에서도(extrasynaptic)")
         out.append((ko, en, True, m.span()))
@@ -863,12 +863,12 @@ def term_pairs(text):
 
 
 def _latin_term_re(term):
-    # 다른 영어 낱말과 붙은 합성어("KV cache"의 cache)는 따로 세지 않는다.
+    # 다른 영어 단어와 붙은 합성어("KV cache"의 cache)는 따로 세지 않는다.
     return re.compile(r"(?<![A-Za-z0-9_\-])(?<![A-Za-z0-9] )" + re.escape(term) + r"(?! ?[A-Za-z0-9_\-])", re.I)
 
 
 def _hangul_term_re(term):
-    # 조사가 붙거나 문장 부호가 뒤따르는 낱말만 센다. "흥분성 뉴런", "인접 행렬"처럼 다른 명사 앞에 붙은 말은
+    # 조사가 붙거나 문장 부호가 뒤따르는 단어만 센다. "흥분성 뉴런", "인접 행렬"처럼 다른 명사 앞에 붙은 말은
     # 다른 개념의 합성어일 수 있어서 세지 않는다.
     return re.compile(r"(?<![가-힣])" + re.escape(term) + r"(?:" + KO_PARTICLES + r"|(?![가-힣])(?!\s[가-힣]))")
 
@@ -902,7 +902,7 @@ def term_mix_hits(units, max_hits=5):
 
 
 def avoid_terms(facts_text):
-    """fact sheet 용어 표에서 "쓰지 않을 표기" 열의 낱말을 모은다. 표가 없으면 빈 목록."""
+    """fact sheet 용어 표에서 "쓰지 않을 표기" 열의 단어를 모은다. 표가 없으면 빈 목록."""
     terms = []
     lines = facts_text.split("\n")
     for i, ln in enumerate(lines):
@@ -974,7 +974,7 @@ def _cell(cells, j):
 
 def split_terms(cell):
     """"글에 쓸 표기" 칸의 용어들. 괄호("C. elegans(예쁜꼬마선충)")를 걷어 내고, 한 행에 묶어 적은 용어
-    ("수평 세포 / 양극 세포 / amacrine 세포", "tonic spiking, burst")는 나눈다. 네 낱말이 넘는 조각은 뺀다."""
+    ("수평 세포 / 양극 세포 / amacrine 세포", "tonic spiking, burst")는 나눈다. 네 단어가 넘는 조각은 뺀다."""
     out = []
     for part in TERM_SPLIT_RE.split(PAREN_RE.sub("", cell)):
         part = part.strip().strip("`\"'“”‘’ ")
@@ -1025,7 +1025,7 @@ def _term_re(term):
     if re.fullmatch(r"[A-Za-z0-9 .'\-]+", term):
         return _latin_term_re(term)
     if re.match(r"[A-Za-z]", term):
-        # "starburst amacrine 세포"의 "amacrine 세포"처럼 다른 영어 낱말에 붙은 자리는 세지 않는다.
+        # "starburst amacrine 세포"의 "amacrine 세포"처럼 다른 영어 단어에 붙은 자리는 세지 않는다.
         return re.compile(r"(?<![A-Za-z0-9_\-])(?<![A-Za-z0-9] )" + re.escape(term), re.I)
     return re.compile(r"(?<![가-힣])" + re.escape(term))
 
@@ -1055,8 +1055,8 @@ LATIN_PHRASES_LOWER = frozenset(p.lower() for p in LATIN_PHRASES)
 
 
 def latin_runs(masked, skip_names=()):
-    """문장에서 영어 낱말이 이어진 구간(소문자로). 괄호 안, 저자(연도) 인용, 학명, 대문자 약어, 사람과 기관 이름처럼
-    모든 낱말이 대문자로 시작하는 구간, 두 글자 이하는 뺀다. skip_names: 기울임꼴 학명과 참고자료 절의 이름."""
+    """문장에서 영어 단어가 이어진 구간(소문자로). 괄호 안, 저자(연도) 인용, 학명, 대문자 약어, 사람과 기관 이름처럼
+    모든 단어가 대문자로 시작하는 구간, 두 글자 이하는 뺀다. skip_names: 기울임꼴 학명과 참고자료 절의 이름."""
     if len(MATH_SYMBOL_RE.findall(masked)) > 3:
         return []
     text = PAREN_RE.sub(" ", masked)
@@ -1067,7 +1067,7 @@ def latin_runs(masked, skip_names=()):
         whole = m.group(0).strip(" -'")
         if whole in skip_names:
             continue
-        # 대문자 약어 낱말("interneuron PVC"의 PVC)에서 구간을 나눈다. 약어는 A20.abbr_first가 본다.
+        # 대문자 약어 단어("interneuron PVC"의 PVC)에서 구간을 나눈다. 약어는 A20.abbr_first가 본다.
         groups, cur = [], []
         for w in whole.split():
             if re.fullmatch(r"[A-Z][A-Z0-9]+", w):
@@ -1091,7 +1091,7 @@ def latin_runs(masked, skip_names=()):
 
 def table_latin_vocab(facts_text):
     """용어 표의 원어, 글에 쓸 표기, 쓰지 않을 표기 칸(괄호 안 포함)에 있는 영어 구간(소문자). A20.untabled가 본문의
-    영어 낱말이 용어 표에 있는지 볼 때 쓴다."""
+    영어 단어가 용어 표에 있는지 볼 때 쓴다."""
     vocab = set()
     for _, header, cells in term_table_rows(facts_text):
         for key in ("원어", "글에 쓸", "쓰지 않을"):
@@ -1106,7 +1106,7 @@ def table_latin_vocab(facts_text):
 
 
 def untabled_hits(units, facts_text, skip_names=(), min_count=2):
-    """본문에 min_count번 이상 나오는 영어 낱말 가운데 fact sheet 용어 표에 없는 것(A20.untabled).
+    """본문에 min_count번 이상 나오는 영어 단어 가운데 fact sheet 용어 표에 없는 것(A20.untabled).
     용어 표에 없는 말은 설명할지 정한 적이 없는 말이다."""
     vocab = table_latin_vocab(facts_text)
     count, first = {}, {}
@@ -1125,8 +1125,8 @@ LIST_ADNOMINAL_RE = re.compile(r"(?:하는|되는|있는|없는|하던|되던|�
 
 
 def list_item_spans(masked):
-    """쉼표로 셋 넘게 나열한 항목의 위치(시작, 끝). 가운데 조각이 네 낱말 이하이고 서술어로 끝나지 않을 때 나열로
-    본다. 첫 조각은 끝의 네 낱말, 마지막 조각은 앞의 네 낱말만 항목으로 본다. "A, B와 C"처럼 쉼표가 하나인
+    """쉼표로 셋 넘게 나열한 항목의 위치(시작, 끝). 가운데 조각이 네 단어 이하이고 서술어로 끝나지 않을 때 나열로
+    본다. 첫 조각은 끝의 네 단어, 마지막 조각은 앞의 네 단어만 항목으로 본다. "A, B와 C"처럼 쉼표가 하나인
     나열은 보지 않는다."""
     parts, pos = [], 0
     for seg in masked.split(","):
@@ -1282,7 +1282,7 @@ NV_WRITE_OBJ = ("글", "문서", "코드", "테스트", "메시지", "리뷰", "
                 "나절", "하루", "며칠", "주일", "개월")
 # 목적어 없이 앞에 붙는 굳은 말("CPU Bound를 신경 쓰며", "인프라를 신경 쓰지 않고")
 NV_IDIOM = ("신경", "손", "애", "힘", "머리", "마음", "떼", "억지")
-# 수동 "쓰이다"의 주어가 이 낱말이면 '사용' 뜻이 아니다("시간의 상당수가 검토에 쓰입니다", "장애일지는 성실하게 쓰였고")
+# 수동 "쓰이다"의 주어가 이 단어이면 '사용' 뜻이 아니다("시간의 상당수가 검토에 쓰입니다", "장애일지는 성실하게 쓰였고")
 NV_PASSIVE_SUBJ = ("시간", "비용", "돈", "예산", "노력", "글", "문서", "일지", "일기", "기사", "논문", "책", "편지", "보고서",
                    "원고", "소설", "매뉴얼", "가이드", "답장", "후기", "회고", "칼럼")
 NV_SSEUDA = re.compile(r"(?:씁니다|써요|썼(?:습니다|어요|다|고|으며|는데|지만|던|을)?|쓴다|쓰고|쓰는|쓴|쓸|쓰면|쓰지|써서|"
@@ -1352,7 +1352,7 @@ def native_verb_hits(sentences):
             m = rx.search(s.masked)
             if m:
                 before = s.masked[:m.start()].split()
-                # 바로 앞 낱말이 쓰는 대상이면 '사용' 뜻이 아니다("손을 쓸 수 없을", "신경 쓸 수 없는")
+                # 바로 앞 단어가 쓰는 대상이면 '사용' 뜻이 아니다("손을 쓸 수 없을", "신경 쓸 수 없는")
                 prev = (before or [""])[-1]
                 bare = prev[:-1] if prev.endswith(("을", "를")) else prev
                 if bare and (bare in NV_WRITE_OBJ or (bare != prev and any(bare.endswith(w) for w in NV_WRITE_OBJ))):
@@ -1542,7 +1542,10 @@ def analyze(text, patterns_spec=None, facts_text=None):
                     break
         metrics[pid] = {"value": len(hits), "hits": hits}
 
-    # A14: 따옴표 친 영어 낱말에 이미 걸린 문장("\"likely\"라고 적었어요")은 인용 동사 항목에서 다시 세지 않는다.
+    # A5.plain_terms는 수로 판정하고 A5.plain_terms_check는 기준 안이어도 걸린 문장을 모두 보여 준다.
+    metrics["A5.plain_terms_check"] = dict(metrics["A5.plain_terms"])
+
+    # A14: 따옴표 친 영어 단어에 이미 걸린 문장("\"likely\"라고 적었어요")은 인용 동사 항목에서 다시 세지 않는다.
     quoted = {(h["line"], h["text"]) for h in metrics["A14.quoted_english_token"]["hits"]}
     for pid in ("A14.report_write", "A14.report_write_check"):
         kept = [h for h in metrics[pid]["hits"] if (h["line"], h["text"]) not in quoted]
@@ -1623,8 +1626,8 @@ def analyze(text, patterns_spec=None, facts_text=None):
     species = species_first_hits(body_units, italic_names)
     put("A20.species_first", len(species), species)
     described = described_terms(facts_text) if facts_text is not None else []
-    # 참고자료 절의 대문자로 시작하는 낱말(저자, 학술지 이름)과 기울임꼴 학명은 용어가 아니라 이름이다.
-    # "TANGO-mapping"처럼 논문 제목에 든 용어는 이름이 아니므로 첫 글자만 대문자인 낱말만 모은다.
+    # 참고자료 절의 대문자로 시작하는 단어(저자, 학술지 이름)과 기울임꼴 학명은 용어가 아니라 이름이다.
+    # "TANGO-mapping"처럼 논문 제목에 든 용어는 이름이 아니므로 첫 글자만 대문자인 단어만 모은다.
     skip_names = set(italic_names)
     for s in sentences:
         if s.in_refs:
@@ -2029,14 +2032,14 @@ def render_text(path, tone, analysis, ev, show_all=False, standard=DEFAULT_STAND
     groups = (
         ([r for r in checks if r.get("group") not in ("ko", "term", "rhythm")], False,
          "단독 읽기 점검 후보 (판정에 들어가지 않음): 이 문장과 바로 앞 문장만 읽고 무엇에 대한 말인지, "
-         "누구의 말인지, 수치가 무엇을 잰 값인지 알 수 있으면 그대로 둔다."),
+         "누구의 말인지, 수치가 무엇을 측정한 값인지 알 수 있으면 그대로 둔다."),
         ([r for r in checks if r.get("group") == "rhythm"], True,
-         "서술어 반복 점검 후보 (판정에 들어가지 않음): 이웃한 두 문장을 함께 읽는다. 반복 때문에 읽기가 "
-         "끊기고 뜻과 조건을 더 명확하게 쓸 수 있을 때만 항목을 묶거나 근거와 결과를 잇는다. 자연스러운 반복과 "
+         "서술어 반복 점검 후보 (판정에 들어가지 않음): 인접한 두 문장을 함께 읽는다. 반복 때문에 읽기가 "
+         "끊기고 의미와 조건을 더 명확하게 쓸 수 있을 때만 항목을 묶거나 근거와 결과를 잇는다. 자연스러운 반복과 "
          "필요한 주어와 목적어는 남기고, 남긴 후보의 문맥과 이유를 기록한다."),
         ([r for r in checks if r.get("group") == "ko"], True,
          "한국어 점검 후보 (판정에 들어가지 않음): 걸린 말이 references/ai-patterns.md의 \"과교정하지 않기\"에 "
-         f"있는 쓰임이면 그대로 두고, 아니면 {standard}에서 사용하는 말로 고친다."),
+         f"있는 용법이면 그대로 두고, 아니면 {standard}에서 사용하는 말로 고친다."),
         ([r for r in checks if r.get("group") == "term"], True,
          "용어 설명 점검 후보 (판정에 들어가지 않음): 걸린 말이 처음 나온 이 문장이나 바로 다음 문장에 그 말이 "
          "무엇인지 쓴 설명이 있으면 그대로 둔다. 이름을 옮긴 말이나 약어의 풀네임뿐이면 references/style-guide.md의 "
@@ -2071,7 +2074,7 @@ def render_text(path, tone, analysis, ev, show_all=False, standard=DEFAULT_STAND
 # ---------------------------------------------------------------- 짧은 글 모드
 
 def short_profile(thresholds, patterns_spec):
-    """thresholds.json의 short 프로필을 적용한 (기준치, 패턴) 사본을 돌려준다.
+    """thresholds.json의 short 프로필을 적용한 (기준치, 패턴) 복사본을 돌려준다.
     drop의 항목이 "."으로 끝나면 그 접두어로 시작하는 metric을 모두 뺀다."""
     prof = thresholds.get("short") or {}
     drops = prof.get("drop") or []

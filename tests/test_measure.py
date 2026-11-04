@@ -5,6 +5,7 @@
 import importlib.util
 import json
 import os
+import re
 import unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -128,6 +129,38 @@ class ParserTest(unittest.TestCase):
         self.assertIn("%ED%95%9C", entry["url"])
         self.assertIsNone(M.clova_entry("english", {"language": {"code": "EN"}}))
         self.assertIsNone(M.next_page_props("<html></html>"))
+
+
+class TermStatsTest(unittest.TestCase):
+    """dev/baseline/techblog/term_stats.py: plain-terms.md의 표를 만드는 정규식."""
+
+    @classmethod
+    def setUpClass(cls):
+        spec = importlib.util.spec_from_file_location(
+            "term_stats", os.path.join(ROOT, "dev", "baseline", "techblog", "term_stats.py"))
+        cls.T = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cls.T)
+        cls.rx = {label: re.compile(pattern) for label, pattern in cls.T.TERMS}
+
+    def count(self, label, text):
+        return len(self.rx[label].findall(self.T.clean(text)))
+
+    def test_pan_counts_version_only(self):
+        for text in ("Python 판과 비교합니다.", "arXiv판을 읽습니다.", "0.3.1판입니다."):
+            self.assertEqual(self.count("판(영어, 숫자 뒤)", text), 1, text)
+        self.assertEqual(self.count("판(수식어 뒤)", "이전 판으로 되돌립니다."), 1)
+        self.assertEqual(self.count("판(N번째)", "두 번째 판을 씁니다."), 1)
+        for text in ("개정판과 제2판을 읽습니다.", "버전을 판단합니다.", "CPU 판정입니다."):
+            self.assertEqual(self.count("판(영어, 숫자 뒤)", text) + self.count("판(수식어 뒤)", text), 0, text)
+
+    def test_clean_removes_code_and_quotes(self):
+        self.assertEqual(self.count("낱말", '본문 `낱말` "낱말"\n\n```\n낱말\n```\n'), 0)
+        self.assertEqual(self.count("낱말", "본문의 낱말"), 1)
+
+    def test_natural_terms_are_listed(self):
+        for label in ("버전", "단어", "의미", "쌍", "테스트", "버그", "복사본, 복제본", "중(N개 중, 이 중)", "인접한", "커버하다",
+                      "출력하다", "반환하다", "삭제하다", "제외하다", "추가하다", "강도", "헤더", "반복"):
+            self.assertIn(label, self.rx)
 
 
 if __name__ == "__main__":

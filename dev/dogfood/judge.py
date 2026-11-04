@@ -12,15 +12,15 @@
   바로 앞 문장을 읽어야 알 수 있는지(needs_prev), 앞 문장까지 읽어도 알 수 없는지(unclear)를 고른다.
   사람 글 대조군 6편(합니다체 3, 해요체 3)도 같은 방식으로 판정하고 결과를 work 폴더에 저장해 다시 쓴다.
 - korean(J5): 글의 헤딩과 모든 문장을 하나씩 보여 주고, 문장마다 자연스러움(natural)과
-  어색함(awkward, 유형 A~R 가운데 문장 하나로 판정할 수 없는 I, M 제외)을 고르게 한다. 1,000자당 어색한 문장 수를 같은 어투의 사람 글 대조군 3편과 비교한다.
+  어색함(awkward, 유형 A~R, U 중 문장 하나로 판정할 수 없는 I, M 제외)을 고르게 한다. 1,000자당 어색한 문장 수를 같은 어투의 사람 글 대조군 3편과 비교한다.
   사람 글 결과는 _korean_humans.json에 둔다.
 - terms(J10): judge가 글만 읽고 독자(자료 분야의 지식이 충분하지 않거나 없을 수 있는 사람)가 모를 수 있는 말을
-  모두 적는다. 말마다 처음 나온 문장, 글의 설명 인용, 빠진 요소(무엇인지, 하는 일, 이름의 뜻, 설명에 쓴 말, 목록에서만
+  모두 적는다. 말마다 처음 나온 문장, 글의 설명 인용, 빠진 요소(무엇인지, 하는 일, 이름의 의미, 설명에 쓴 말, 목록에서만
   소개)를 받는다. 처음 나온 문장이 본문에 없는 말은 뺀다. J10은 코드가 빠진 요소가 있는 말의 수와 중심 대상 정의로 계산한다.
   글마다 2번 실행하고, 두 실행이 빠졌다고 적은 말의 겹침(Jaccard)과 두 실행이 모두 적은 말로 계산한 J10(j10_both)을 낸다.
   사람 글 대조군 6편도 같은 방식으로 판정해 _terms_humans.json에 둔다.
 
-- within: 같은 실행의 초안 사본(article.unrevised.md)과 후처리를 마친 합니다체 글(Default는 article.md, Casual은
+- within: 같은 실행의 초안 복사본(article.unrevised.md)과 후처리를 마친 합니다체 글(Default는 article.md, Casual은
   article.draft.md)을 비교한다. 전체 pairwise, 바뀐 절만 모은 절 A/B, 문장을 맞춘 clarity, 두 글의 fidelity(걸린 주장을
   바뀐 문장과 바뀌지 않은 문장으로 나눔), 케이스마다 두 글과 사람 글 2편을 한 묶음으로 채점하는 style을 실행한다.
 - cross: 이번 iteration과 다른 iteration의 같은 케이스에서 후처리를 마친 합니다체 글끼리 pairwise로 비교한다.
@@ -106,7 +106,7 @@ FIDELITY_PROMPT = """현재 폴더의 article.md는 자료 {source}를 정리한
    - supported: 자료가 그대로 뒷받침한다.
    - unsupported: 자료에서 찾을 수 없다(지어낸 수치, 경험, 출처, 사례 포함).
    - interpretation: 글쓴이의 해석이나 추론이고, 문장에 해석·추론임이 드러나 있으며("~라면 ~할 수 있습니다", "표를 보면 ~로 읽힙니다"), 자료의 사실과 모순되지 않는다. 자료의 결론처럼 단정했다면 unsupported로 판정한다.
-   - general_knowledge: 용어를 설명하려고 쓴 일반 지식(사전, 교과서, 백과사전 수준의 정의, 이름의 뜻, 구성, 위치, 하는 일)이라 자료에 없다. 수치, 연구 결과, 연도, 인물, 평가는 일반 지식이 아니다. note에 그 내용이 사실과 맞는지 적는다.
+   - general_knowledge: 용어를 설명하려고 쓴 일반 지식(사전, 교과서, 백과사전 수준의 정의, 이름의 의미, 구성, 위치, 하는 일)이라 자료에 없다. 수치, 연구 결과, 연도, 인물, 평가는 일반 지식이 아니다. note에 그 내용이 사실과 맞는지 적는다.
    - contradicted: 자료와 다르다(수치 오류, 조건이 빠져 뜻이 바뀜, 추정을 단정으로 바꿈, 대상을 혼동함).
    note에는 판정 이유를 짧게 적으세요.
 2. coverage: 자료의 문제(problem), 방법(method), 핵심 결과(results), 한계(limitations)가 글에 있는지 각각 true/false로 적으세요.
@@ -143,7 +143,7 @@ needs_prev나 unclear이면 question에 이 문장만 읽은 독자가 갖게 �
 
 CLARITY_CONTROLS = 3  # 어투마다 사람 글 대조군 수
 
-KOREAN_TYPES = ["", "A", "B", "C", "D", "E", "F", "G", "H", "J", "K", "L", "N", "O", "P", "Q", "R"]
+KOREAN_TYPES = ["", "A", "B", "C", "D", "E", "F", "G", "H", "J", "K", "L", "N", "O", "P", "Q", "R", "U"]
 KOREAN_SCHEMA = {
     "type": "object",
     "properties": {"items": {"type": "array", "items": {"type": "object", "properties": {
@@ -175,6 +175,7 @@ KOREAN_PROMPT = """현재 폴더의 items.md에는 한국어 기술 블로그 �
   P 같은 뜻을 두 번 쓴 말(약 3억 건 정도, 다시 재시작, 과반수 이상)
   Q 헷갈리기 쉬운 말과 맞춤법(다르다를 틀리다로, 맞히다를 맞추다로, 되요, 몇일)
   R 같은 뜻에 사람이 쓴 정보 글이 더 자주 쓰는 말이 있는 동사('사용' 뜻의 쓰다는 사용하다, 재다는 측정하다, 값을 정하는 두다는 설정하다, 판단을 옮기는 "~라고 봅니다"는 추정합니다나 예상합니다)
+  U 같은 대상을 사람이 쓴 정보 글이 다른 말로 부르는 말과 물건이나 몸동작에 빗댄 말(version을 "판"으로, word를 "낱말"로, test를 "시험"으로, 행동을 못 박았습니다, 기준이 갈립니다, 같은 결의 문제)
 기술 용어를 영어로 쓴 것(latency, token bucket)과 용어 설명이 없는 것은 이 판정의 이유가 아닙니다(용어 설명은 다른 판정에서 봅니다). 바로 앞 문장을 읽어야 무엇에 대한 말인지 아는 것도 이 판정의 이유가 아닙니다(다른 판정에서 봅니다). natural이면 type과 reason은 빈 문자열로 둡니다."""
 
 KOREAN_CHUNK = 80  # judge 한 번에 보여 줄 문장 수. 모든 문장을 판정하므로 글 하나를 여러 번에 나눠 묻는다.
@@ -289,7 +290,7 @@ def run_fidelity(iter_dir, model, only=None):
             ext = os.path.splitext(src)[1]
             cand = os.path.join(d, "input" + ext)
             if not os.path.exists(cand):
-                # pasted 케이스는 자료를 프롬프트에 붙여넣고 실행 폴더의 사본을 지운다. 원본 경로에서 가져온다.
+                # pasted 케이스는 자료를 프롬프트에 붙여넣고 실행 폴더의 복사본을 지운다. 원본 경로에서 가져온다.
                 cand = src.replace("{work}", os.path.dirname(os.path.dirname(iter_dir))).replace("{root}", ROOT)
                 if not os.path.isabs(cand):
                     cand = os.path.join(ROOT, cand)
@@ -616,7 +617,7 @@ TERMS_PROMPT = """현재 폴더의 article.md는 자료 하나를 정리한 한�
 - missing: 글의 설명으로 답할 수 없는 질문을 모두 고릅니다. 없으면 빈 목록입니다.
   - what: 무엇인지(어떤 종류의 대상이고 같은 종류의 다른 대상과 무엇이 다른지)
   - does: 무엇을 하는 대상(세포, 리듬, 장치, 방법, 알고리즘)인데 그 대상이 하는 일
-  - name: 원어로 둔 이름이 낱말 뜻으로 대상을 가리킬 때(pyloric은 '유문의') 그 이름의 뜻
+  - name: 원어로 둔 이름이 단어 의미로 대상을 가리킬 때(pyloric은 '유문의') 그 이름의 의미
   - words: 설명에 쓴 말 가운데 독자가 모를 말이 설명 없이 있다
   - list_only: 여럿을 나열한 문장에서만 소개하고 뒤에서 혼자 다시 쓴다
 판정은 글의 문장만으로 합니다. 당신이 그 말을 알아도 글에 설명이 없으면 빠진 것입니다. 이름을 한국어로 옮긴 말이나 약어의 풀네임만 쓴 것은 what에 답한 것이 아닙니다.
@@ -716,7 +717,7 @@ def run_terms(iter_dir, work, model, extras=(), only=None):
     return out
 
 
-# ---------------------------------------------------------------- within: 초안 사본 대 후처리를 마친 글
+# ---------------------------------------------------------------- within: 초안 복사본 대 후처리를 마친 글
 
 SECTION_SCHEMA = {
     "type": "object",
@@ -1017,7 +1018,7 @@ def main():
     ap.add_argument("--only", nargs="*")
     ap.add_argument("--extra", action="append", default=[], help="clarity, korean, terms만 판정할 추가 글: 이름=경로")
     ap.add_argument("--human-cache", help="사람 글 캐시 폴더(measure.py collect --cache). 없으면 {work}/baseline/cache")
-    ap.add_argument("--within", action="store_true", help="초안 사본과 후처리를 마친 글을 비교한다")
+    ap.add_argument("--within", action="store_true", help="초안 복사본과 후처리를 마친 글을 비교한다")
     ap.add_argument("--cross", help="다른 iteration의 같은 케이스와 후처리를 마친 글끼리 비교한다")
     args = ap.parse_args()
     global HUMAN_CACHE

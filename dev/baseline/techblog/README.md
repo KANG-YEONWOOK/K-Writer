@@ -338,7 +338,7 @@ lint 항목은 사용자가 고친 문장 447개 중 십여 개만 잡는다. �
 - 비교 글(1,000자당 A5.native_verbs / A7.see_judgment): 3주차 노트 14편 0.87 / 0.26, 예시 글(Skill-Techblog 0.4.0) 2.40 / 0.44, Skill-Techblog 0.8.0 실행 글 0.72 / 0.45. 이 예시 글은 두 항목 모두 FAIL이었다. 예시 글을 Skill-Techblog 0.9.0 실행 결과로 바꾼 뒤에는 `tests/test_lint_ko.py`의 예시 글 회귀 시험이 두 항목까지 판정한다. 새 예시 글(Casual)은 A5.native_verbs 2곳, A7.see_judgment 0곳이다.
 
 
-## 이웃한 서술어 반복 후보 (2026-10-20)
+## 인접한 서술어 반복 후보 (2026-10-20)
 
 2026-10-20에 `A8.same_predicate_adjacent`를 추가했다. 같은 문단의 실제 이웃한 두 서술문이 같은 마지막 어절로 끝나는 쌍을 센다. `점도 들어요`, `라고도 말해요`도 마지막 어절로 비교한다. 목록, 표, 인용 블록, 참고 자료 절과 문단 경계는 제외하고, 질문이나 명령, 명사구가 사이에 있으면 그 문장을 건너뛰어 비교하지 않는다. 반복 어절을 포함한 앞뒤 문장을 출력한다. 문장 안의 반복과 활용이 다른 동사는 한국어 점검에서 읽는다.
 
@@ -364,6 +364,23 @@ python dev/baseline/predicate_stats.py --cache <캐시> --out dev/baseline/predi
 
 따라서 새 항목에 PASS/WARN/FAIL 임계값을 만들지 않았다. `thresholds.json`의 human 값은 기준용 66편의 분포 참고값이다. 사람이 문맥을 읽어 뜻과 조건을 더 명확하게 쓸 수 있는 후보만 고치며, 남긴 후보의 문맥과 이유를 기록한다. 사용자 보강안의 수정 기록 수는 이 항목의 측정값으로 사용하지 않았다.
 
+
+## 같은 대상을 부르는 말 (2026-11-04)
+
+2026-11-04에 `A6.version_pan`, `A5.plain_terms`, `A5.plain_terms_check`, `A6.metaphor_check`를 추가했다. 사용자는 AI 글이 version을 "판"으로 쓰는 것을 지적하고, 같은 종류의 표현을 AI 글쓰기 자료에서 모아 이 플러그인의 글에 나오지 않게 해 달라고 했다. 자료 목록, 횟수 표, 항목별 판정을 정한 이유는 [plain-terms.md](plain-terms.md)에 있다.
+
+- 명령: `python dev/baseline/techblog/ko_stats.py --cache docs/corpus --no-holdout --rates --samples 0 --groups default casual mid-default mid-casual drift-default drift-casual`. 표면형 횟수는 `term_stats.py`로 잰다.
+
+| 항목 | default 101편 | casual 13편 | mid-default 82편 | mid-casual 16편 | drift-default 162편 | drift-casual 42편 |
+|---|---|---|---|---|---|---|
+| A6.version_pan(문장) | 0 | 0 | 0 | 0 | 0 | 0 |
+| A5.plain_terms(문장) | 5 | 0 | 2 | 0 | 28 | 6 |
+| A6.metaphor_check(문장) | 2 | 0 | 1 | 0 | 19 | 7 |
+
+- holdout과 해라체 글을 포함한 600편에서도 A6.version_pan은 0곳이다. 그래서 policy로 둔다.
+- `A5.plain_terms`의 기준은 default 101편(holdout 제외, 466,610자)의 5문장으로 계산한 1,000자당 0.011이다. `pass_q` 0.975, `warn_q` 0.9999로 두면 11,000자 글은 PASS 1곳, WARN 3곳까지다. 처음 정규식은 "~라는 뜻입니다", "시험 삼아", "예시를 짝지어", "걸음수 세기", "여럿", "쓰임"도 세서 default에서 16문장이 걸렸다. 걸린 문장을 모두 읽어 사람 글이 자연스럽게 쓰는 형태를 뺐다.
+- `--verdicts`로 판정한 사람 글(합니다체, 해요체 그룹)에서 세 항목의 WARN과 FAIL은 0편이고, 기준 기간 holdout 31편 중 28편이 통과한다(90%, 이전과 같다).
+- 2025년 이후 글에서 값이 큰 이유는 측정하지 않았다. 글쓰기에 AI를 사용했는지 확인할 수 없어서 원인으로 적지 않는다.
 
 ## 주어, 목적어와 어울리지 않는 서술어 (2026-11-02)
 

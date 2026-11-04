@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""K-Writer 후처리 보조: 초안 사본 만들기, 다시 읽을 반복 후보 찾기, 후처리 전후 비교, 고친 문장 점검.
+"""K-Writer 후처리 보조: 초안 복사본 만들기, 다시 읽을 반복 후보 찾기, 후처리 전후 비교, 고친 문장 점검.
 
 이 파일의 원본은 저장소의 core/scripts/revise_ko.py이고, dev/sync_core.py가 skill마다 skills/<이름>/scripts/에 복사한다.
 출력 머리말의 이름은 스크립트가 든 skill 폴더 이름이다.
@@ -12,20 +12,20 @@
   python revise_ko.py audit ARTICLE [--base FILE] [--facts FACTS.md] [--out FILE] [--json]
 
 ARTICLE은 후처리할 합니다체 글이다. Default 글이면 출력 파일(<이름>.md), Casual 글이면 Default 초안
-(<이름>.draft.md)이다. 초안 사본(<이름>.unrevised.md), 수정 전 사본(<이름>.pre-fix.md), fact sheet(<이름>.facts.md)의
+(<이름>.draft.md)이다. 초안 복사본(<이름>.unrevised.md), 수정 전 복사본(<이름>.pre-fix.md), fact sheet(<이름>.facts.md)의
 경로는 ARTICLE 이름에서 정한다.
 
-- start: ARTICLE을 초안 사본으로 복사하고, 반복 후보를 <이름>.repeats.md에 적는다. 후처리를 맡은 subagent에
-  Bash 권한이 없어도 후보를 Read로 볼 수 있게 하려는 파일이다. 사본이 이미 있으면 --force 없이는 덮어쓰지 않는다.
-  이전 후처리에서 남은 수정 전 사본은 지운다.
+- start: ARTICLE을 초안 복사본으로 복사하고, 반복 후보를 <이름>.repeats.md에 적는다. 후처리를 맡은 subagent에
+  Bash 권한이 없어도 후보를 Read로 볼 수 있게 하려는 파일이다. 복사본이 이미 있으면 --force 없이는 덮어쓰지 않는다.
+  이전 후처리에서 남은 수정 전 복사본은 지운다.
 - repeats: 다시 읽을 위치(반복 후보)를 출력한다. 판정은 하지 않는다. 후보마다 이 글의 독자에게 필요한
   반복인지는 글쓴이가 판단한다.
-- check: 초안 사본과 ARTICLE을 비교한다. 바뀐 문장 수, 초안에만 있는 수치와 새 수치, 헤딩과 코드와 표의 변경,
+- check: 초안 복사본과 ARTICLE을 비교한다. 바뀐 문장 수, 초안에만 있는 수치와 새 수치, 헤딩과 코드와 표의 변경,
   lint 상태가 나빠진 항목, 연결어미가 3개 이상인 새 문장을 출력한다.
-- mark: 수정 후 검토에서 지적된 곳을 고치기 전에 ARTICLE을 수정 전 사본으로 복사한다(있으면 덮어쓴다).
-- audit: 비교할 사본(--base, 없으면 수정 전 사본, 그것도 없으면 초안 사본)과 ARTICLE을 문장, 헤딩, 표의 행
+- mark: 수정 후 검토에서 지적된 곳을 고치기 전에 ARTICLE을 수정 전 복사본으로 복사한다(있으면 덮어쓴다).
+- audit: 비교할 복사본(--base, 없으면 수정 전 복사본, 그것도 없으면 초안 복사본)과 ARTICLE을 문장, 헤딩, 표의 행
   단위로 비교한다. 바뀌거나 새로 쓴 단위마다 수정 후 검토자가 묻는 질문(T, F, C, X, 같은 사실, S)과 답할 때 볼
-  자리를 출력한다. 볼 자리는 앞 문장과 뒤 문장, 지시어, 글에서 처음 나오는 말, "…" 절로 가리킨 절의 줄 범위와
+  위치를 출력한다. 볼 위치는 앞 문장과 뒤 문장, 지시어, 글에서 처음 나오는 말, "…" 절로 가리킨 절의 줄 범위와
   그 절에 없는 말, 수치가 나오는 다른 줄과 fact sheet 줄, 근거 후보 fact sheet 줄, 이유와 범위의 표지, 쉼표로
   나열한 항목 수, 목적어와 서술어의 짝, 서술어 하나가 받는 여러 주어나 목적어, 이름이 겹치는 정의, 고치기 전
   표현이 남은 줄, 그 단위에서 lint가 센 표현이다. 판정은 하지 않는다. --out이 있으면 결과를 그 파일에 쓴다.
@@ -215,7 +215,7 @@ def find_repeats(text):
         cands.append({"id": "R7", "item": 3, "lines": [prev["line"], hit["line"]],
                       "section": "", "text": prev["text"] + " " + hit["text"],
                       "previous": prev, "predicate": hit["match"],
-                      "label": f"이웃한 같은 서술어 «{hit['match']}» (문맥 검토)"})
+                      "label": f"인접한 같은 서술어 «{hit['match']}» (문맥 검토)"})
 
     # R6 비교 기준 없는 변화량
     for idx, r in enumerate(recs):
@@ -248,7 +248,7 @@ def find_repeats(text):
         if len(idxs) >= 3 or adjacent >= 1:
             cands.append({"id": "R1", "item": 1, "lines": [recs[i]["line"] for i in idxs], "section": "",
                           "text": recs[idxs[0]]["text"], "key": k, "count": len(idxs), "adjacent": adjacent,
-                          "label": f"같은 비교 기준 «{k}» {len(idxs)}문장" + (f", 이웃 문장 {adjacent}쌍" if adjacent else "")})
+                          "label": f"같은 비교 기준 «{k}» {len(idxs)}문장" + (f", 인접한 문장 {adjacent}쌍" if adjacent else "")})
 
     # R4 같은 문형: (첫 어절, 마지막 어절) 쌍이 3회 이상, 같은 마지막 어절이 3문장 연속
     frames = {}
@@ -431,7 +431,7 @@ def _fmt_metric(r):
 def render_check(snap, path, res):
     st = res["structure"]
     lb, la = res["lint_before"], res["lint_after"]
-    lines = [f"{SKILL_NAME} check | 초안 사본 {os.path.basename(snap)} → {os.path.basename(path)}"]
+    lines = [f"{SKILL_NAME} check | 초안 복사본 {os.path.basename(snap)} → {os.path.basename(path)}"]
     lines.append(f"문장: 초안 {res['sentences'][0]}문장 중 {res['kept']}문장 그대로, {res['changed']}문장 고치거나 지움"
                  f"({res['changed_share'] * 100:.1f}%), 새로 쓴 문장 {res['written']}개")
     if res["changed_share"] > CHANGED_SHARE_RECHECK:
@@ -476,7 +476,7 @@ def render_check(snap, path, res):
     if not (res["gate_fail"] or res["worse_ai"] or res["worse_dist"]):
         lines.append("  나빠진 항목 없음")
     if res["predicate_candidates"]:
-        lines.append("  이웃한 서술어 반복 후보(자동 수정 아님. 문맥을 읽고 고치거나 남긴 이유를 기록한다):")
+        lines.append("  인접한 서술어 반복 후보(자동 수정 아님. 문맥을 읽고 고치거나 남긴 이유를 기록한다):")
         for h in res["predicate_candidates"]:
             lines.append(f"    L{h['previous']['line']} → L{h['line']} «{h['match']}»: "
                          f"{h['previous']['text']} {h['text']}")
@@ -514,7 +514,7 @@ FORWARD_WORDS = ("아래", "다음")
 NUMERAL_DET = ("두", "세", "네")  # "두 값", "세 항목"처럼 앞에서 센 대상을 다시 가리키는 말
 COUNTERS = ("개", "편", "곳", "가지", "번", "명", "건", "줄", "문장", "단계", "차례", "쌍", "종", "회", "배", "글자",
             "자", "쪽", "장", "권")
-# 조사를 더 넓게 뗄 때 쓰는 목록(낱말 하나짜리 표현의 길이를 잴 때만 쓴다).
+# 조사를 더 넓게 뗄 때 쓰는 목록(단어 하나짜리 표현의 길이를 잴 때만 쓴다).
 EXTRA_PARTICLES = ("이나", "이라는", "라는", "이란", "이며", "이고", "으로서", "로서", "으로써", "로써", "에게", "한테",
                    "이라고", "라고", "이라", "이든", "마저", "조차", "밖에", "도", "만", "나", "란")
 # 이유와 목적을 말하는 표지. "~어서", "~아서"는 아래 _causal_seo로 찾는다.
@@ -525,7 +525,7 @@ LEFTOVER_MAX_UNITS = 6  # 고치기 전 표현이 이보다 많은 단위에 있
 SCOPE_EXACT = ("모두", "모든", "전부", "전체", "항상", "언제나", "늘", "대부분", "오직", "유일", "가운데", "중", "각",
                "이상", "이하", "미만", "초과", "등")
 SCOPE_ENDS = ("처럼", "부터", "까지", "마다", "로만", "에만", "에서만", "만으로", "뿐")
-# 과/와로 끝나는 명사. 이 낱말 뒤의 "과", "와"는 나열 조사가 아니다.
+# 과/와로 끝나는 명사. 이 단어 뒤의 "과", "와"는 나열 조사가 아니다.
 COORD_NOUN_END = ("결과", "효과", "성과", "통과", "초과", "경과", "학과", "사과", "부과", "교과")
 GA_NOUNS = ("평가", "추가", "증가", "대가", "단가", "원가", "주가", "전문가", "작가", "국가", "휴가", "부가", "참가",
             "허가")
@@ -589,8 +589,8 @@ def _stem(word):
 
 
 def _words(masked):
-    """따옴표와 인라인 코드를 뺀 글에서 낱말을 뽑아 (원래 꼴, 비교할 꼴)로 돌려준다. 비교할 꼴은 소문자로 바꾸고
-    조사와 "~했습니다" 같은 끝을 뗀 것이다. 괄호는 낱말을 나누는 자리로 본다("도입(H2로" → "도입", "H2로")."""
+    """따옴표와 인라인 코드를 뺀 글에서 단어를 뽑아 (원래 꼴, 비교할 꼴)로 돌려준다. 비교할 꼴은 소문자로 바꾸고
+    조사와 "~했습니다" 같은 끝을 뗀 것이다. 괄호는 단어를 나누는 자리로 본다("도입(H2로" → "도입", "H2로")."""
     out = []
     for raw in WORD_RE.findall(L.PH_RE.sub(" ", masked)):
         out.append((raw, _stem(_bare(raw.lower()))))
@@ -689,7 +689,7 @@ def _role(tok):
 
 
 def coordinated(toks):
-    """"A와 … B가(를)"처럼 서술어 하나가 주어나 목적어 둘 이상을 받는 곳과 그 서술어. B는 A 뒤 여섯 낱말 안에서 찾는다."""
+    """"A와 … B가(를)"처럼 서술어 하나가 주어나 목적어 둘 이상을 받는 곳과 그 서술어. B는 A 뒤 여섯 단어 안에서 찾는다."""
     out = []
     clean = _clean_toks(toks)
     i = 0
@@ -711,14 +711,14 @@ def coordinated(toks):
 
 
 FINAL_ENDINGS = ("다", "요", "까", "기", "음")
-# 명사를 꾸미는 꼴의 끝. 받침 ㄴ으로 끝나는 명사(원인, 확인, 기간, 사본)와 겹치는 "인", "간", "본"은 넣지 않는다.
+# 명사를 꾸미는 꼴의 끝. 받침 ㄴ으로 끝나는 명사(원인, 확인, 기간, 복사본)와 겹치는 "인", "간", "본"은 넣지 않는다.
 ADNOMINAL_ENDS = ("는", "던", "한", "된", "할", "될", "든", "른", "운", "쓴", "친", "진", "난", "온")
 # 서술어 어미처럼 보이는 조사("보다", "와", "가")로 끝나는 꼴
 PARTICLE_ENDS = ("에서", "께서", "보다", "부터", "까지", "처럼", "마다", "에다", "에게", "한테")
 
 
 def _verb_form(tok):
-    """서술어 꼴인지: 문장을 끝내거나 잇는 어미, 명사를 꾸미는 꼴, "~기", "~아/~어"로 끝나는 낱말."""
+    """서술어 꼴인지: 문장을 끝내거나 잇는 어미, 명사를 꾸미는 꼴, "~기", "~아/~어"로 끝나는 단어."""
     if len(tok) < 2 or not L.HANGUL_RE.match(tok[-1]) or tok.endswith(PARTICLE_ENDS):
         return False
     if tok.endswith(FINAL_ENDINGS) or L.is_connective(tok) or tok.endswith(ADNOMINAL_ENDS):
@@ -729,7 +729,7 @@ def _verb_form(tok):
 
 
 def object_verbs(toks):
-    """목적어(~을, ~를)와 그 뒤에 처음 나오는 서술어 꼴 낱말의 짝. 목적어 앞 낱말 하나를 함께 보여 준다."""
+    """목적어(~을, ~를)와 그 뒤에 처음 나오는 서술어 꼴 단어의 짝. 목적어 앞 단어 하나를 함께 보여 준다."""
     clean = _clean_toks(toks)
     out = []
     for i, t in enumerate(clean):
@@ -744,7 +744,7 @@ def object_verbs(toks):
 
 
 def list_items(raw_toks):
-    """쉼표로 나열한 항목 수. 괄호 밖 낱말 뒤의 쉼표만 세고 연결어미 뒤의 쉼표는 세지 않는다. 쉼표가 둘 이상일 때만 돌려준다."""
+    """쉼표로 나열한 항목 수. 괄호 밖 단어 뒤의 쉼표만 세고 연결어미 뒤의 쉼표는 세지 않는다. 쉼표가 둘 이상일 때만 돌려준다."""
     n = 0
     for t in raw_toks:
         if t.endswith((",", "，")):
@@ -755,7 +755,7 @@ def list_items(raw_toks):
 
 
 def _mention_candidate(raw, norm):
-    """처음 나오는 말로 보여 줄 낱말인지. 조사를 뗀 꼴(norm)로 서술어 꼴과 부사를 거른다("기준치는"은 "기준치"로 본다)."""
+    """처음 나오는 말로 보여 줄 단어인지. 조사를 뗀 꼴(norm)로 서술어 꼴과 부사를 거른다("기준치는"은 "기준치"로 본다)."""
     if len(norm) < 2 or norm in ADVERBS or raw in ADVERBS:
         return False
     if re.fullmatch(r"[가-힣]+", norm):
@@ -764,7 +764,7 @@ def _mention_candidate(raw, norm):
 
 
 def first_mentions(units, idx, limit=8):
-    """units[idx]의 낱말 가운데 글의 앞 단위에 한 번도 나오지 않은 말. 서술어 꼴, 부사, 한 글자 낱말은 뺀다."""
+    """units[idx]의 단어 가운데 글의 앞 단위에 한 번도 나오지 않은 말. 서술어 꼴, 부사, 한 글자 단어는 뺀다."""
     seen = set()
     for u in units[:idx]:
         seen.update(norm for _, norm in u["words"])
@@ -818,7 +818,7 @@ LOCATION_REF_RE = re.compile(r"\d[\d,]*(?:\s*[~\-–]\s*\d[\d,]*)?\s*(?:줄|쪽|
 
 
 def facts_rows(facts_text):
-    """fact sheet의 줄마다 수치와 내용 낱말. 표 구분 줄과 빈 줄은 뺀다. 자료 위치("22~35줄", "8쪽")의 숫자는 수치로 세지 않는다."""
+    """fact sheet의 줄마다 수치와 내용 단어. 표 구분 줄과 빈 줄은 뺀다. 자료 위치("22~35줄", "8쪽")의 숫자는 수치로 세지 않는다."""
     rows = []
     for n, line in enumerate(facts_text.split("\n"), 1):
         if not line.strip() or L.TABLE_DELIM_RE.match(line):
@@ -838,7 +838,7 @@ def _idf(df, key, total):
 
 
 def fact_candidates(unit, rows, df, top=2):
-    """이 문장의 수치나 드문 낱말을 함께 쓴 fact sheet 줄. 수치를 하나 이상 같이 쓰거나 낱말 점수가 기준을 넘는 줄만 고른다."""
+    """이 문장의 수치나 드문 단어를 함께 쓴 fact sheet 줄. 수치를 하나 이상 같이 쓰거나 단어 점수가 기준을 넘는 줄만 고른다."""
     nums = {k for k, _ in _audit_numbers(unit["clean"])}
     keys = _content_keys(unit["clean"])
     total = len(rows)
@@ -888,7 +888,7 @@ def _find_phrase(units, phrase, skip):
 
 
 def removed_phrases(old_units, new_units):
-    """고치기 전 문장에만 있던 표현. 서술어 꼴 낱말에서 끊고, 두 낱말 짝과 한 낱말(영문이나 숫자가 든 말, 조사를
+    """고치기 전 문장에만 있던 표현. 서술어 꼴 단어에서 끊고, 두 단어 짝과 한 단어(영문이나 숫자가 든 말, 조사를
     뗀 길이가 세 글자 이상인 말, "이번", "기존" 같은 시점의 말)을 돌려준다."""
     gone = set(k for u in old_units for k in u["keys"]) - set(k for u in new_units for k in u["keys"])
     out = []
@@ -913,8 +913,8 @@ def removed_phrases(old_units, new_units):
 
 
 def defined_names(unit):
-    """"이름(설명)" 꼴로 괄호 바로 앞에 붙여 쓴 이름. 괄호 앞 다섯 낱말까지를 이름으로 보고, 쉼표가 붙은 낱말이나
-    문장을 끝내거나 잇는 서술어에서 멈춘다. 돌려주는 값: (이름 낱말 목록, 괄호 안 글)."""
+    """"이름(설명)" 꼴로 괄호 바로 앞에 붙여 쓴 이름. 괄호 앞 다섯 단어까지를 이름으로 보고, 쉼표가 붙은 단어이나
+    문장을 끝내거나 잇는 서술어에서 멈춘다. 돌려주는 값: (이름 단어 목록, 괄호 안 글)."""
     out = []
     s = unit["clean"]
     for m in re.finditer(r"\(([^()]{2,120})\)", s):
@@ -939,7 +939,7 @@ def defined_names(unit):
 
 
 def name_overlaps(units, idx):
-    """units[idx]가 정의한 이름과 마지막 낱말이 같고 낱말을 둘 이상 함께 쓰는 다른 정의(괄호 안 글이 다른 것)."""
+    """units[idx]가 정의한 이름과 마지막 단어가 같고 단어를 둘 이상 함께 쓰는 다른 정의(괄호 안 글이 다른 것)."""
     found = []
     mine = defined_names(units[idx])
     if not mine:
@@ -1031,13 +1031,13 @@ AUDIT_GUIDE = (
     "이어받는가(앞 문장)",
     "  C 서술어: 서술어마다 주어와 목적어를 붙여 읽으면 무슨 일이 일어났다는 말인지 한 가지로 답할 수 있는가"
     "(목적어와 서술어, 함께 받는 서술어)",
-    "  X 사실: 값, 조건(모집단, 기간, 뺀 것과 예외, 판단 기준), 이유, 범위가 근거 후보 행과 그 행의 자료 원문과 같은가. "
+    "  X 사실: 값, 조건(모집단, 기간, 제외한 것과 예외, 판단 기준), 이유, 범위가 근거 후보 행과 그 행의 자료 원문과 같은가. "
     "글의 말이 원문보다 강하거나 넓지 않은가(후보를 근거로, 일부를 전체로). 합계를 부르는 이름이 합계의 항목 모두에 맞는가. "
     "나열과 \"무엇이 바뀌었다\" 같은 묶음 전체의 말은 원문 목록과 한 항목씩 대조했는가. 일부면 예임을 밝혔는가"
     "(수치, 근거 후보, 이유·목적, 범위, 나열, 함께 받는 서술어)",
     "  같은 사실: 같은 수치, 같은 이름, 고치기 전 표현을 쓴 다른 줄도 같은 대상과 조건을 말하는가. 한 이름이 두 대상을 "
     "가리키지 않는가(수치, 고치기 전 표현, 이름이 겹치는 정의)",
-    "  S 반복: 바뀐 문장과 이웃 문장이 같은 서술어나 같은 문형으로 이어져 읽기를 끊지 않는가(앞 문장, 뒤 문장)",
+    "  S 반복: 바뀐 문장과 인접한 문장이 같은 서술어나 같은 문형으로 이어져 읽기를 끊지 않는가(앞 문장, 뒤 문장)",
 )
 
 
@@ -1135,19 +1135,19 @@ def render_audit(base, path, res):
 def cmd_start(args):
     snap = snapshot_path(args.article)
     if os.path.exists(snap) and not args.force:
-        print(f"초안 사본이 이미 있습니다: {snap}. 후처리를 처음부터 다시 하려면 --force를 붙입니다.", file=sys.stderr)
+        print(f"초안 복사본이 이미 있습니다: {snap}. 후처리를 처음부터 다시 하려면 --force를 붙입니다.", file=sys.stderr)
         return 2
     shutil.copyfile(args.article, snap)
     mp = mark_path(args.article)
     if os.path.exists(mp):
-        os.remove(mp)  # 이전 후처리의 수정 전 사본. 남겨 두면 audit가 이 사본을 기준으로 삼는다.
-        print(f"이전 후처리의 수정 전 사본을 지웠습니다: {mp}")
+        os.remove(mp)  # 이전 후처리의 수정 전 복사본. 남겨 두면 audit가 이 복사본을 기준으로 삼는다.
+        print(f"이전 후처리의 수정 전 복사본을 지웠습니다: {mp}")
     text = L.read_text(args.article)
     st = L.analyze(text)["stats"]
     rp = repeats_path(args.article)
     with open(rp, "w", encoding="utf-8") as f:
         f.write(render_repeats(args.article, find_repeats(text)) + "\n")
-    print(f"초안 사본: {snap} ({st['sentences']}문장, {st['chars']:,}자). 후처리는 {args.article}을 고친다.")
+    print(f"초안 복사본: {snap} ({st['sentences']}문장, {st['chars']:,}자). 후처리는 {args.article}을 고친다.")
     print(f"반복 후보 파일: {rp}. 글을 처음부터 끝까지 읽고 멈출 곳을 적은 뒤에 연다.")
     return 0
 
@@ -1156,7 +1156,7 @@ def cmd_mark(args):
     mp = mark_path(args.article)
     shutil.copyfile(args.article, mp)
     st = L.analyze(L.read_text(args.article))["stats"]
-    print(f"수정 전 사본: {mp} ({st['sentences']}문장). 고친 뒤 audit를 실행하면 이 사본과 비교한다.")
+    print(f"수정 전 복사본: {mp} ({st['sentences']}문장). 고친 뒤 audit를 실행하면 이 복사본과 비교한다.")
     return 0
 
 
@@ -1168,11 +1168,11 @@ def cmd_audit(args):
     else:
         base = snapshot_path(args.article)
     if not os.path.isfile(base):
-        print(f"비교할 사본이 없습니다: {base}. 고치기 전에 mark를 실행하거나 --base로 고치기 전 글을 줍니다.",
+        print(f"비교할 복사본이 없습니다: {base}. 고치기 전에 mark를 실행하거나 --base로 고치기 전 글을 줍니다.",
               file=sys.stderr)
         return 2
     if args.out and os.path.abspath(args.out) in (os.path.abspath(args.article), os.path.abspath(base)):
-        print(f"--out에는 글이나 비교할 사본이 아닌 새 파일 경로를 줍니다: {args.out}", file=sys.stderr)
+        print(f"--out에는 글이나 비교할 복사본이 아닌 새 파일 경로를 줍니다: {args.out}", file=sys.stderr)
         return 2
     fp = args.facts or facts_path(args.article)
     facts_text = L.read_text(fp) if os.path.isfile(fp) else None
@@ -1206,7 +1206,7 @@ def cmd_repeats(args):
 def cmd_check(args):
     snap = snapshot_path(args.article)
     if not os.path.isfile(snap):
-        print(f"초안 사본이 없습니다: {snap}. 후처리를 시작할 때 start를 먼저 실행합니다.", file=sys.stderr)
+        print(f"초안 복사본이 없습니다: {snap}. 후처리를 시작할 때 start를 먼저 실행합니다.", file=sys.stderr)
         return 2
     fp = args.facts or facts_path(args.article)
     facts_text = L.read_text(fp) if os.path.isfile(fp) else None
@@ -1226,18 +1226,18 @@ def main(argv=None):
     L.setup_stdio()
     ap = argparse.ArgumentParser(description=f"{SKILL_NAME} 후처리 보조")
     sub = ap.add_subparsers(dest="cmd", required=True)
-    p = sub.add_parser("start", help="초안 사본을 만든다")
+    p = sub.add_parser("start", help="초안 복사본을 만든다")
     p.add_argument("article")
     p.add_argument("--force", action="store_true")
     p = sub.add_parser("repeats", help="다시 읽을 반복 후보를 출력한다")
     p.add_argument("article")
     p.add_argument("--all", action="store_true")
     p.add_argument("--json", action="store_true")
-    p = sub.add_parser("check", help="초안 사본과 비교한다")
+    p = sub.add_parser("check", help="초안 복사본과 비교한다")
     p.add_argument("article")
     p.add_argument("--facts")
     p.add_argument("--json", action="store_true")
-    p = sub.add_parser("mark", help="고치기 전 사본을 만든다")
+    p = sub.add_parser("mark", help="고치기 전 복사본을 만든다")
     p.add_argument("article")
     p = sub.add_parser("audit", help="고친 문장마다 확인할 자리를 출력한다")
     p.add_argument("article")

@@ -66,6 +66,14 @@ class ShortModeTest(unittest.TestCase):
         report, verdict = self.lint(GOOD)
         self.assertEqual(verdict, "PASS", self.failed(report))
 
+    def test_version_written_as_pan_fails_in_short_mode(self):
+        source = "The old version failed. The new version passed every test.\n"
+        report, verdict = self.lint("이전 판은 실패했습니다. 새 판은 모든 테스트를 통과했습니다.\n", source=source)
+        self.assertEqual(verdict, "FAIL")
+        self.assertIn("A6.version_pan", self.failed(report))
+        _, verdict = self.lint("이전 버전은 실패했습니다. 새 버전은 모든 테스트를 통과했습니다.\n", source=source)
+        self.assertEqual(verdict, "PASS")
+
     def test_direct_address_and_requests_are_allowed_only_in_short_mode(self):
         ko = self.write("good.md", GOOD)
         _, article = L.run(ko, "default")

@@ -4,7 +4,7 @@ description: 전달받은 자료(논문 PDF, 문서 PDF, 마크다운, URL, 붙�
 license: MIT
 allowed-tools: Read Write Edit Glob Grep WebFetch WebSearch Agent Bash(python "${CLAUDE_SKILL_DIR}/scripts/*) Bash(python ${CLAUDE_SKILL_DIR}/scripts/*) Bash(python3 "${CLAUDE_SKILL_DIR}/scripts/*) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/*)
 metadata:
-  version: "0.3.1"
+  version: "0.4.0"
   repository: https://github.com/KANG-YEONWOOK/K-Writer
 ---
 
@@ -27,7 +27,7 @@ Codex에서는 `$techblog`와 함께 보낸 사용자 요청을 입력으로 삼
 ## 파일
 
 - 글은 `<이름>.md`에 저장한다.
-- 작업 파일은 출력 파일과 같은 폴더에 만든다. fact sheet는 `<이름>.facts.md`이고, Casual 글을 쓸 때만 만드는 Default 초안은 `<이름>.draft.md`다. 6단계를 시작할 때 스크립트가 후처리 전 초안을 `<이름>.unrevised.md`에 복사하고 반복 후보를 `<이름>.repeats.md`에 적는다. 독자 점검 결과는 `<이름>.reader.md`, 수정 후 검토의 점검 목록은 `<이름>.audit.md`, 지적을 반영하기 전 글의 사본은 `<이름>.pre-fix.md`다. 작업 파일은 8단계에서 지운다.
+- 작업 파일은 출력 파일과 같은 폴더에 만든다. fact sheet는 `<이름>.facts.md`이고, Casual 글을 쓸 때만 만드는 Default 초안은 `<이름>.draft.md`다. 6단계를 시작할 때 스크립트가 후처리 전 초안을 `<이름>.unrevised.md`에 복사하고 반복 후보를 `<이름>.repeats.md`에 적는다. 독자 점검 결과는 `<이름>.reader.md`, 수정 후 검토의 점검 목록은 `<이름>.audit.md`, 지적을 반영하기 전 글의 복사본은 `<이름>.pre-fix.md`다. 작업 파일은 8단계에서 삭제한다.
 - 후처리 대상은 합니다체 글이다. Default 글이면 출력 파일 `<이름>.md`, Casual 글이면 Default 초안 `<이름>.draft.md`다.
 
 ## 작업 순서와 필수 문서
@@ -42,4 +42,4 @@ Codex에서는 `$techblog`와 함께 보낸 사용자 요청을 입력으로 삼
 
 ### 완성된 글의 어투만 변환
 
-`--retone` 또는 같은 뜻의 요청이면 [finalization.md](references/finalization.md)의 7~8단계와 [tone.md](references/tone.md)를 따른다. 1~6단계는 수행하지 않는다. 입력은 수정하거나 삭제하지 않고 fact sheet와 후처리 파일을 만들지 않는다. 원문의 어투 외 lint 문제는 보고만 한다. 종결부는 문장마다 바꾸고 정규식이나 스크립트로 일괄 치환하지 않는다.
+`--retone` 또는 같은 의미의 요청이면 [finalization.md](references/finalization.md)의 7~8단계와 [tone.md](references/tone.md)를 따른다. 1~6단계는 수행하지 않는다. 입력은 수정하거나 삭제하지 않고 fact sheet와 후처리 파일을 만들지 않는다. 원문의 어투 외 lint 문제는 보고만 한다. 종결부는 문장마다 바꾸고 정규식이나 스크립트로 일괄 치환하지 않는다.

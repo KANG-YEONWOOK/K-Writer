@@ -46,7 +46,9 @@ ADOPTED = ("G6.emdash", "G6.punct_policy", "G10.num_particle", "A6.window_range"
            "A14.causative", "A5.pleonasm", "A14.adverb_pair", "A21.jeokda_as", "A5.native_verbs", "A7.see_judgment",
            "A8.same_predicate_adjacent",
            # 서술어 항목. CANDIDATES는 본문 문장만 보므로 헤딩과 표까지 보는 lint 항목으로 잰다.
-           "A6.open_close", "A6.open_close_check")
+           "A6.open_close", "A6.open_close_check",
+           # 같은 대상을 부르는 말과 빗댄 말
+           "A6.version_pan", "A5.plain_terms", "A6.metaphor_check")
 # lint에 넣을지 정하려고 따로 재는 후보. 문장 단위로 센다.
 CANDIDATES = {
     "옛(관형사)": r"(?<![가-힣])옛\s",

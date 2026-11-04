@@ -3,7 +3,7 @@
 
 사용법
   python dev/dogfood/report.py --iter iter-1
-  python dev/dogfood/report.py --iter iter-11 --within   # 초안 사본과 후처리를 마친 글의 비교 표
+  python dev/dogfood/report.py --iter iter-11 --within   # 초안 복사본과 후처리를 마친 글의 비교 표
 """
 
 import argparse

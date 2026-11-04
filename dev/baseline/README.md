@@ -1,6 +1,6 @@
 # 사람 글 baseline
 
-skill마다 기준 글(그 skill의 글이 읽혀야 하는 사람 글) 표본을 하나 두고, 그 표본을 `lint_ko.py`로 잰 값으로 그 skill의 기준치를 보정한다. 표본의 URL 목록, 측정값, 측정 도구는 `dev/baseline/<skill 이름>/`에 둔다.
+skill마다 기준 글(그 skill의 글이 읽혀야 하는 사람 글) 표본을 하나 두고, 그 표본을 `lint_ko.py`로 측정한 값으로 그 skill의 기준치를 보정한다. 표본의 URL 목록, 측정값, 측정 도구는 `dev/baseline/<skill 이름>/`에 둔다.
 
 | skill | 기준 글 | 폴더 | 보정하는 파일 |
 |---|---|---|---|
@@ -9,7 +9,7 @@ skill마다 기준 글(그 skill의 글이 읽혀야 하는 사람 글) 표본�
 ## 기준치를 나눠 두는 곳
 
 - `core/scripts/rules.json`: 모든 skill이 쓰는 검사 항목의 정의(종류, 제목, 고치는 방향), Gate와 policy, 고정 기준(fixed)이다. skill마다 같으므로 표본으로 보정하지 않는다.
-- `skills/<skill>/scripts/thresholds.json`: 그 skill의 기준 글로 보정한 값이다. gate도 fixed도 아닌 항목의 PASS, WARN 경계(`pass_max`, `warn_max`, `pass_min`, `warn_min`, `rate_per_1k`, `by_tone`)와 사람 글 분포(`human`, `n`, `n_eff`), 보정에서 뺄 사이트(`exclude_sites`)를 담는다. 그 skill에 맞지 않는 항목은 `drop`으로 빼고, 다르게 판정할 항목은 필드를 덮어쓴다.
+- `skills/<skill>/scripts/thresholds.json`: 그 skill의 기준 글로 보정한 값이다. gate도 fixed도 아닌 항목의 PASS, WARN 경계(`pass_max`, `warn_max`, `pass_min`, `warn_min`, `rate_per_1k`, `by_tone`)와 사람 글 분포(`human`, `n`, `n_eff`), 보정에서 뺄 사이트(`exclude_sites`)를 담는다. 그 skill에 맞지 않는 항목은 `drop`으로 제외하고, 다르게 판정할 항목은 필드를 덮어쓴다.
 - `lint_ko.py`는 두 파일을 합친 값으로 판정한다(`load_thresholds`). 보정값이 없는 분포 지표는 판정하지 않고 값만 보고한다(INFO).
 
 ## 새 skill의 표본을 만들 때

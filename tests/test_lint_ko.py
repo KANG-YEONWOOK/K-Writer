@@ -476,6 +476,75 @@ class KoreanPatternTest(unittest.TestCase):
             self.assertEqual(m["A6.open_close_check"]["value"], 1, text)
             self.assertEqual(m["A6.open_close"]["value"], 0, text)
 
+    # 사용자 지적(2026-11-04): AI 글이 version을 "판"으로 쓴다. 책의 판, 배포판, 판단, 굳은 말은 세지 않는다.
+    VERSION_PAN_HITS = ("Python 판과 Rust 판을 함께 배포했습니다.", "arXiv판과 IEEE판은 수식 번호가 다릅니다.",
+                        "이전 판으로 되돌렸습니다.", "두 번째 판에서는 그 절을 삭제했습니다.", "0.3.1판에서 수정했습니다.",
+                        "2026-10-29 판의 요구입니다.", "설치된 판 번호를 읽습니다.", "core 판을 올립니다.",
+                        "옛 판과 새 판으로 두 번씩 실행했습니다.", "이 판은 그 요구를 포함합니다.", "HEAD 판과 비교합니다.",
+                        "patch 판을 설치합니다.", "두 판 모두 통과했습니다.", "최신판을 받습니다.")
+    VERSION_PAN_KEEP = ("교과서 제2판을 참고했습니다.", "AIMA 4판을 인용합니다.", "개정판이 나왔습니다.", "한국어판을 읽었습니다.",
+                        "Linux 배포판을 설치합니다.", "평가판을 사용합니다.", "버전을 판단합니다.", "CPU 판정 결과입니다.",
+                        "새 판을 짜야 합니다.", "처음부터 새 판에서 고민했습니다.", "3×3 판에서 타일을 옮깁니다.",
+                        "API 판매량이 늘었습니다.", "이번 버전에서 수정했습니다.", "판을 뒤집는 기술입니다.",
+                        "화면 판 위에 올립니다.", "`tokio` 패키지입니다.")
+
+    def test_version_pan(self):
+        for text in self.VERSION_PAN_HITS:
+            self.assertEqual(self.m(text)["A6.version_pan"]["value"], 1, text)
+        for text in self.VERSION_PAN_KEEP:
+            self.assertEqual(self.m(text)["A6.version_pan"]["value"], 0, text)
+
+    def test_version_pan_in_title_heading_and_table(self):
+        m = self.m("# Python 판과 Rust 판\n\n## 이전 판으로 되돌리기\n\n| 항목 | 값 |\n|---|---|\n"
+                   "| 두 번째 판 | 0.4 |\n\n본문입니다.\n")
+        self.assertEqual(m["A6.version_pan"]["value"], 3)
+
+    PLAIN_TERMS_HITS = ("토큰은 낱말 조각입니다.", "이 논문의 판본을 확인했습니다.", "이미지가 없는 글로만 시험했습니다.",
+                        "첫 시험 대상은 지시 한 줄입니다.", "글의 뜻이 바뀝니다.", "이렇게 만든 짝은 학습에 사용합니다.",
+                        "후보 세 개 가운데 하나입니다.", "효과의 세기를 정하는 값입니다.", "α로 세기를 조절합니다.",
+                        "이전 바이너리 사본을 남겨 둡니다.", "실측 비용을 근거로 판단했습니다.", "절마다 되풀이했습니다.",
+                        "이웃한 문장을 함께 읽습니다.", "테스트가 이 경로를 덮습니다.", "설정 항목을 더했습니다.",
+                        "실행 결과 글마다 새 lint 항목의 값과 걸린 말을 낸다.", "그룹마다 합산 비율을 냅니다.")
+    PLAIN_TERMS_KEEP = ("여러 항목을 나열합니다.", "짝수 번째 행입니다.", "예시를 짝지어 보완했어요.", "가운데 정렬을 사용합니다.",
+                        "화면 가운데에 표시합니다.", "21세기 기술입니다.", "걸음수 세기 기능입니다.", "시험 삼아 실행했습니다.",
+                        "자격증 시험에 합격했습니다.", "신분증 사본을 제출합니다.", "쓰기 연산일 수 있다는 뜻입니다.",
+                        "이름은 '기록할 때 복사한다'는 뜻입니다.", "파일을 덮어쓰지 않습니다.", "두 값을 더합니다.",
+                        "당근 이웃과 거래합니다.", "뜻밖의 결과입니다.", "단어와 의미를 대응합니다.", "단짝이라는 이름입니다.",
+                        "실행 시간의 평균을 냅니다.", "좋은 결과를 냅니다.", "해시값을 만들어 냅니다.")
+
+    def test_plain_terms(self):
+        for text in self.PLAIN_TERMS_HITS:
+            m = self.m(text)
+            self.assertEqual(m["A5.plain_terms"]["value"], 1, text)
+            self.assertEqual(m["A5.plain_terms_check"]["value"], 1, text)
+        for text in self.PLAIN_TERMS_KEEP:
+            self.assertEqual(self.m(text)["A5.plain_terms"]["value"], 0, text)
+
+    def test_plain_terms_judged_by_count_and_listed_as_check(self):
+        thresholds = L.load_thresholds()
+        body = "# 제목\n\n" + "\n\n".join(f"배치 크기를 {n}으로 줄인 실험입니다. 지연은 {n} ms였습니다." for n in range(10, 170))
+        one = body + "\n\n토큰은 낱말 조각입니다.\n"
+        many = body + "\n\n" + "\n\n".join(("토큰은 낱말 조각입니다.", "글의 뜻이 바뀝니다.", "후보 세 개 가운데 하나입니다.",
+                                             "절마다 되풀이했습니다.", "실측 비용입니다.", "바이너리 사본입니다.")) + "\n"
+        st = {r["id"]: r for r in L.evaluate(L.analyze(one), thresholds, "default")["results"]}
+        self.assertEqual(st["A5.plain_terms"]["status"], "PASS")
+        self.assertEqual(st["A5.plain_terms_check"]["status"], "CHECK")
+        st = {r["id"]: r for r in L.evaluate(L.analyze(many), thresholds, "default")["results"]}
+        self.assertEqual(st["A5.plain_terms"]["status"], "FAIL")
+
+    METAPHOR_HITS = ("행동을 못 박았습니다.", "기준은 둘로 갈립니다.", "이 문제에는 두 층위가 있습니다.", "같은 결의 문제입니다.",
+                     "훅과 본문이 따로 놉니다.", "파일 대신 주소를 건넵니다.", "동기화 중에 락을 쥐고 있습니다.", "품이 듭니다.",
+                     "숫자를 움직여 봅니다.", "지금 기댈 수 있는 기준입니다.", "전체 실행 1회로 닫습니다.", "짧게 봅니다.",
+                     "이 판정은 불안정해서 값이 흔들립니다.", "결과를 가르는 요인은 셋입니다.")
+    METAPHOR_KEEP = ("호불호가 갈리는 영화입니다.", "의견이 갈립니다.", "승패를 가릅니다.", "x축과 y축을 그립니다.",
+                     "결과가 같습니다.", "자리를 옮깁니다.", "연결을 닫습니다.", "못 합니다.", "키를 전달합니다.")
+
+    def test_metaphor_check(self):
+        for text in self.METAPHOR_HITS:
+            self.assertEqual(self.m(text)["A6.metaphor_check"]["value"], 1, text)
+        for text in self.METAPHOR_KEEP:
+            self.assertEqual(self.m(text)["A6.metaphor_check"]["value"], 0, text)
+
     def test_negation_scope(self):
         for text in ("모든 영역이 한 값에 머물지 않았습니다.", "80개 영역이 모두 한 값에 머물지 않았습니다."):
             self.assertEqual(self.m(text)["A18.negation_scope"]["value"], 1, text)
@@ -866,6 +935,47 @@ class SkillTextTest(unittest.TestCase):
             for line in text.splitlines():
                 for rx in rxs:
                     self.assertIsNone(rx.search(line), (name, line))
+
+
+class PlainTermsDocsTest(unittest.TestCase):
+    """모델은 skill 문서를 읽은 뒤 글을 쓴다. 2026-11-04 전까지 skill 문서가 "낱말"을 107번 사용했고, 그 문서를 읽고 쓴 글에
+    "낱말"이 1만 자당 5.89번 나왔다(사람 글 600편은 0번). 고치기 전 표현을 보여 주는 ai-patterns.md, korean-review.md,
+    rubric.md와 그 항목 자신의 hint만 뺀다."""
+
+    DOCS = ("style-guide.md", "genre.md", "drafting.md", "fact-sheet.md", "validation.md", "finalization.md",
+            "reader-check.md", "revision.md", "runtime.md", "settings.md", "settings-protocol.md", "tone.md", "short.md")
+    OWN = {"A6.version_pan", "A5.plain_terms", "A5.plain_terms_check", "A6.metaphor_check"}
+
+    def setUp(self):
+        spec = L.load_json(L.PATTERNS_PATH)["patterns"]
+        self.rxs = [(pid, re.compile(r)) for pid in ("A6.version_pan", "A5.plain_terms") for r in spec[pid]["regex"]]
+        self.spec = spec
+
+    def assert_plain(self, name, text):
+        for line in text.splitlines():
+            for pid, rx in self.rxs:
+                m = rx.search(line)
+                self.assertIsNone(m, (name, pid, m.group(0) if m else "", line[:120]))
+
+    def test_docs_read_while_writing_use_plain_terms(self):
+        for name in self.DOCS:
+            with self.subTest(doc=name):
+                self.assert_plain(name, L.read_text(os.path.join(SCRIPTS, "..", "references", name)))
+        self.assert_plain("SKILL.md", L.read_text(os.path.join(SCRIPTS, "..", "SKILL.md")))
+
+    def test_hints_use_plain_terms(self):
+        for pid, p in self.spec.items():
+            if pid not in self.OWN:
+                self.assert_plain(f"patterns hint {pid}", p.get("hint", ""))
+        for mid, s in L.load_thresholds()["metrics"].items():
+            if mid not in self.OWN:
+                self.assert_plain(f"rules hint {mid}", s.get("hint", ""))
+
+    def test_style_guide_lists_the_words_to_use(self):
+        text = L.read_text(os.path.join(SCRIPTS, "..", "references", "style-guide.md"))
+        for word in ("| version | 버전 |", "| test | 테스트 |", "| word | 단어 |", "| meaning | 의미 |", "| pair | 쌍 |"):
+            self.assertIn(word, text)
+        self.assertIn('fact sheet', text)
 
 
 class ToneTest(unittest.TestCase):

@@ -5,7 +5,7 @@
 - run.jsonl(stream-json)에서 도구 호출 순서, 권한 거부, 비용, turn 수를 읽는다.
 - 스킬이 lint_ko.py와 tone_check.py를 실제로 실행했는지, Default 초안을 Casual보다 먼저 썼는지 본다.
 - article.md에 lint_ko.py를 다시 돌리고, Casual이면 초안과 tone_check.py를 다시 돌린다.
-- 후처리(6단계): 초안 사본(article.unrevised.md)과 후처리를 마친 합니다체 글(Default는 article.md, Casual은
+- 후처리(6단계): 초안 복사본(article.unrevised.md)과 후처리를 마친 합니다체 글(Default는 article.md, Casual은
   article.draft.md)을 revise_ko.compare로 비교하고, 반복 후보 수, revise_ko.py 실행 순서, start 이후의 토큰 비율,
   context compaction 횟수를 기록한다.
 - 결과를 eval.json에 쓰고 요약 표를 출력한다.
@@ -40,7 +40,9 @@ KEY_METRICS = ("A1.np", "A2.comma_per_sentence", "A2.connective_comma_ratio", "A
                "G11.spelling", "A14.causative", "A5.pleonasm", "A14.adverb_pair", "A21.jeokda_as", "A5.native_verbs",
                "A7.see_judgment",
                # 서술어 항목
-               "A6.open_close", "A6.open_close_check")
+               "A6.open_close", "A6.open_close_check",
+               # 같은 대상을 부르는 말과 빗댄 말
+               "A6.version_pan", "A5.plain_terms", "A6.metaphor_check")
 
 
 def parse_transcript(path, events=None):
@@ -136,7 +138,7 @@ def _usage_share(events, start_tool, end_tool=None):
 
 
 def revise_summary(case_dir, tone, tools, events):
-    """6단계 후처리를 점검한다. 초안 사본이 없으면 None."""
+    """6단계 후처리를 점검한다. 초안 복사본이 없으면 None."""
     snap = os.path.join(case_dir, "article.unrevised.md")
     if not os.path.isfile(snap):
         return None
