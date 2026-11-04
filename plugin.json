@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "k-writer",
-  "version": "0.4.0",
-  "description": "자연스러운 한국어 글을 쓰는 Claude Code 및 Codex skill 모음입니다. 모든 skill이 공통 한국어 규칙과 검사기를 쓰고, skill마다 글의 종류에 맞는 독자, 어투, 구성을 정합니다. 지금은 자료를 한국어 기술 블로그 글로 정리하고 사실과 문체를 점검하는 techblog skill을 담고 있습니다.",
+  "version": "0.4.1",
+  "description": "AI가 사람처럼 자연스러운 한국어 글을 쓰게 하는 Claude Code, Codex 스킬 모음입니다. 모든 스킬이 공통 한국어 규칙과 검사 스크립트를 사용하고, 스킬마다 글의 종류에 맞는 독자, 어투, 구성을 정합니다. 지금은 자료를 한국어 기술 블로그 글로 정리하고 사실과 문체를 점검하는 techblog 스킬을 제공합니다.",
   "author": {
     "name": "KANG-YEONWOOK",
     "url": "https://github.com/KANG-YEONWOOK"

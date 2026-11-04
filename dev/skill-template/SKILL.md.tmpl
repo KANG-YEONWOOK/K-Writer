@@ -1,6 +1,6 @@
 ---
 name: {{name}}
-description: "TODO: 이 skill이 하는 일, 지원하는 어투, 호출 조건을 1,024자 안에 쓴다. 예: \"${{name}}\", \"/{{name}}\" 같은 요청에 쓴다."
+description: "TODO: 이 skill이 하는 일, 지원하는 어투, 호출 조건을 1,024자 안에 작성한다. 예: \"${{name}}\", \"/{{name}}\" 같은 요청에 사용한다."
 license: MIT
 allowed-tools: Read Write Edit Glob Grep WebFetch WebSearch Agent Bash(python "${CLAUDE_SKILL_DIR}/scripts/*) Bash(python ${CLAUDE_SKILL_DIR}/scripts/*) Bash(python3 "${CLAUDE_SKILL_DIR}/scripts/*) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/*)
 metadata:
@@ -10,13 +10,13 @@ metadata:
 
 # {{name}}
 
-TODO: 이 skill이 쓰는 글(장르)과 출력(파일로 쓰는 글 또는 대화로 하는 답)을 한 문단으로 쓴다. 기본 독자와 기준 글(사람이 쓴 어떤 한국어 글처럼 읽혀야 하는지)을 적는다. 예: "기준 글(사람이 쓴 한국어 ○○ 글)에서 사용하는 말로 쓴다."
+TODO: 이 스킬이 쓰는 글(장르)과 출력(파일에 저장하는 글 또는 대화로 하는 답변)을 한 문단으로 작성한다. 기본 독자와 기준 글(사람이 쓴 어떤 한국어 글처럼 읽혀야 하는지)을 적는다. 예: "기준 글(사람이 쓴 한국어 ○○ 글)에서 사용하는 표현으로 쓴다."
 
 Claude Code와 Codex에서 사용한다. 먼저 [실행 환경 안내](references/runtime.md)를 읽고 현재 환경의 입력, 도구, 스킬 경로를 확인한다.
 
 Claude Code 호출 인자: $ARGUMENTS
 
-Codex에서는 `${{name}}`과 함께 보낸 사용자 요청을 입력으로 삼는다. `$ARGUMENTS`가 치환되지 않았거나 자연어로 호출했다면 현재 사용자 요청에서 자료와 옵션을 읽는다.
+Codex에서는 `${{name}}`과 함께 보낸 사용자 요청을 입력으로 받는다. `$ARGUMENTS`가 치환되지 않았거나 자연어로 호출했다면 현재 사용자 요청에서 자료와 옵션을 읽는다.
 
 ## 인자와 설정
 
@@ -27,5 +27,5 @@ Codex에서는 `${{name}}`과 함께 보낸 사용자 요청을 입력으로 삼
 모든 `references/`와 `scripts/`는 이 `SKILL.md`가 있는 디렉터리 기준이다. 검사 명령과 실행 오류 처리는 [runtime.md](references/runtime.md)를 따른다.
 
 1. [workflow.md](references/workflow.md)를 읽고 그 순서대로 수행한다.
-2. 초안을 쓰기 전에 [style-guide.md](references/style-guide.md)와 [genre.md](references/genre.md)를 읽는다. [ai-patterns.md](references/ai-patterns.md)는 초안을 쓴 뒤 점검할 때만 읽는다.
+2. 초안을 작성하기 전에 [style-guide.md](references/style-guide.md)와 [genre.md](references/genre.md)를 읽는다. [ai-patterns.md](references/ai-patterns.md)는 초안을 작성한 뒤 점검할 때만 읽는다.
 3. 어투를 적용할 때 [tone.md](references/tone.md)를 읽는다. 판정 기준은 [rubric.md](references/rubric.md)에 있다.

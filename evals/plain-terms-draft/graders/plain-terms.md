@@ -1,8 +1,8 @@
-source.md와 skill이 만든 세 파일을 읽는다. fact sheet(`article.facts.md`)의 "의미"와 용어 표, 6단계를 시작할 때 복사한 5단계 뒤의 초안(`article.unrevised.md`), 최종 글(`article.md`)이다. 이 평가는 사람 글이 부르는 말이 굳은 영어 단어를 skill이 사전의 대응어나 고유어로 옮기지 않는지 본다.
+source.md와 스킬이 만든 세 파일을 읽는다. fact sheet(`article.facts.md`)의 "의미"와 용어 표, 6단계를 시작할 때 복사한 5단계 초안(`article.unrevised.md`), 최종 글(`article.md`)이다. 이 평가는 사람 글에서 한국어 표현이 정착한 영어 단어를 스킬이 사전의 대응어나 고유어로 옮기지 않는지 확인한다.
 
 ## 자료의 영어 단어
 
-| 번호 | 자료 표현 | 자연스러운 한국어의 예 | 어색한 말의 예 |
+| 번호 | 자료 표현 | 자연스러운 한국어의 예 | 어색한 표현의 예 |
 |---|---|---|---|
 | P1 | the Python version, the Rust version | Python 버전, Rust 버전 | Python 판, Rust 판 |
 | P2 | the old version, the new version, the previous version | 이전 버전, 새 버전, 기존 버전 | 옛 판, 새 판, 이전 판 |
@@ -29,11 +29,11 @@ source.md와 skill이 만든 세 파일을 읽는다. fact sheet(`article.facts.
 
 ## 판정
 
-- 세 파일마다 P1~P22가 나온 곳의 표현을 그대로 인용하고, 자연스러우면 OK, 어색한 말이면 AWKWARD로 적는다. 그 파일에 그 내용이 없으면 ABSENT로 적는다.
-- 위 표에 없어도 사람이 쓴 한국어 기술 블로그 글이 다른 말로 부르는 대상을 사전의 대응어나 고유어로 쓴 말, 물건이나 몸동작에 빗댄 말을 찾으면 파일과 문장을 함께 적는다.
-- 음역으로 바꾸지 않았다는 이유만으로 감점하지 않는다. 오류, 목록, 잠금, 갱신처럼 사람 글이 쓰는 말은 OK다.
-- 최종 글에 `lint_ko.py --tone default --facts article.facts.md`를 실행할 수 있으면 Gate, FAIL 수와 A6.version_pan, A5.plain_terms, A5.plain_terms_check, A6.metaphor_check에 걸린 줄을 적는다.
+- 세 파일마다 P1~P22가 나온 부분의 표현을 그대로 인용하고, 자연스러우면 OK, 어색하면 AWKWARD로 적는다. 그 파일에 그 내용이 없으면 ABSENT로 적는다.
+- 위 표에 없어도 사람이 쓴 한국어 기술 블로그 글에서 다른 표현으로 부르는 대상을 사전의 대응어나 고유어로 쓴 표현, 물건이나 몸동작에 빗댄 표현을 찾으면 파일과 문장을 함께 적는다.
+- 음역으로 바꾸지 않았다는 이유만으로 감점하지 않는다. 오류, 목록, 잠금, 갱신처럼 사람 글에서 사용하는 단어는 OK다.
+- 최종 글에 `lint_ko.py --tone default --facts article.facts.md`를 실행할 수 있으면 Gate, FAIL 수와 A6.version_pan, A5.plain_terms, A5.plain_terms_check, A6.metaphor_check로 검출된 줄을 적는다.
 
 ## 보고
 
-파일마다 OK, AWKWARD, ABSENT 수를 표로 적고, AWKWARD는 문장을 인용한다. fact sheet에서 생긴 표현이 초안과 최종 글로 이어졌는지, 6단계에서 고쳐졌는지도 적는다.
+파일마다 OK, AWKWARD, ABSENT 수를 표로 적고, AWKWARD는 문장을 인용한다. fact sheet에서 생긴 표현이 초안과 최종 글로 이어졌는지, 6단계에서 수정됐는지도 적는다.

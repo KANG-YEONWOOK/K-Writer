@@ -1,37 +1,41 @@
 #!/usr/bin/env python3
-"""K-Writer 후처리 보조: 초안 복사본 만들기, 다시 읽을 반복 후보 찾기, 후처리 전후 비교, 고친 문장 점검.
+"""K-Writer post-processing helper: creates a draft copy, finds repeat candidates to reread, compares the article before and after post-processing, and checks edited sentences.
 
-이 파일의 원본은 저장소의 core/scripts/revise_ko.py이고, dev/sync_core.py가 skill마다 skills/<이름>/scripts/에 복사한다.
-출력 머리말의 이름은 스크립트가 든 skill 폴더 이름이다.
+The source of this file is core/scripts/revise_ko.py in the repo. dev/sync_core.py copies it to skills/<name>/scripts/ for each skill.
+The name in the output header is the name of the skill folder that contains the script.
 
-사용법
+Usage
   python revise_ko.py start ARTICLE [--force]
   python revise_ko.py repeats ARTICLE [--all] [--json]
   python revise_ko.py check ARTICLE [--facts FACTS.md] [--json]
   python revise_ko.py mark ARTICLE
   python revise_ko.py audit ARTICLE [--base FILE] [--facts FACTS.md] [--out FILE] [--json]
 
-ARTICLE은 후처리할 합니다체 글이다. Default 글이면 출력 파일(<이름>.md), Casual 글이면 Default 초안
-(<이름>.draft.md)이다. 초안 복사본(<이름>.unrevised.md), 수정 전 복사본(<이름>.pre-fix.md), fact sheet(<이름>.facts.md)의
-경로는 ARTICLE 이름에서 정한다.
+ARTICLE is the "합니다체" article to post-process: the output file (<name>.md) for a Default article, the Default draft
+(<name>.draft.md) for a Casual article. The paths of the draft copy (<name>.unrevised.md), the pre-fix copy
+(<name>.pre-fix.md), and the fact sheet (<name>.facts.md) are derived from the ARTICLE name.
 
-- start: ARTICLE을 초안 복사본으로 복사하고, 반복 후보를 <이름>.repeats.md에 적는다. 후처리를 맡은 subagent에
-  Bash 권한이 없어도 후보를 Read로 볼 수 있게 하려는 파일이다. 복사본이 이미 있으면 --force 없이는 덮어쓰지 않는다.
-  이전 후처리에서 남은 수정 전 복사본은 지운다.
-- repeats: 다시 읽을 위치(반복 후보)를 출력한다. 판정은 하지 않는다. 후보마다 이 글의 독자에게 필요한
-  반복인지는 글쓴이가 판단한다.
-- check: 초안 복사본과 ARTICLE을 비교한다. 바뀐 문장 수, 초안에만 있는 수치와 새 수치, 헤딩과 코드와 표의 변경,
-  lint 상태가 나빠진 항목, 연결어미가 3개 이상인 새 문장을 출력한다.
-- mark: 수정 후 검토에서 지적된 곳을 고치기 전에 ARTICLE을 수정 전 복사본으로 복사한다(있으면 덮어쓴다).
-- audit: 비교할 복사본(--base, 없으면 수정 전 복사본, 그것도 없으면 초안 복사본)과 ARTICLE을 문장, 헤딩, 표의 행
-  단위로 비교한다. 바뀌거나 새로 쓴 단위마다 수정 후 검토자가 묻는 질문(T, F, C, X, 같은 사실, S)과 답할 때 볼
-  위치를 출력한다. 볼 위치는 앞 문장과 뒤 문장, 지시어, 글에서 처음 나오는 말, "…" 절로 가리킨 절의 줄 범위와
-  그 절에 없는 말, 수치가 나오는 다른 줄과 fact sheet 줄, 근거 후보 fact sheet 줄, 이유와 범위의 표지, 쉼표로
-  나열한 항목 수, 목적어와 서술어의 짝, 서술어 하나가 받는 여러 주어나 목적어, 이름이 겹치는 정의, 고치기 전
-  표현이 남은 줄, 그 단위에서 lint가 센 표현이다. 판정은 하지 않는다. --out이 있으면 결과를 그 파일에 쓴다.
+- start: copies ARTICLE to the draft copy and writes the repeat candidates to <name>.repeats.md. That file lets a
+  post-processing subagent without Bash permission read the candidates with Read. An existing copy is not overwritten
+  without --force. A pre-fix copy left over from an earlier post-processing run is deleted.
+- repeats: prints the positions to reread (repeat candidates). It makes no verdict. For each candidate, the writer
+  decides whether the reader of this article needs the repetition.
+- check: compares the draft copy with ARTICLE. Prints the number of changed sentences, numbers found only in the draft
+  and new numbers, changes to headings, code, and tables, items whose lint status got worse, and new sentences with 3
+  or more connective endings.
+- mark: copies ARTICLE to the pre-fix copy (overwriting it if present) before fixing what the post-edit review flagged.
+- audit: compares the base copy (--base, otherwise the pre-fix copy, otherwise the draft copy) with ARTICLE by sentence,
+  heading, and table row. For each changed or newly written unit, prints the questions the post-edit reviewer asks
+  (T, F, C, X, "같은 사실", S) and the positions to look at when answering them. Those positions are: the previous and
+  next sentences, demonstratives, words that appear for the first time in the article, the line range of a section
+  referenced as "…" 절 and the words absent from that section, other lines and fact sheet lines with the same number,
+  candidate supporting fact sheet lines, reason and scope markers, the number of comma-separated items, object-predicate
+  pairs, multiple subjects or objects sharing one predicate, definitions with overlapping names, lines where the
+  pre-edit expression remains, and expressions lint counted in that unit. It makes no verdict. With --out, the result
+  is written to that file.
 
-종료 코드: 0 정상, 1 check나 audit에서 Gate 위반, FAIL, AI 문체 항목 악화 중 하나가 있음, 2 사용법 또는 입력 오류
-표준 라이브러리만 쓴다(Python 3.8 이상).
+Exit codes: 0 OK, 1 check or audit found a Gate violation, a FAIL, or a worsened AI style item, 2 usage or input error
+Uses only the standard library (Python 3.8 or later).
 """
 
 import argparse
@@ -57,24 +61,26 @@ MAX_LINES = 8
 CHANGED_SHARE_RECHECK = 0.25
 SHORT_LEN = 35
 
-# 조사 하나를 뗀다. 긴 것부터 대조하고, 뗀 뒤 두 글자 이상 남을 때만 뗀다("차이"는 그대로 둔다).
-# "도", "만"은 넣지 않는다. 정확도, 속도, 빈도, 수만처럼 이 글자로 끝나는 명사가 기술 글에 많다.
+# Strips one particle. Longer particles are tried first, and a particle is stripped only if at least two characters
+# remain ("차이" stays as is).
+# "도" and "만" are not included: tech writing has many nouns ending in these characters, such as "정확도", "속도", "빈도", "수만".
 PARTICLES = sorted(("에서는", "에서", "으로", "보다", "까지", "부터", "처럼", "에는", "은", "는", "이", "가", "을",
                     "를", "의", "와", "과", "에", "로"), key=len, reverse=True)
 EDGE = "\"'“”‘’()[]{}<>.,?!:;…·「」『』"
 SUBJECT_END = ("은", "는", "이", "가")
 DEMONSTRATIVES = ("이", "그", "저", "이런", "그런", "이러한", "그러한", "이번", "해당", "위의", "아래")
-# R4에서 세지 않는 일반 종결. 사람 글에서도 이어서 나오는 종결이고, 같은 종결의 연속은 lint A8.ending_run4가 센다.
+# Generic endings that R4 does not count. Human posts also use these endings in a row, and lint A8.ending_run4 counts
+# runs of the same ending.
 GENERIC_PREDICATES = ("있습니다", "없습니다", "합니다", "했습니다", "됩니다", "됐습니다", "되었습니다", "않습니다",
                       "같습니다", "입니다", "있었습니다", "없었습니다", "않았습니다")
 
-# R6: 변화량을 말하는 서술어와 비교 기준 표지
+# R6: predicates that state an amount of change, and comparison baseline markers
 CHANGE_RE = re.compile(r"(줄었|줄어들|줄어든|줄였|늘었|늘어났|늘어난|늘렸|올랐|올라갔|올라간|떨어졌|떨어뜨|떨어진|"
                        r"내려갔|내려간|낮아졌|낮아진|낮췄|높아졌|높아진|높였|감소|증가|개선|향상|단축|커졌|커진|작아졌|"
                        r"작아진|빨라졌|빨라진|느려졌|느려진)")
 TIMES_RE = re.compile(r"(?<![\w.\-])\d[\d.,]*\s*배(?:$|[^가-힣]|로|가|를|의|에|까지|였|입|이|나|만큼|씩|가량|정도)")
-# 단위가 붙은 수치. 뒤에 "까지", "로"가 붙은 값("1,850ms까지 올랐습니다", "0.8초로 줄었습니다")은 바뀐 뒤의 값이라
-# 변화량으로 세지 않는다. 배수("2배로")는 그대로 변화량이다.
+# Numbers with a unit. A value followed by "까지" or "로" ("1,850ms까지 올랐습니다", "0.8초로 줄었습니다") is the value after
+# the change, so it does not count as an amount of change. A multiplier ("2배로") still counts as an amount of change.
 UNIT_NUM_RE = re.compile(r"(?<![\w.\-])\d[\d.,]*\s*(%p|%|배|x|×|ms|초|분|시간|개|건|명|GB|MB|KB|TB|토큰|점|회|번)"
                          r"(까지|으로|로)?")
 BASELINE_RE = re.compile(
@@ -83,13 +89,13 @@ BASELINE_RE = re.compile(
     r"의\s+(?:최대\s+|약\s+|평균\s+)?[\d.,]+\s*배|"     # "Orca의 1.67배"
     r"(?<![가-힣])전(?:보다|에는|과|의|에)?(?=\s|$))")
 
-# check에서 상태 악화를 나누는 기준. 이 접두사로 시작하는 항목은 문장과 문단의 분포 항목이고,
-# 나머지(G, A1~A7, A10~A15, T)는 AI 문체 항목이다.
+# How check classifies status regressions. Items starting with these prefixes are sentence and paragraph distribution
+# items. The rest (G, A1~A7, A10~A15, T) are AI style items.
 DIST_PREFIX = ("A8.", "A9.", "A16.", "A17.")
 RANK = {"PASS": 0, "INFO": 0, "CHECK": 0, "WARN": 1, "FAIL": 2, "GATE": 3}
 
 
-# ---------------------------------------------------------------- 경로
+# ---------------------------------------------------------------- Paths
 
 def stem_of(path):
     base = path[:-3] if path.endswith(".md") else path
@@ -114,7 +120,7 @@ def mark_path(path):
     return stem_of(path) + MARK_SUFFIX
 
 
-# ---------------------------------------------------------------- 문장
+# ---------------------------------------------------------------- Sentences
 
 def tokens(masked):
     s = L.PH_RE.sub(" ", masked)
@@ -134,7 +140,7 @@ def strip_particle(tok):
 
 
 def sentence_records(text, include_refs=False):
-    """글의 서술 문장을 순서대로 돌려준다. 헤딩, 절 번호, 문단 첫 문장인지, 바로 앞 블록 종류를 함께 적는다."""
+    """Return the article's narrative sentences in order, each with its heading, section number, whether it is the first sentence of its paragraph, and the type of the preceding block."""
     recs = []
     heading, section, in_refs, prev_type = "", 0, False, "start"
     for bi, b in enumerate(L.parse_blocks(L.normalize_text(text))):
@@ -158,7 +164,7 @@ def sentence_records(text, include_refs=False):
             word = L.last_word(s)
             cls = L.classify_ending(word, s.rstrip(L.CLOSERS + " ").endswith("?"))
             if b.type == "list_item" and cls in ("NOUN", "OTHER"):
-                continue  # 명사구 목록 항목은 서술 문장이 아니다
+                continue  # a noun-phrase list item is not a narrative sentence
             recs.append({"line": b.line, "heading": heading, "section": section, "block": bi, "kind": b.type,
                          "first": i == 0, "after": prev_type if i == 0 else "sentence",
                          "text": s, "masked": masked, "toks": tokens(masked), "word": word})
@@ -177,14 +183,14 @@ def fmt_lines(lines, n=6):
     return shown + (", …" if len(uniq) > n else "")
 
 
-# ---------------------------------------------------------------- 반복 후보
+# ---------------------------------------------------------------- Repeat candidates
 
 def _baseline_keys(rec):
-    """수치가 든 비교 기준 구절의 키. 예: "무작위 추측 정확도 20%보다" → "추측 정확도 20%"."""
+    """Keys of comparison baseline phrases that contain a number. Example: "무작위 추측 정확도 20%보다" → "추측 정확도 20%"."""
     toks = rec["toks"]
     keys = []
     for j, t in enumerate(toks):
-        end = None  # 기준 명사가 붙은 마지막 토큰 위치
+        end = None  # position of the last token with the baseline noun attached
         if t.endswith("보다") and len(t) > 2:
             end = j
         elif t == "대비" and j > 0:
@@ -197,7 +203,7 @@ def _baseline_keys(rec):
             continue
         window = toks[max(0, end - 2):end + 1]
         if not any(L.NUM_RE.search(w) for w in window):
-            continue  # 이름만 있는 기준("Orca보다")은 세지 않는다
+            continue  # a baseline with only a name ("Orca보다") does not count
         norm = [strip_particle(w) for w in window]
         if norm and norm[-1].endswith("에"):
             norm[-1] = norm[-1][:-1]
@@ -209,7 +215,7 @@ def find_repeats(text):
     recs = sentence_records(text)
     cands = []
 
-    # R7: 어미 bucket과 별개인 인접 서술어 후보. lint와 같은 문단 경계를 쓴다.
+    # R7: adjacent predicate candidates, separate from the ending buckets. Uses the same paragraph boundaries as lint.
     for hit in L.analyze(text)["metrics"]["A8.same_predicate_adjacent"]["hits"]:
         prev = hit["previous"]
         cands.append({"id": "R7", "item": 3, "lines": [prev["line"], hit["line"]],
@@ -217,7 +223,7 @@ def find_repeats(text):
                       "previous": prev, "predicate": hit["match"],
                       "label": f"인접한 같은 서술어 «{hit['match']}» (문맥 검토)"})
 
-    # R6 비교 기준 없는 변화량
+    # R6 amounts of change without a comparison baseline
     for idx, r in enumerate(recs):
         m = r["masked"]
         amounts = [u for u in UNIT_NUM_RE.finditer(m) if u.group(1) == "배" or not u.group(2)]
@@ -229,7 +235,7 @@ def find_repeats(text):
             continue
         units = [u.group(1) for u in UNIT_NUM_RE.finditer(m)]
         if len(units) >= 2 and len(set(units)) < len(units):
-            continue  # 같은 단위의 수치가 둘이면 바뀌기 전과 후 값이 함께 있다
+            continue  # two numbers with the same unit mean the before and after values are both present
         after_block = r["after"] in ("table", "list", "code")
         prev = recs[idx - 1] if idx > 0 and r["after"] in ("sentence", "paragraph") else None
         if prev is not None and BASELINE_RE.search(prev["masked"]):
@@ -238,7 +244,7 @@ def find_repeats(text):
                       "text": r["text"], "after": "표나 목록 뒤" if after_block else "",
                       "label": "비교 기준 없는 변화량" + ("(표나 목록 바로 뒤)" if after_block else "")})
 
-    # R1 수치가 든 같은 비교 기준
+    # R1 the same comparison baseline containing a number
     occ = {}
     for idx, r in enumerate(recs):
         for k in set(_baseline_keys(r)):
@@ -250,7 +256,7 @@ def find_repeats(text):
                           "text": recs[idxs[0]]["text"], "key": k, "count": len(idxs), "adjacent": adjacent,
                           "label": f"같은 비교 기준 «{k}» {len(idxs)}문장" + (f", 인접한 문장 {adjacent}쌍" if adjacent else "")})
 
-    # R4 같은 문형: (첫 어절, 마지막 어절) 쌍이 3회 이상, 같은 마지막 어절이 3문장 연속
+    # R4 same sentence pattern: a (first word, last word) pair 3 or more times, or the same last word in 3 sentences in a row
     frames = {}
     for idx, r in enumerate(recs):
         toks = r["toks"]
@@ -280,7 +286,7 @@ def find_repeats(text):
                           "label": f"같은 서술어 «{w}» {len(run)}문장 연속"})
         run = [idx]
 
-    # R3 같은 주어로 여는 문장이 한 절에서 3문장 이상 연속
+    # R3 3 or more sentences in a row within a section that start with the same subject
     run = []
     for idx in range(len(recs) + 1):
         cur = recs[idx] if idx < len(recs) else None
@@ -293,10 +299,10 @@ def find_repeats(text):
         if len(run) >= 3:
             cands.append({"id": "R3", "item": 3, "lines": [recs[i]["line"] for i, _ in run], "section": "",
                           "text": recs[run[0][0]]["text"], "count": len(run),
-                          "label": f"«{run[0][1][1]}»로 여는 문장 {len(run)}개 연속"})
+                          "label": f"«{run[0][1][1]}»로 시작하는 문장 {len(run)}개 연속"})
         run = [(idx, key)] if key is not None else []
 
-    # R5 한 절 안에서 35자 미만 문단 문장이 4개 이상 연속
+    # R5 4 or more paragraph sentences in a row within a section that are shorter than 35 characters
     run = []
     for idx in range(len(recs) + 1):
         cur = recs[idx] if idx < len(recs) else None
@@ -319,19 +325,19 @@ def render_repeats(path, res, show_all=False):
     cands = res["candidates"]
     lines = [f"{SKILL_NAME} repeats | {os.path.basename(path)} | {res['sentences']}문장"]
     if not cands:
-        lines.append("반복 후보 없음. 글을 읽으며 적은 곳만 고친다.")
+        lines.append("반복 후보 없음. 글을 읽으며 적은 부분만 수정한다.")
         return "\n".join(lines)
-    lines.append("다시 읽을 곳(판정 아님): 후보마다 이 글의 독자에게 필요한 반복인지 판단한다. "
-                 "필요한 반복은 그대로 둔다. 괄호의 번호는 references/revision.md의 \"고칠 곳\" 항목이다.")
+    lines.append("다시 읽을 부분(판정 아님): 후보마다 이 글의 독자에게 필요한 반복인지 판단한다. "
+                 "필요한 반복은 유지한다. 괄호의 번호는 references/revision.md의 \"수정할 부분과 수정 방법\" 항목이다.")
     shown = cands if show_all else cands[:MAX_LINES]
     for c in shown:
         lines.append(f"[{c['id']}] {fmt_lines(c['lines'])} {c['label']} (항목 {c['item']}): «{excerpt(c['text'])}»")
     if len(cands) > len(shown):
-        lines.append(f"+{len(cands) - len(shown)}개 (--all로 모두 본다)")
+        lines.append(f"+{len(cands) - len(shown)}개 (--all로 모두 출력한다)")
     return "\n".join(lines)
 
 
-# ---------------------------------------------------------------- 전후 비교
+# ---------------------------------------------------------------- Before and after comparison
 
 def _blocks_of(text, kind):
     return [b.text.strip() for b in L.parse_blocks(L.normalize_text(text)) if b.type == kind]
@@ -432,15 +438,15 @@ def render_check(snap, path, res):
     st = res["structure"]
     lb, la = res["lint_before"], res["lint_after"]
     lines = [f"{SKILL_NAME} check | 초안 복사본 {os.path.basename(snap)} → {os.path.basename(path)}"]
-    lines.append(f"문장: 초안 {res['sentences'][0]}문장 중 {res['kept']}문장 그대로, {res['changed']}문장 고치거나 지움"
+    lines.append(f"문장: 초안 {res['sentences'][0]}문장 중 {res['kept']}문장 그대로, {res['changed']}문장 수정하거나 삭제"
                  f"({res['changed_share'] * 100:.1f}%), 새로 쓴 문장 {res['written']}개")
     if res["changed_share"] > CHANGED_SHARE_RECHECK:
-        lines.append(f"    바뀐 문장이 {int(CHANGED_SHARE_RECHECK * 100)}%를 넘었다. 고친 곳마다 revision.md의 판단 질문에 "
-                     "답하는 수정인지, korean-review.md의 유형에 해당하는 수정인지 다시 읽는다.")
+        lines.append(f"    바뀐 문장이 {int(CHANGED_SHARE_RECHECK * 100)}%를 넘었다. 수정한 문장마다 revision.md의 판단 질문에 "
+                     "답하는지, korean-review.md의 유형에 해당하는지 다시 확인한다.")
     lines.append(f"본문 글자 수: {st['chars'][0]:,}자 → {st['chars'][1]:,}자")
     lost = res["lost_numbers"]
     if lost:
-        lines.append(f"초안에만 있는 수치 {len(lost)}개: 원자료에서도 맞는 사실의 유일한 언급이었으면 되살린다. 근거를 확인한 오류 수정은 유지한다.")
+        lines.append(f"초안에만 있는 수치 {len(lost)}개: 원자료와 일치하는 사실을 유일하게 언급한 수치였으면 복원한다. 근거를 확인한 오류 수정은 유지한다.")
         for x in lost[:8]:
             lines.append(f"    {x['raw']} (초안 L{x['line']}, 초안에서 {x['count']}회)")
     else:
@@ -455,77 +461,79 @@ def render_check(snap, path, res):
     else:
         lines.append("새 수치: 없음")
     lines.append("구조: 헤딩 " + ("같음" if st["headings_same"] else
-                                 "바뀜(후처리는 헤딩과 절 구성을 바꾸지 않는다. 한국어 문장 점검의 유형 J 수정이면 남기고, "
-                                 "글 안에서 그 헤딩으로 거는 링크를 함께 고친다)")
+                                 "바뀜(후처리는 헤딩과 섹션 구성을 바꾸지 않는다. 한국어 문장 점검의 유형 J 수정이면 유지하고 "
+                                 "글 안에서 그 헤딩을 가리키는 링크도 함께 수정한다)")
                  + ", 코드 블록 " + ("같음" if st["code_same"] else "바뀜(코드는 바꾸지 않는다)")
                  + f", 표 {st['tables'][0]}개 → {st['tables'][1]}개")
     lines.append(f"lint: 초안 G{lb['gate_fail']} F{lb['fail']} W{lb['warn']} → 후처리 G{la['gate_fail']} F{la['fail']} W{la['warn']}")
     if res["gate_fail"]:
-        lines.append("  Gate 위반과 FAIL(고친다):")
+        lines.append("  Gate 위반과 FAIL(수정한다):")
         for r in res["gate_fail"]:
             lines += _fmt_metric(r)
     ai_only = [r for r in res["worse_ai"] if r["status"] not in ("GATE", "FAIL")]
     if ai_only:
-        lines.append("  나빠진 AI 문체 항목(고친다):")
+        lines.append("  나빠진 AI 문체 항목(수정한다):")
         for r in ai_only:
             lines += _fmt_metric(r)
     if res["worse_dist"]:
-        lines.append("  나빠진 문장과 문단의 분포 항목(후처리에서 의도했으면 남기고 보고에 이유를 쓴다):")
+        lines.append("  나빠진 문장과 문단의 분포 항목(후처리에서 의도했으면 유지하고 보고에 이유를 적는다):")
         for r in res["worse_dist"]:
             lines += _fmt_metric(r)
     if not (res["gate_fail"] or res["worse_ai"] or res["worse_dist"]):
         lines.append("  나빠진 항목 없음")
     if res["predicate_candidates"]:
-        lines.append("  인접한 서술어 반복 후보(자동 수정 아님. 문맥을 읽고 고치거나 남긴 이유를 기록한다):")
+        lines.append("  인접한 서술어 반복 후보(자동 수정 아님. 문맥을 읽고 수정하거나, 남긴 이유를 기록한다):")
         for h in res["predicate_candidates"]:
             lines.append(f"    L{h['previous']['line']} → L{h['line']} «{h['match']}»: "
                          f"{h['previous']['text']} {h['text']}")
     if res["long_new"]:
-        lines.append(f"연결어미가 3개 이상인 새 문장 {len(res['long_new'])}개(절의 대상과 관계를 검토하고 필요한 곳만 나눈다):")
+        lines.append(f"연결어미가 3개 이상인 새 문장 {len(res['long_new'])}개(절의 대상과 관계를 검토하고 필요한 문장만 나눈다):")
         for x in res["long_new"][:5]:
             lines.append(f"    L{x['line']}: {excerpt(x['text'], 80)}")
-    lines.append("자동 판정: " + ("고칠 항목 있음" if res["must_fix"] else "고칠 항목 없음")
+    lines.append("자동 판정: " + ("수정할 항목 있음" if res["must_fix"] else "수정할 항목 없음")
                  + ". 후보의 문맥과 수정 후 단독 읽기는 별도로 확인한다.")
     return "\n".join(lines)
 
 
-# ---------------------------------------------------------------- 고친 문장 점검(audit)
+# ---------------------------------------------------------------- Edited sentence check (audit)
 #
-# 수정 후 검토(skill의 작업 문서가 정한 검토)에서 검토자가 찾은 문제의 대부분은 앞 수정이 새로 만든 문장에 있었다.
-# 2026-11-02 README 작업에서 검토에서 지적된 곳을 고친 문장은 다음 다섯 가지 이유로 다시 지적됐다. 조건을 줄여 옮김,
-# fact sheet에 없는 이유와 인과를 더함, 지시어와 한 이름이 두 대상을 가리킴, 문장을 나누거나 합치며 주어와
-# 서술어가 어긋남, 같은 사실을 쓴 다른 줄을 고치지 않음. audit는 고친 문장마다 이 다섯 가지를 확인할 자리를
-# 보여 준다. 판정은 하지 않는다.
+# Most problems that reviewers found in the post-edit review (the review defined by the skill's workflow documents) were
+# in sentences that an earlier edit had newly created. In the 2026-11-02 README work, sentences edited to fix what the
+# review flagged were flagged again for these five reasons: conditions were dropped when restating, a reason or causal
+# link absent from the fact sheet was added, a demonstrative or a single name pointed at two targets, splitting or merging
+# sentences made the subject and predicate mismatch, and other lines stating the same fact were not edited. For each edited
+# sentence, audit shows where to check these five things. It makes no verdict.
 
-# 앞 문장이나 글을 읽는 시점에 따라 대상이 정해지는 말. 뒤에 조사가 붙은 형태("이는", "지금은")도 센다.
+# Words whose target depends on the previous sentence or on when the article is read. Forms with a particle attached
+# ("이는", "지금은") also count.
 DEICTIC_WORDS = ("이", "그", "저", "이런", "그런", "이러한", "그러한", "이렇게", "그렇게", "해당", "이때", "그때",
                  "이것", "그것", "이들", "그들", "여기", "거기", "이번", "지금", "현재", "최근", "새", "새로운", "새롭게",
                  "기존", "이전", "당시")
 RELATIVE_TIME = ("이번", "지금", "현재", "최근", "새", "새로운", "새롭게", "기존", "이전", "당시")
 DEICTIC_TAILS = ("", "은", "는", "이", "가", "을", "를", "의", "에", "에서", "에는", "에서는", "에도", "으로", "로",
                  "와", "과", "도", "만", "부터", "까지", "처럼", "보다")
-# 글 안의 위치를 가리키는 말. "모은 뒤"처럼 동작의 순서를 말하는 쓰임은 빼고, 글의 단위 이름 앞이거나
-# "위의", "다음과"처럼 위치를 가리키는 꼴일 때만 센다.
+# Words that point to a position in the article. Uses that state the order of actions, like "모은 뒤", are excluded. These
+# words count only before the name of an article unit or in a form that points to a position, like "위의" or "다음과".
 POSITION_WORDS = ("위", "앞", "뒤", "아래", "다음")
 POSITION_FORMS = ("위의", "앞의", "뒤의", "아래의", "위에서", "앞에서", "앞서", "다음과", "다음은", "아래와", "위와")
 DOC_NOUNS = ("절", "문단", "문장", "표", "그림", "목록", "단계", "예", "예시", "코드", "식", "장", "항목", "글", "결과",
              "설명", "내용", "부분", "방법", "실험", "측정", "값", "수치", "정의", "질문", "사례")
 FORWARD_WORDS = ("아래", "다음")
-NUMERAL_DET = ("두", "세", "네")  # "두 값", "세 항목"처럼 앞에서 센 대상을 다시 가리키는 말
+NUMERAL_DET = ("두", "세", "네")  # words like "두 값" and "세 항목" that refer back to targets counted earlier
 COUNTERS = ("개", "편", "곳", "가지", "번", "명", "건", "줄", "문장", "단계", "차례", "쌍", "종", "회", "배", "글자",
             "자", "쪽", "장", "권")
-# 조사를 더 넓게 뗄 때 쓰는 목록(단어 하나짜리 표현의 길이를 잴 때만 쓴다).
+# List used to strip particles more broadly (only when measuring the length of one-word expressions).
 EXTRA_PARTICLES = ("이나", "이라는", "라는", "이란", "이며", "이고", "으로서", "로서", "으로써", "로써", "에게", "한테",
                    "이라고", "라고", "이라", "이든", "마저", "조차", "밖에", "도", "만", "나", "란")
-# 이유와 목적을 말하는 표지. "~어서", "~아서"는 아래 _causal_seo로 찾는다.
+# Markers of reason and purpose. "~어서" and "~아서" are found by _causal_seo below.
 CAUSAL_RE = re.compile(r"때문|덕분|탓에|탓으로|인해|인한|그래서|따라서|그러므로|결과적으로|므로|니까|느라|도록|위해|려고|목적(?!어)")
 SEO_NONCAUSAL = ("위해서", "대해서", "통해서", "의해서", "관해서", "비해서", "따라서", "에서", "께서", "부터서")
-LEFTOVER_MAX_UNITS = 6  # 고치기 전 표현이 이보다 많은 단위에 있으면 흔한 말로 보고 보여 주지 않는다
-# 범위, 빈도, 경계를 정하는 말. 줄여 옮길 때 빠지거나 넓어지기 쉽다.
+LEFTOVER_MAX_UNITS = 6  # a pre-edit expression found in more units than this is treated as common and not shown
+# Words that set scope, frequency, or bounds. They are easily dropped or widened when restating.
 SCOPE_EXACT = ("모두", "모든", "전부", "전체", "항상", "언제나", "늘", "대부분", "오직", "유일", "가운데", "중", "각",
                "이상", "이하", "미만", "초과", "등")
 SCOPE_ENDS = ("처럼", "부터", "까지", "마다", "로만", "에만", "에서만", "만으로", "뿐")
-# 과/와로 끝나는 명사. 이 단어 뒤의 "과", "와"는 나열 조사가 아니다.
+# Nouns ending in "과" or "와". The "과" or "와" in these words is not a listing particle.
 COORD_NOUN_END = ("결과", "효과", "성과", "통과", "초과", "경과", "학과", "사과", "부과", "교과")
 GA_NOUNS = ("평가", "추가", "증가", "대가", "단가", "원가", "주가", "전문가", "작가", "국가", "휴가", "부가", "참가",
             "허가")
@@ -536,8 +544,8 @@ FACT_SCORE_MIN = 8.0
 
 
 def audit_units(text):
-    """비교 단위: 헤딩, 표의 행, 문단과 목록 항목과 인용 블록의 문장. 명사구 목록 항목도 넣는다. 코드와 HTML은 뺀다.
-    text는 인라인 코드를 되살린 문장이고 clean은 lint가 보는 문장(인라인 코드는 자리 표시)이다."""
+    """Comparison units: headings, table rows, and the sentences of paragraphs, list items, and blockquotes. Noun-phrase list items are included. Code and HTML are excluded.
+    text is the sentence with inline code restored, and clean is the sentence lint sees (inline code is a placeholder)."""
     units = []
     for b in L.parse_blocks(L.normalize_text(text)):
         if b.type in ("code", "html"):
@@ -574,7 +582,7 @@ def audit_units(text):
 
 
 WORD_RE = re.compile(r"[A-Za-z][A-Za-z0-9\-_.]*|[가-힣]+")
-# 동사와 형용사의 활용 꼴을 명사 줄기로 줄일 때 떼는 끝. "측정했습니다"와 "측정"을 같은 말로 본다.
+# Endings stripped to reduce conjugated verbs and adjectives to a noun stem. "측정했습니다" and "측정" count as the same word.
 STEM_END_RE = re.compile(r"(?:했습니다|합니다|했고|하고|하는|하며|하면|하기|해서|해야|하지|한다|했다|하여|됐습니다|됩니다|"
                          r"되는|되고|되어|됐고|된|될|한|할|해)$")
 ADVERBS = ("잘못", "다시", "먼저", "모두", "함께", "가장", "아직", "이미", "바로", "따로", "서로", "거의", "정도", "대부분",
@@ -589,8 +597,8 @@ def _stem(word):
 
 
 def _words(masked):
-    """따옴표와 인라인 코드를 뺀 글에서 단어를 뽑아 (원래 꼴, 비교할 꼴)로 돌려준다. 비교할 꼴은 소문자로 바꾸고
-    조사와 "~했습니다" 같은 끝을 뗀 것이다. 괄호는 단어를 나누는 자리로 본다("도입(H2로" → "도입", "H2로")."""
+    """Extract words from text without quotes and inline code, and return them as (original form, comparison form). The comparison form is lowercased,
+    with particles and endings like "~했습니다" stripped. Parentheses count as word separators ("도입(H2로" → "도입", "H2로")."""
     out = []
     for raw in WORD_RE.findall(L.PH_RE.sub(" ", masked)):
         out.append((raw, _stem(_bare(raw.lower()))))
@@ -601,7 +609,7 @@ VERSION_RE = re.compile(r"(?<![\d.])\d+\.\d+\.\d+(?![\d.])")
 
 
 def _audit_numbers(text):
-    """수치 목록. 버전 번호("0.2.0")와 자료 위치("22~35줄")는 뺀다."""
+    """List of numbers, excluding version numbers ("0.2.0") and source locations ("22~35줄")."""
     return L.extract_numbers(LOCATION_REF_RE.sub(" ", VERSION_RE.sub(" ", text)))
 
 
@@ -609,7 +617,7 @@ BARE_PARTICLES = sorted(set(PARTICLES) | set(EXTRA_PARTICLES), key=len, reverse=
 
 
 def _bare(tok):
-    """조사를 하나 떼되 한 글자 명사("글은", "수가")도 뗀다."""
+    """Strip one particle, including from one-character nouns ("글은", "수가")."""
     for p in BARE_PARTICLES:
         if tok.endswith(p) and len(tok) > len(p):
             return tok[:-len(p)]
@@ -617,7 +625,7 @@ def _bare(tok):
 
 
 def _adnominal(tok):
-    """"모은", "측정한", "여는", "쓰던"처럼 뒤의 명사를 꾸미는 꼴인지. 받침 ㄴ으로 끝나는 명사도 여기에 들어간다."""
+    """Whether the token is a form that modifies the next noun, like "모은", "측정한", "여는", "쓰던". Nouns ending in the final consonant ㄴ also match."""
     if not tok or not L.HANGUL_RE.match(tok[-1]):
         return False
     return tok.endswith(("는", "던")) or L._jong(tok[-1]) == 4
@@ -652,7 +660,7 @@ def deictics_in(toks):
 
 
 def _causal_seo(tok):
-    """"늘어서", "없어서", "나와서"처럼 이유를 잇는 "~아서/~어서". "면서", "에서", "위해서"는 뺀다."""
+    """A "~아서/~어서" that connects a reason, like "늘어서", "없어서", "나와서". Excludes "면서", "에서", "위해서"."""
     if len(tok) < 2 or not tok.endswith("서") or tok.endswith(SEO_NONCAUSAL) or tok.endswith("면서"):
         return False
     prev = tok[-2]
@@ -689,7 +697,7 @@ def _role(tok):
 
 
 def coordinated(toks):
-    """"A와 … B가(를)"처럼 서술어 하나가 주어나 목적어 둘 이상을 받는 곳과 그 서술어. B는 A 뒤 여섯 단어 안에서 찾는다."""
+    """Places like "A와 … B가(를)" where one predicate takes two or more subjects or objects, along with that predicate. B is searched for within six words after A."""
     out = []
     clean = _clean_toks(toks)
     i = 0
@@ -711,25 +719,26 @@ def coordinated(toks):
 
 
 FINAL_ENDINGS = ("다", "요", "까", "기", "음")
-# 명사를 꾸미는 꼴의 끝. 받침 ㄴ으로 끝나는 명사(원인, 확인, 기간, 복사본)와 겹치는 "인", "간", "본"은 넣지 않는다.
+# Endings of forms that modify a noun. "인", "간", "본" are left out because they overlap with nouns ending in the final
+# consonant ㄴ ("원인", "확인", "기간", "복사본").
 ADNOMINAL_ENDS = ("는", "던", "한", "된", "할", "될", "든", "른", "운", "쓴", "친", "진", "난", "온")
-# 서술어 어미처럼 보이는 조사("보다", "와", "가")로 끝나는 꼴
+# Forms ending in particles that look like predicate endings ("보다", "와", "가")
 PARTICLE_ENDS = ("에서", "께서", "보다", "부터", "까지", "처럼", "마다", "에다", "에게", "한테")
 
 
 def _verb_form(tok):
-    """서술어 꼴인지: 문장을 끝내거나 잇는 어미, 명사를 꾸미는 꼴, "~기", "~아/~어"로 끝나는 단어."""
+    """Whether the token is a predicate form: a word ending in an ending that closes or connects a sentence, a form that modifies a noun, "~기", or "~아/~어"."""
     if len(tok) < 2 or not L.HANGUL_RE.match(tok[-1]) or tok.endswith(PARTICLE_ENDS):
         return False
     if tok.endswith(FINAL_ENDINGS) or L.is_connective(tok) or tok.endswith(ADNOMINAL_ENDS):
         return True
     if tok.endswith(("와", "과", "가", "나")):
-        return False  # 조사 "와", "과", "가", "나"는 모음 ㅏ, ㅘ로 끝나도 "~아" 꼴이 아니다
+        return False  # the particles "와", "과", "가", "나" are not the "~아" form even though they end in the vowels ㅏ or ㅘ
     return L._jong(tok[-1]) == 0 and L._jung(tok[-1]) in L.SEO_VOWELS
 
 
 def object_verbs(toks):
-    """목적어(~을, ~를)와 그 뒤에 처음 나오는 서술어 꼴 단어의 짝. 목적어 앞 단어 하나를 함께 보여 준다."""
+    """Pairs of an object (~을, ~를) and the first predicate-form word after it. Also shows the one word before the object."""
     clean = _clean_toks(toks)
     out = []
     for i, t in enumerate(clean):
@@ -744,7 +753,7 @@ def object_verbs(toks):
 
 
 def list_items(raw_toks):
-    """쉼표로 나열한 항목 수. 괄호 밖 단어 뒤의 쉼표만 세고 연결어미 뒤의 쉼표는 세지 않는다. 쉼표가 둘 이상일 때만 돌려준다."""
+    """Number of comma-separated items. Counts only commas after words outside parentheses, not commas after connective endings. Returns the count only when there are two or more commas."""
     n = 0
     for t in raw_toks:
         if t.endswith((",", "，")):
@@ -755,7 +764,7 @@ def list_items(raw_toks):
 
 
 def _mention_candidate(raw, norm):
-    """처음 나오는 말로 보여 줄 단어인지. 조사를 뗀 꼴(norm)로 서술어 꼴과 부사를 거른다("기준치는"은 "기준치"로 본다)."""
+    """Whether a word should be shown as a first mention. Filters out predicate forms and adverbs using the particle-stripped form norm ("기준치는" counts as "기준치")."""
     if len(norm) < 2 or norm in ADVERBS or raw in ADVERBS:
         return False
     if re.fullmatch(r"[가-힣]+", norm):
@@ -764,7 +773,7 @@ def _mention_candidate(raw, norm):
 
 
 def first_mentions(units, idx, limit=8):
-    """units[idx]의 단어 가운데 글의 앞 단위에 한 번도 나오지 않은 말. 서술어 꼴, 부사, 한 글자 단어는 뺀다."""
+    """Words in units[idx] that never appear in earlier units of the article. Excludes predicate forms, adverbs, and one-character words."""
     seen = set()
     for u in units[:idx]:
         seen.update(norm for _, norm in u["words"])
@@ -780,7 +789,7 @@ SECTION_REF_RE = re.compile(r"[\"“]([^\"”]{2,40})[\"”]\s*절")
 
 
 def section_refs(units, idx):
-    """"…" 절로 다른 절을 가리킨 곳. 가리킨 절의 줄 범위와, 이 단위의 말 가운데 그 절에 나오지 않는 말을 돌려준다."""
+    """Places that refer to another section as "…" 절. Returns the line range of that section and the words in this unit that do not appear in it."""
     u = units[idx]
     out = []
     heads = [(j, x) for j, x in enumerate(units) if x["kind"] == "헤딩"]
@@ -818,7 +827,7 @@ LOCATION_REF_RE = re.compile(r"\d[\d,]*(?:\s*[~\-–]\s*\d[\d,]*)?\s*(?:줄|쪽|
 
 
 def facts_rows(facts_text):
-    """fact sheet의 줄마다 수치와 내용 단어. 표 구분 줄과 빈 줄은 뺀다. 자료 위치("22~35줄", "8쪽")의 숫자는 수치로 세지 않는다."""
+    """Numbers and content words for each fact sheet line. Excludes table delimiter rows and blank lines. Digits in source locations ("22~35줄", "8쪽") do not count as numbers."""
     rows = []
     for n, line in enumerate(facts_text.split("\n"), 1):
         if not line.strip() or L.TABLE_DELIM_RE.match(line):
@@ -838,7 +847,7 @@ def _idf(df, key, total):
 
 
 def fact_candidates(unit, rows, df, top=2):
-    """이 문장의 수치나 드문 단어를 함께 쓴 fact sheet 줄. 수치를 하나 이상 같이 쓰거나 단어 점수가 기준을 넘는 줄만 고른다."""
+    """Fact sheet lines that share this sentence's numbers or rare words. Selects only lines that share at least one number or whose word score passes the threshold."""
     nums = {k for k, _ in _audit_numbers(unit["clean"])}
     keys = _content_keys(unit["clean"])
     total = len(rows)
@@ -864,7 +873,7 @@ def fact_candidates(unit, rows, df, top=2):
 
 
 def _numbers_by_line(text):
-    """audit용 수치 위치. lint_ko의 수치 추출에서 버전 번호와 자료 위치를 뺀 것이다."""
+    """Number positions for audit: lint_ko's number extraction without version numbers and source locations."""
     found = {}
     for b in L.parse_blocks(L.normalize_text(text)):
         if b.type == "code":
@@ -888,8 +897,8 @@ def _find_phrase(units, phrase, skip):
 
 
 def removed_phrases(old_units, new_units):
-    """고치기 전 문장에만 있던 표현. 서술어 꼴 단어에서 끊고, 두 단어 짝과 한 단어(영문이나 숫자가 든 말, 조사를
-    뗀 길이가 세 글자 이상인 말, "이번", "기존" 같은 시점의 말)을 돌려준다."""
+    """Expressions found only in the pre-edit sentences. Breaks at predicate-form words and returns two-word pairs and single words (words containing Latin letters or digits,
+    words of three or more characters after stripping particles, and time words like "이번" and "기존")."""
     gone = set(k for u in old_units for k in u["keys"]) - set(k for u in new_units for k in u["keys"])
     out = []
     for u in old_units:
@@ -913,15 +922,15 @@ def removed_phrases(old_units, new_units):
 
 
 def defined_names(unit):
-    """"이름(설명)" 꼴로 괄호 바로 앞에 붙여 쓴 이름. 괄호 앞 다섯 단어까지를 이름으로 보고, 쉼표가 붙은 단어이나
-    문장을 끝내거나 잇는 서술어에서 멈춘다. 돌려주는 값: (이름 단어 목록, 괄호 안 글)."""
+    """Names written directly before a parenthesis in the form "이름(설명)". Up to five words before the parenthesis count as the name, stopping at a word with a comma attached
+    or at a predicate that closes or connects a sentence. Return value: (list of name words, text in the parentheses)."""
     out = []
     s = unit["clean"]
     for m in re.finditer(r"\(([^()]{2,120})\)", s):
         before = s[:m.start()]
         if not before or before[-1] in " \t":
             continue
-        # 인라인 코드나 따옴표 뒤에서 이름을 다시 시작한다("`lint_ko.py`는 부정 대구(" → "부정 대구").
+        # Restart the name after inline code or a quote ("`lint_ko.py`는 부정 대구(" → "부정 대구").
         raw = [t for t in L.PH_RE.split(L.mask_quotes(before))[-1].split() if t not in PARTICLES]
         keys = []
         for t in reversed(raw[-5:]):
@@ -932,14 +941,14 @@ def defined_names(unit):
                 break
             keys.append(strip_particle(w).lower())
         keys.reverse()
-        # "두 개(…)"처럼 수량으로 끝나는 말은 이름이 아니다.
+        # A phrase ending in a quantity, like "두 개(…)", is not a name.
         if len(keys) >= 2 and not PRED_LIKE_RE.search(keys[-1]) and keys[-1] not in COUNTERS:
             out.append((keys, m.group(1).strip()))
     return out
 
 
 def name_overlaps(units, idx):
-    """units[idx]가 정의한 이름과 마지막 단어가 같고 단어를 둘 이상 함께 쓰는 다른 정의(괄호 안 글이 다른 것)."""
+    """Other definitions (with different text in the parentheses) that have the same last word as a name defined in units[idx] and share two or more words with it."""
     found = []
     mine = defined_names(units[idx])
     if not mine:
@@ -1020,24 +1029,25 @@ def audit(before, after, facts_text=None):
             "worse_ai": cmp["worse_ai"], "worse_dist": cmp["worse_dist"], "must_fix": cmp["must_fix"]}
 
 
-# 수정 후 검토자가 바뀐 문장마다 묻는 질문. 고친 사람이 같은 질문에 먼저 답하게 하려고
-# 출력 맨 위에 둔다. 괄호 안은 그 질문에 답할 때 볼 출력 줄이다.
+# The questions the post-edit reviewer asks for each changed sentence. They are placed at the top of the output so that
+# the person who made the edit answers the same questions first. The parentheses name the output lines to look at when
+# answering that question.
 AUDIT_GUIDE = (
-    "확인할 것(판정 아님). 바뀐 단위마다 수정 후 검토자가 묻는 아래 질문에 먼저 답한다. 답할 수 없으면 그 단위를 고친 뒤 "
+    "확인할 것(판정 아님). 바뀐 단위마다 수정 후 검토자가 묻는 아래 질문에 먼저 답한다. 답할 수 없으면 그 단위를 수정한 뒤 "
     "audit를 다시 실행한다.",
-    "  T 대상: 구절과 지시어가 가리키는 자료, 절차, 결과를 이 문장이나 앞 문장, 가리킨 절, 글이 링크한 문서에서 찾을 수 "
-    "있는가. 글에서 처음 나오는 말은 독자가 그 자리에서 무엇인지 알 수 있는가(앞 문장, 지시어, 처음 나오는 말, 절 참조)",
+    "  T 대상: 구절과 지시어가 가리키는 자료, 절차, 결과를 이 문장이나 앞 문장, 가리킨 섹션, 글이 링크한 문서에서 찾을 수 "
+    "있는가. 글에서 처음 나오는 단어는 독자가 그 위치에서 무엇인지 알 수 있는가(앞 문장, 지시어, 처음 나오는 단어, 섹션 참조)",
     "  F 주어와 목적어: 절마다 누가 무엇을 하는지 이 문장에서 답할 수 있는가. 나눈 문장은 앞 문장의 주어와 조건을 "
     "이어받는가(앞 문장)",
-    "  C 서술어: 서술어마다 주어와 목적어를 붙여 읽으면 무슨 일이 일어났다는 말인지 한 가지로 답할 수 있는가"
-    "(목적어와 서술어, 함께 받는 서술어)",
+    "  C 서술어: 서술어마다 주어와 목적어를 붙여 읽으면 무슨 일이 일어났다는 의미인지 한 가지로 답할 수 있는가"
+    "(목적어와 서술어, 공유 서술어)",
     "  X 사실: 값, 조건(모집단, 기간, 제외한 것과 예외, 판단 기준), 이유, 범위가 근거 후보 행과 그 행의 자료 원문과 같은가. "
-    "글의 말이 원문보다 강하거나 넓지 않은가(후보를 근거로, 일부를 전체로). 합계를 부르는 이름이 합계의 항목 모두에 맞는가. "
-    "나열과 \"무엇이 바뀌었다\" 같은 묶음 전체의 말은 원문 목록과 한 항목씩 대조했는가. 일부면 예임을 밝혔는가"
-    "(수치, 근거 후보, 이유·목적, 범위, 나열, 함께 받는 서술어)",
-    "  같은 사실: 같은 수치, 같은 이름, 고치기 전 표현을 쓴 다른 줄도 같은 대상과 조건을 말하는가. 한 이름이 두 대상을 "
-    "가리키지 않는가(수치, 고치기 전 표현, 이름이 겹치는 정의)",
-    "  S 반복: 바뀐 문장과 인접한 문장이 같은 서술어나 같은 문형으로 이어져 읽기를 끊지 않는가(앞 문장, 뒤 문장)",
+    "글의 표현이 원문보다 강하거나 넓지 않은가(후보를 근거로, 일부를 전체로). 합계에 붙인 이름이 합계의 모든 항목에 맞는가. "
+    "나열과 \"무엇이 바뀌었다\"처럼 여러 항목을 한꺼번에 가리키는 표현은 원문 목록과 한 항목씩 대조했는가. 일부만 다뤘다면 예시임을 밝혔는가"
+    "(수치, 근거 후보, 이유·목적, 범위, 나열, 공유 서술어)",
+    "  같은 사실: 같은 수치, 같은 이름, 수정 전 표현을 사용한 다른 줄도 같은 대상과 조건을 말하는가. 한 이름이 두 대상을 "
+    "가리키지 않는가(수치, 수정 전 표현, 이름이 겹치는 정의)",
+    "  S 반복: 바뀐 문장과 인접한 문장이 같은 서술어나 같은 문형으로 이어져 읽는 흐름을 끊지 않는가(앞 문장, 뒤 문장)",
 )
 
 
@@ -1048,18 +1058,18 @@ def _q(text, n=None):
 def render_audit(base, path, res):
     lines = [f"{SKILL_NAME} audit | 기준 {os.path.basename(base)} → {os.path.basename(path)} | "
              f"단위 {res['units'][0]}개 → {res['units'][1]}개, 바뀌거나 새로 쓴 단위 {res['changed']}개, "
-             f"바뀐 곳 {len(res['groups'])}곳"]
+             f"바뀐 부분 {len(res['groups'])}개"]
     if not res["groups"]:
         lines.append("바뀐 문장 없음")
     else:
         lines.extend(AUDIT_GUIDE)
     for gi, g in enumerate(res["groups"], 1):
         if g["op"] == "insert":
-            head = f"새로 씀: {g['new_count']}단위"
+            head = f"추가: {g['new_count']}단위"
         elif g["op"] == "delete":
-            head = f"지움: 기준 {fmt_lines(g['old_lines'])}의 {g['old_count']}단위"
+            head = f"삭제: 기준 {fmt_lines(g['old_lines'])}의 {g['old_count']}단위"
         else:
-            head = f"고침: 기준 {fmt_lines(g['old_lines'])}의 {g['old_count']}단위 → {g['new_count']}단위"
+            head = f"수정: 기준 {fmt_lines(g['old_lines'])}의 {g['old_count']}단위 → {g['new_count']}단위"
         lines.append(f"[{gi}] {head}")
         for it in g["items"]:
             lines.append(f"  L{it['line']} {it['kind']}: {_q(it['text'])}")
@@ -1068,21 +1078,21 @@ def render_audit(base, path, res):
                 lines.append(f"    앞 문장 L{pv['line']}: {_q(pv['text'], 160)}")
             notes = []
             if it["split"]:
-                notes.append("한 문장을 나눈 뒤 문장이다. 앞 문장에만 있는 주어, 조건을 이 문장이 이어받는지 본다")
+                notes.append("한 문장을 나눈 문장 중 뒤 문장이다. 앞 문장에만 있는 주어와 조건을 이 문장이 이어받는지 확인한다")
             if it["merged"]:
-                notes.append("여러 문장을 합친 문장이다. 합친 주어 모두에 서술어가 맞는지 본다")
+                notes.append("여러 문장을 합친 문장이다. 합친 주어 모두에 서술어가 맞는지 확인한다")
             for n in notes:
                 lines.append(f"    {n}")
             if it["deictic"]:
                 lines.append("    지시어: " + ", ".join(_q(d) for d in it["deictic"]))
             if it["first_mentions"]:
-                lines.append("    처음 나오는 말: " + ", ".join(_q(w) for w in it["first_mentions"]))
+                lines.append("    처음 나오는 단어: " + ", ".join(_q(w) for w in it["first_mentions"]))
             for ref in it["section_refs"]:
                 if ref["lines"] is None:
-                    lines.append(f"    절 참조 «{ref['name']}»: 글에 그런 이름의 헤딩이 없다")
+                    lines.append(f"    섹션 참조 «{ref['name']}»: 글에 그런 이름의 헤딩이 없다")
                 else:
-                    miss = (" / 그 절에 없는 말: " + ", ".join(_q(w) for w in ref["missing"])) if ref["missing"] else ""
-                    lines.append(f"    절 참조 «{ref['name']}»: L{ref['lines'][0]}~L{ref['lines'][1]}{miss}")
+                    miss = (" / 그 섹션에 없는 단어: " + ", ".join(_q(w) for w in ref["missing"])) if ref["missing"] else ""
+                    lines.append(f"    섹션 참조 «{ref['name']}»: L{ref['lines'][0]}~L{ref['lines'][1]}{miss}")
             if it.get("following"):
                 fw = it["following"]
                 lines.append(f"    뒤 단위 L{fw['line']} {fw['kind']}: {_q(fw['text'], 100)}")
@@ -1093,7 +1103,7 @@ def render_audit(base, path, res):
                 if x["facts"]:
                     where.append("fact sheet " + ", ".join(str(n) for n in x["facts"][:6])
                                  + ("…" if len(x["facts"]) > 6 else "") + "줄")
-                lines.append(f"    수치 {x['raw']}: " + (" / ".join(where) if where else "다른 곳 없음"))
+                lines.append(f"    수치 {x['raw']}: " + (" / ".join(where) if where else "다른 위치 없음"))
             for f in it["facts"]:
                 lines.append(f"    근거 후보 fact sheet {f['line']}줄: {_q(f['text'])}")
             if it["causal"]:
@@ -1105,17 +1115,17 @@ def render_audit(base, path, res):
             if it["objects"]:
                 lines.append("    목적어와 서술어: " + ", ".join(f"«{o['object']} → {o['verb']}»" for o in it["objects"]))
             for c in it["coordinated"]:
-                lines.append(f"    함께 받는 서술어({c['role']}): «{c['first']} … {c['head']}» → «{c['predicate']}»")
+                lines.append(f"    공유 서술어({c['role']}): «{c['first']} … {c['head']}» → «{c['predicate']}»")
             for nm in it["names"]:
                 lines.append(f"    이름이 겹치는 정의 L{nm['line']}({nm['kind']}): «{nm['other']}({nm['paren']})» "
                              f"/ 이 문장 «{nm['name']}»")
         for lo in g["leftover"]:
             where = ", ".join(f"L{w['line']}({w['kind']})" for w in lo["where"])
-            lines.append(f"  고치기 전 표현 «{lo['phrase']}»이 남은 곳: {where}")
+            lines.append(f"  수정 전 표현 «{lo['phrase']}»이 남은 위치: {where}")
         if g["next"]:
-            lines.append(f"  뒤 문장(그대로) L{g['next']['line']}: {_q(g['next']['text'], 160)}")
+            lines.append(f"  뒤 문장(변경 없음) L{g['next']['line']}: {_q(g['next']['text'], 160)}")
     if res["lint_hits"]:
-        lines.append("바뀐 문장에서 lint가 센 표현:")
+        lines.append("바뀐 문장에서 lint가 검출한 표현:")
         for h in res["lint_hits"]:
             m = f" «{h['match']}»" if h["match"] else ""
             lines.append(f"    L{h['line']} {h['id']}{m}")
@@ -1130,7 +1140,7 @@ def render_audit(base, path, res):
     return "\n".join(lines)
 
 
-# ---------------------------------------------------------------- 명령
+# ---------------------------------------------------------------- Commands
 
 def cmd_start(args):
     snap = snapshot_path(args.article)
@@ -1140,15 +1150,15 @@ def cmd_start(args):
     shutil.copyfile(args.article, snap)
     mp = mark_path(args.article)
     if os.path.exists(mp):
-        os.remove(mp)  # 이전 후처리의 수정 전 복사본. 남겨 두면 audit가 이 복사본을 기준으로 삼는다.
-        print(f"이전 후처리의 수정 전 복사본을 지웠습니다: {mp}")
+        os.remove(mp)  # the pre-fix copy from the previous post-processing run. If kept, audit would use it as the base.
+        print(f"이전 후처리의 수정 전 복사본을 삭제했습니다: {mp}")
     text = L.read_text(args.article)
     st = L.analyze(text)["stats"]
     rp = repeats_path(args.article)
     with open(rp, "w", encoding="utf-8") as f:
         f.write(render_repeats(args.article, find_repeats(text)) + "\n")
-    print(f"초안 복사본: {snap} ({st['sentences']}문장, {st['chars']:,}자). 후처리는 {args.article}을 고친다.")
-    print(f"반복 후보 파일: {rp}. 글을 처음부터 끝까지 읽고 멈출 곳을 적은 뒤에 연다.")
+    print(f"초안 복사본: {snap} ({st['sentences']}문장, {st['chars']:,}자). 후처리는 {args.article}을 수정한다.")
+    print(f"반복 후보 파일: {rp}. 글을 처음부터 끝까지 읽으면서 멈추게 되는 부분을 적은 뒤에 이 파일을 연다.")
     return 0
 
 
@@ -1156,7 +1166,7 @@ def cmd_mark(args):
     mp = mark_path(args.article)
     shutil.copyfile(args.article, mp)
     st = L.analyze(L.read_text(args.article))["stats"]
-    print(f"수정 전 복사본: {mp} ({st['sentences']}문장). 고친 뒤 audit를 실행하면 이 복사본과 비교한다.")
+    print(f"수정 전 복사본: {mp} ({st['sentences']}문장). 수정한 뒤 audit를 실행하면 이 복사본과 비교한다.")
     return 0
 
 
@@ -1168,11 +1178,11 @@ def cmd_audit(args):
     else:
         base = snapshot_path(args.article)
     if not os.path.isfile(base):
-        print(f"비교할 복사본이 없습니다: {base}. 고치기 전에 mark를 실행하거나 --base로 고치기 전 글을 줍니다.",
+        print(f"비교할 복사본이 없습니다: {base}. 수정하기 전에 mark를 실행하거나 --base로 수정 전 글을 지정합니다.",
               file=sys.stderr)
         return 2
     if args.out and os.path.abspath(args.out) in (os.path.abspath(args.article), os.path.abspath(base)):
-        print(f"--out에는 글이나 비교할 복사본이 아닌 새 파일 경로를 줍니다: {args.out}", file=sys.stderr)
+        print(f"--out에는 글이나 비교할 복사본이 아닌 새 파일 경로를 지정합니다: {args.out}", file=sys.stderr)
         return 2
     fp = args.facts or facts_path(args.article)
     facts_text = L.read_text(fp) if os.path.isfile(fp) else None
@@ -1188,7 +1198,7 @@ def cmd_audit(args):
     if args.out:
         with open(args.out, "w", encoding="utf-8") as f:
             f.write(out + "\n")
-        print(f"audit 결과: {args.out} (바뀌거나 새로 쓴 단위 {res['changed']}개, 바뀐 곳 {len(res['groups'])}곳)")
+        print(f"audit 결과: {args.out} (바뀌거나 새로 쓴 단위 {res['changed']}개, 바뀐 부분 {len(res['groups'])}개)")
     else:
         print(out)
     return 1 if res["must_fix"] else 0
@@ -1224,22 +1234,22 @@ def cmd_check(args):
 
 def main(argv=None):
     L.setup_stdio()
-    ap = argparse.ArgumentParser(description=f"{SKILL_NAME} 후처리 보조")
+    ap = argparse.ArgumentParser(description=f"{SKILL_NAME} post-processing helper")
     sub = ap.add_subparsers(dest="cmd", required=True)
-    p = sub.add_parser("start", help="초안 복사본을 만든다")
+    p = sub.add_parser("start", help="Create the draft copy")
     p.add_argument("article")
     p.add_argument("--force", action="store_true")
-    p = sub.add_parser("repeats", help="다시 읽을 반복 후보를 출력한다")
+    p = sub.add_parser("repeats", help="Print repeat candidates to reread")
     p.add_argument("article")
     p.add_argument("--all", action="store_true")
     p.add_argument("--json", action="store_true")
-    p = sub.add_parser("check", help="초안 복사본과 비교한다")
+    p = sub.add_parser("check", help="Compare against the draft copy")
     p.add_argument("article")
     p.add_argument("--facts")
     p.add_argument("--json", action="store_true")
-    p = sub.add_parser("mark", help="고치기 전 복사본을 만든다")
+    p = sub.add_parser("mark", help="Create the pre-fix copy")
     p.add_argument("article")
-    p = sub.add_parser("audit", help="고친 문장마다 확인할 자리를 출력한다")
+    p = sub.add_parser("audit", help="Print what to check for each edited sentence")
     p.add_argument("article")
     p.add_argument("--base")
     p.add_argument("--facts")
@@ -1250,7 +1260,7 @@ def main(argv=None):
     except SystemExit as e:
         return 2 if e.code else 0
     if args.article.endswith((SNAPSHOT_SUFFIX, FACTS_SUFFIX, REPEATS_SUFFIX, MARK_SUFFIX, AUDIT_SUFFIX)):
-        print(f"후처리할 글의 경로를 줍니다. 받은 경로는 작업 파일입니다: {args.article}", file=sys.stderr)
+        print(f"후처리할 글의 경로를 지정합니다. 입력한 경로는 작업 파일입니다: {args.article}", file=sys.stderr)
         return 2
     if not os.path.isfile(args.article):
         print(f"파일이 없습니다: {args.article}", file=sys.stderr)

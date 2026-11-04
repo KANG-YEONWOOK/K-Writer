@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
-"""한국어 기술 블로그 글(토스, 카카오, 당근, 네이버 D2, 우아한형제들, CLOVA)을 모아 lint_ko.analyze()로 측정한다.
+"""Collect Korean tech blog articles (Toss, Kakao, Daangn, NAVER D2, Woowahan, CLOVA) and measure them with
+lint_ko.analyze().
 
-원문은 --cache 폴더에만 저장하고 저장소에는 커밋하지 않는다. 저장소에는 URL 목록(urls.json)과
-측정값(stats.json)만 남긴다.
+Source text is stored only in the --cache folder and is not committed. The repo keeps only the URL list (urls.json) and
+the measurements (stats.json).
 
-기간
-  - pre2018: 2018-01-01 이전. 본문을 받지 않고 제외 사유만 기록한다.
-  - base: 2018-01-01~2022-11-30. ChatGPT 공개(2022-11-30) 이전 글로, 기준치 계산의 중심이다.
-  - mid: 2022-12-01~2024-12-31. 기준치 계산에는 가중치를 낮춰 넣는다(calibrate.py).
-  - drift: 2025-01-01 이후. 비교에만 쓴다.
-그룹 이름은 base가 default/casual, mid가 mid-default/mid-casual, drift가 drift-default/drift-casual이다.
+Periods
+  - pre2018: before 2018-01-01. Bodies are not fetched; only the exclusion reason is recorded.
+  - base: 2018-01-01~2022-11-30. Articles from before ChatGPT's release (2022-11-30); the main basis of threshold
+    calculation.
+  - mid: 2022-12-01~2024-12-31. Included in threshold calculation with a lower weight (calibrate.py).
+  - drift: from 2025-01-01. Used only for comparison.
+Group names: default/casual for base, mid-default/mid-casual for mid, drift-default/drift-casual for drift.
 
-사용법
+Usage
   python -I -X utf8 dev/baseline/techblog/measure.py collect --cache DIR [--only d2 woowahan ...]
   python -I -X utf8 dev/baseline/techblog/measure.py measure --cache DIR [--out dev/baseline/techblog/stats.json] [--urls dev/baseline/techblog/urls.json]
 """
@@ -36,18 +38,20 @@ sys.path.insert(0, os.path.join(ROOT, "skills", "techblog", "scripts"))
 import lint_ko as L  # noqa: E402
 
 UA = {"User-Agent": "Mozilla/5.0 (K-Writer baseline measurement; github.com/KANG-YEONWOOK/K-Writer)"}
-BASE_START = "2018-01-01"      # 기준 기간의 시작
-CUTOFF = "2022-12-01"          # ChatGPT 공개(2022-11-30) 이전 글
-DRIFT_START = "2025-01-01"     # mid 기간은 CUTOFF부터 이 날짜 전까지
+BASE_START = "2018-01-01"      # start of the base period
+CUTOFF = "2022-12-01"          # articles before this date predate ChatGPT's release (2022-11-30)
+DRIFT_START = "2025-01-01"     # the mid period runs from CUTOFF up to this date
 KST = timezone(timedelta(hours=9))
-# 게시 계정이 글쓴이와 다른 사이트(우아한형제들 WP author, CLOVA clova-admin)는 저자당 상한에서 뺀다.
+# Sites whose posting account differs from the author (Woowahan WP author, CLOVA clova-admin) are exempt from the
+# per-author cap.
 AUTHOR_CAP_EXEMPT_SITES = ("woowahan", "clova")
-# 우아한형제들 WP category ID: culture 12, education 14, woowa-tech-seminar 269, 우아한테크캠프 275,
-# 우아한스터디 319, notice 681, 우아콘 686. 하나라도 있으면 기술 글이 아니다.
+# Woowahan WP category IDs: culture 12, education 14, woowa-tech-seminar 269, "우아한테크캠프" 275,
+# "우아한스터디" 319, notice 681, "우아콘" 686. A post with any of these is not a tech article.
 WOOWA_NONTECH_CATS = {12, 14, 269, 275, 319, 681, 686}
-# pm 286, design 479. category가 이것뿐이면 토스의 Engineering 외 category처럼 뺀다.
+# pm 286, design 479. A post with only these categories is excluded, like Toss categories other than Engineering.
 WOOWA_PRODUCT_CATS = {286, 479}
-# 번역 글 표지. "원문 보기", "원문 링크"는 인용한 글이나 기능 설명에도 나와서(카카오, 토스 글) 줄 첫머리의 "원문:"만 센다.
+# Markers of a translated article. "원문 보기" and "원문 링크" also appear in quoted articles and feature descriptions
+# (Kakao, Toss articles), so only "원문:" at the start of a line counts.
 TRANSLATION_RE = re.compile(r"(이 글은[^.\n]{0,120}번역|번역(한|했|하였|본|된) (글|것)|번역문|^\s*원문\s*[:：]"
                             r"|원저자|translated (by|from)|original (post|article))", re.I | re.M)
 DAANGN_TAGS = [
@@ -70,7 +74,7 @@ KAKAO_SKIP_TAGS = ("career", "recruit", "new-krew", "krew", "event", "conference
 # ---------------------------------------------------------------- HTML → markdown
 
 class MDConverter(HTMLParser):
-    """본문 HTML을 lint_ko가 읽는 markdown으로 바꾼다. bold, 헤딩, 목록, 인용, 코드, 표를 보존한다."""
+    """Convert body HTML into the markdown that lint_ko reads. Preserves bold, headings, lists, quotes, code, and tables."""
     SKIP = {"style", "script", "noscript", "svg", "figcaption", "button", "nav", "footer", "iframe",
             "select", "option", "template", "header"}
     BLOCK = {"p", "div", "section", "h1", "h2", "h3", "h4", "h5", "h6", "li", "pre", "blockquote",
@@ -82,7 +86,7 @@ class MDConverter(HTMLParser):
         self.buf = []
         self.skip = 0
         self.lists = []
-        self.ctx = []          # 열린 블록 태그
+        self.ctx = []          # open block tags
         self.pre = 0
         self.bq = 0
         self.row = None
@@ -230,7 +234,7 @@ TAIL_MARKERS = re.compile(r"(님의 다른 글|재미있게 읽으셨나요|좋�
 
 
 def trim_tail(md, cta=None):
-    """본문 뒤에 붙는 채용 버튼, 저자의 다른 글 목록을 잘라 낸다."""
+    """Remove the hiring button and the author's list of other articles that follow the body."""
     out = []
     for ln in md.split("\n"):
         s = ln.strip().lstrip("#").strip()
@@ -248,7 +252,8 @@ FONT_HEADING_RE = re.compile(
 
 
 def normalize_headings(fragment):
-    """글자 크기(20px 이상)로만 헤딩을 나타낸 문단(CLOVA)을 <h2>로 바꾼다. h 태그를 쓰는 사이트에는 영향이 없다."""
+    """Convert paragraphs that mark a heading only by font size (20px or larger, CLOVA) into <h2>. Sites that use h tags
+    are not affected."""
     return FONT_HEADING_RE.sub(lambda m: f"<h2>{m.group(2)}</h2>" if int(m.group(1)) >= 20 else m.group(0),
                                fragment)
 
@@ -257,7 +262,7 @@ def html_to_md(fragment, title=None, cta=None):
     conv = MDConverter()
     conv.feed(normalize_headings(fragment))
     body = conv.result()
-    # 태그 경계에서 사라진 문장 사이 공백을 되살린다: "있습니다.`code`" → "있습니다. `code`"
+    # Restore the space between sentences that was lost at a tag boundary: "있습니다.`code`" -> "있습니다. `code`"
     body = re.sub(r"([다요죠][.!?])(?=[`가-힣A-Za-z\"“])", r"\1 ", body)
     body = trim_tail(body, cta)
     if title:
@@ -265,7 +270,7 @@ def html_to_md(fragment, title=None, cta=None):
     return body
 
 
-# ---------------------------------------------------------------- 수집
+# ---------------------------------------------------------------- collection
 
 def fetch(url, retries=2):
     for attempt in range(retries + 1):
@@ -331,8 +336,8 @@ def write_md(path, md):
 
 
 def save_body(path, fragment, title, cta=None):
-    """받은 본문 HTML을 cache/raw에 두고 markdown을 cache/md에 쓴다.
-    변환기를 고치면 reconvert 명령으로 다시 받지 않고 markdown만 새로 만든다."""
+    """Store the fetched body HTML in cache/raw and write the markdown to cache/md.
+    After a converter change, the reconvert command rebuilds only the markdown without fetching again."""
     raw_dir = os.path.join(os.path.dirname(os.path.dirname(path)), "raw")
     os.makedirs(raw_dir, exist_ok=True)
     with open(os.path.join(raw_dir, os.path.basename(path)[:-3] + ".html"), "w", encoding="utf-8") as f:
@@ -341,18 +346,18 @@ def save_body(path, fragment, title, cta=None):
 
 
 def done(meta, aid, path):
-    """이미 받은 글(본문 파일이 있거나 본문을 받지 않기로 한 글)이면 True."""
+    """True if the article was already fetched (its body file exists, or its body was deliberately not fetched)."""
     return aid in meta and (os.path.exists(path) or bool(meta[aid].get("skipped")))
 
 
 def kakao_sitemap_ids(raw):
-    """카카오 sitemap.xml에서 (글 ID, lastmod)를 읽는다. lastmod는 글의 발행일과 같다."""
+    """Read (article ID, lastmod) from Kakao's sitemap.xml. lastmod equals the article's publication date."""
     return [(int(m.group(1)), (m.group(2) or "")[:10]) for m in
             re.finditer(r"<loc>https://tech\.kakao\.com/posts/(\d+)</loc>\s*(?:<lastmod>([^<]+)</lastmod>)?", raw or "")]
 
 
 def collect_kakao(cache, meta):
-    """sitemap의 글 ID로 글 API를 요청한다. 2018년 이전 글은 본문을 받지 않는다."""
+    """Request the article API with the article IDs from the sitemap. Bodies of articles before 2018 are not fetched."""
     for pid, lastmod in kakao_sitemap_ids(fetch("https://tech.kakao.com/sitemap.xml")):
         aid = f"kakao-{pid}"
         path = os.path.join(cache, "md", aid + ".md")
@@ -391,7 +396,7 @@ def epoch_ms_date(ms):
 
 
 def d2_entries(raw):
-    """D2 목록 API 응답에서 (글 ID, 종류, 날짜, 제목)을 읽는다. 종류는 helloworld 또는 news다."""
+    """Read (article ID, kind, date, title) from a D2 list API response. kind is helloworld or news."""
     out = []
     for it in (json.loads(raw).get("content") or []) if raw else []:
         kind, _, pid = (it.get("url") or "").strip("/").partition("/")
@@ -401,8 +406,9 @@ def d2_entries(raw):
 
 
 def collect_d2(cache, meta):
-    """네이버 D2: 목록 API 한 번으로 글과 발행일을 받고, hello world 글만 본문 API로 받는다.
-    news는 행사, 채용, 영상 소식이라 본문을 받지 않는다. 글 페이지는 JS로만 그려져서 API를 쓴다."""
+    """NAVER D2: one list API call returns the articles and publication dates, and only hello world articles are fetched
+    from the body API. news holds event, hiring, and video notices, so its bodies are not fetched. Article pages render
+    only with JS, so the API is used."""
     for pid, kind, date, title in d2_entries(fetch("https://d2.naver.com/api/v1/contents?categoryId=&page=0&size=1000")):
         aid = f"d2-{pid}"
         path = os.path.join(cache, "md", aid + ".md")
@@ -432,7 +438,7 @@ def collect_d2(cache, meta):
 
 
 def woowahan_entry(p):
-    """우아한형제들 WP REST API의 글 하나를 (항목, 본문 HTML)로 바꾼다. 제외할 글이면 skipped를 단다."""
+    """Convert one post from the Woowahan WP REST API into (entry, body HTML). Sets skipped on a post to exclude."""
     cats = set(p.get("categories") or [])
     title = html.unescape(re.sub(r"<[^>]+>", "", (p.get("title") or {}).get("rendered", "")))
     entry = {"id": f"woowahan-{p['id']}", "site": "woowahan", "url": p.get("link", ""),
@@ -445,7 +451,7 @@ def woowahan_entry(p):
 
 
 def collect_woowahan(cache, meta):
-    """우아한형제들: WordPress REST API의 글 목록에 본문이 함께 온다(100편씩)."""
+    """Woowahan: the WordPress REST API post list includes the bodies (100 posts per page)."""
     page = 1
     while True:
         raw = fetch("https://techblog.woowahan.com/wp-json/wp/v2/posts?per_page=100&page=%d"
@@ -480,7 +486,7 @@ def next_page_props(raw):
 
 
 def clova_entry(slug, post):
-    """CLOVA 글 페이지의 post를 항목으로 바꾼다. 한국어 글이 아니면 None."""
+    """Convert the post from a CLOVA article page into an entry. None if the article is not in Korean."""
     if not post or (post.get("language") or {}).get("code") != "KO":
         return None
     url = "https://clova.ai/tech-blog/" + urllib.parse.quote(slug)
@@ -495,9 +501,9 @@ def edge_slugs(listing):
 
 
 def collect_clova(cache, meta):
-    """CLOVA: 목록 페이지의 글에서 시작해 글 페이지의 previousPost, nextPost와 태그 페이지를 따라간다.
-    previousPost와 nextPost는 날짜순으로 이어지지 않아서 양쪽을 모두 따라간다. 태그 페이지는 그 태그의 글을
-    모두 보여 준다. robots.txt가 /api를 막아서 글 페이지와 태그 페이지의 __NEXT_DATA__만 읽는다. 한국어 글만 저장한다."""
+    """CLOVA: start from the articles on the list page, then follow previousPost, nextPost, and tag pages from each article
+    page. previousPost and nextPost are not in date order, so both are followed. A tag page shows all articles with that
+    tag. robots.txt blocks /api, so only __NEXT_DATA__ from article and tag pages is read. Only Korean articles are saved."""
     pp = next_page_props(fetch("https://clova.ai/tech-blog")) or {}
     queue = edge_slugs(pp.get("posts")) + edge_slugs(pp.get("stickyPost"))
     seen, seen_tags = set(), set()
@@ -530,8 +536,9 @@ def collect_clova(cache, meta):
 
 
 def collect_daangn(cache, meta):
-    """당근: Medium RSS(메인 피드와 태그별 피드). 피드마다 최근 글만 돌려준다.
-    Medium은 HTML, archive, sitemap 요청을 Cloudflare로 막고 robots.txt가 AI crawler를 거부해서 RSS만 쓴다."""
+    """Daangn: Medium RSS (the main feed and per-tag feeds). Each feed returns only recent articles.
+    Medium blocks HTML, archive, and sitemap requests with Cloudflare, and its robots.txt rejects AI crawlers, so only RSS
+    is used."""
     seen = set()
     feeds = ["https://medium.com/feed/daangn"] + [f"https://medium.com/feed/daangn/tagged/{t}" for t in DAANGN_TAGS]
     for feed in feeds:
@@ -564,7 +571,7 @@ def collect_daangn(cache, meta):
 
 
 def cmd_reconvert(args):
-    """cache/raw의 본문 HTML로 cache/md를 다시 만든다. 사이트에 다시 요청하지 않는다."""
+    """Rebuild cache/md from the body HTML in cache/raw. Does not request the sites again."""
     meta = json.load(open(os.path.join(args.cache, "meta.json"), encoding="utf-8"))
     n = 0
     for aid, e in meta.items():
@@ -595,12 +602,12 @@ def cmd_collect(args):
         print(f"[collect] {name} done: {n} entries, total {len(meta)}", flush=True)
 
 
-# ---------------------------------------------------------------- 측정
+# ---------------------------------------------------------------- measurement
 
 def tone_group(analysis):
     c = analysis["endings"]["class"]
     hap = c.get("HAPNIDA", 0)
-    hae = c.get("HAEYO", 0) + c.get("Q_KKAYO", 0) * 0  # ~할까요?는 양쪽에서 쓰여서 판정에서 뺀다
+    hae = c.get("HAEYO", 0) + c.get("Q_KKAYO", 0) * 0  # "~할까요?" occurs in both tones, so it is excluded from the verdict
     hra = c.get("HAERA", 0)
     pred = hap + hae + hra
     if pred == 0:
@@ -609,8 +616,8 @@ def tone_group(analysis):
         return "default", round(hap / pred, 3)
     if hae / pred >= 0.9:
         return "casual", round(hae / pred, 3)
-    # 해라체 글(네이버 D2 대부분)은 이 skill이 쓰지 않는 어투라 기준치 계산에는 넣지 않고,
-    # 어투와 관계없는 서술 방식 분석(structure_stats.py)과 사이트 비교에만 쓴다.
+    # "해라체" articles (most of NAVER D2) use a tone this skill does not use, so they are left out of threshold
+    # calculation and used only for tone-independent analysis of writing style (structure_stats.py) and site comparison.
     if hra / pred >= 0.9:
         return "haera", round(hra / pred, 3)
     return "mixed", round(max(hap, hae, hra) / pred, 3)
@@ -628,17 +635,17 @@ def period(date):
 
 
 def group_name(tone, per):
-    """기간과 어투로 그룹 이름을 정한다. base는 접두어 없이 default, casual이다."""
+    """Build the group name from the period and tone. base has no prefix: default, casual."""
     return tone if per == "base" else f"{per}-{tone}"
 
 
 def is_translation(text):
-    """본문 앞뒤 1,500자에 번역 글 표지가 있으면 True."""
+    """True if the first or last 1,500 characters of the body hold a translated-article marker."""
     return bool(TRANSLATION_RE.search(text[:1500]) or TRANSLATION_RE.search(text[-1500:]))
 
 
 def author_key(entry):
-    """저자당 상한에 쓰는 저자 이름. 게시 계정이 글쓴이와 다른 사이트는 빈 문자열이다."""
+    """Author name used for the per-author cap. An empty string for sites whose posting account differs from the author."""
     if entry.get("site") in AUTHOR_CAP_EXEMPT_SITES:
         return ""
     return str(entry.get("author") or "").split(",")[0].strip()
@@ -661,11 +668,12 @@ def is_tech(entry):
     return True
 
 
-MIN_PARAGRAPHS = 5  # 문단 지표(A8)는 산문 문단의 비율이라, 목록과 코드만 있는 글은 값이 뜻을 잃는다
+MIN_PARAGRAPHS = 5  # paragraph metrics (A8) are ratios of prose paragraphs, meaningless for articles of only lists and code
 
 
 def skip_reason(entry, text, st, grp, per):
-    """본문을 측정한 글을 기준에서 뺄 사유. 넣을 글이면 None. 저자당 상한은 cmd_measure가 따로 본다."""
+    """Reason to exclude a measured article from the baseline. None if it is included. cmd_measure checks the per-author
+    cap separately."""
     hangul = len(re.findall(r"[가-힣]", text))
     if per == "pre2018":
         return SKIP_REASONS["pre2018"]
@@ -722,7 +730,7 @@ def cmd_measure(args):
             rec.update(included=False, reason=reason)
             rows.append(rec)
             continue
-        rec.pop("author", None)  # 저자 이름은 저장소에 남기지 않는다
+        rec.pop("author", None)  # author names are not kept in the repo
         ev_metrics = dict(a["metrics"])
         if grp != "haera":
             ev_metrics.update(L.tone_metrics(a, grp))

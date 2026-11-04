@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""사람 글의 서술 방식(글 골격과 설명 방식)을 잰다. 글의 내용(사실, 주장, 수치)은 재지 않는다.
+"""Measure how human articles are written (article structure and way of explaining). Does not measure content (facts,
+claims, figures).
 
-style-guide.md의 글 골격 관례(제목 형태, 도입, 절 수, 절 첫 문장, 마무리, 용어 설명, 예시, 수치 문장)를
-사람 글 분포로 다시 확인하는 데 쓴다. 저장소에는 글 ID와 지표 값만 남기고 원문은 남기지 않는다.
+Used to recheck the structure conventions in style-guide.md (title form, introduction, section count, first sentence of a
+section, closing, term explanation, examples, sentences with figures) against the human distribution. The repo keeps only
+article IDs and metric values, not source text.
 
-사용법
-  python dev/baseline/techblog/structure_stats.py --cache DIR [--stats PATH] [--out JSON] [--extra 이름=경로 ...]
+Usage
+  python dev/baseline/techblog/structure_stats.py --cache DIR [--stats PATH] [--out JSON] [--extra name=path ...]
 """
 
 import argparse
@@ -71,7 +73,7 @@ def measure(text):
     heads = [(i, b) for i, b in enumerate(blocks) if b.type == "heading"]
     title = heads[0][1].text if heads and heads[0][1].level == 1 else ""
     sections = [(i, b) for i, b in heads if b.level <= 2 and not (i == heads[0][0] and title)]
-    if not sections:  # 절을 H3로만 나눈 글
+    if not sections:  # article with sections divided only by H3
         sections = [(i, b) for i, b in heads if b.level == 3]
     body_start = heads[0][0] + 1 if title else 0
     first_sec = sections[0][0] if sections else len(blocks)
@@ -166,8 +168,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--cache", required=True)
     ap.add_argument("--stats", default=os.path.join(ROOT, "dev", "baseline", "techblog", "stats.json"))
-    ap.add_argument("--out", help="글별 값과 그룹별 요약을 저장할 JSON")
-    ap.add_argument("--extra", action="append", default=[], help="비교할 글: 이름=경로")
+    ap.add_argument("--out", help="JSON path to save per-article values and per-group summaries")
+    ap.add_argument("--extra", action="append", default=[], help="Article to compare: name=path")
     args = ap.parse_args()
     stats = json.load(open(args.stats, encoding="utf-8"))
     rows = []

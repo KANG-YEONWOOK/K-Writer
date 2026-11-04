@@ -1,28 +1,33 @@
 #!/usr/bin/env python3
-"""한국어 점검 항목이 사람 글에서 얼마나 걸리는지 재고, 걸린 문장을 보여 준다.
+"""Measure how often the Korean review items flag human articles, and show the flagged sentences.
 
-새 항목은 사람 글 분포에서 정한 기준치가 아니라 대부분 정책(policy)이나 점검 후보(CHECK)다. 그래서 이 스크립트는
-기준치를 계산하지 않고 오탐을 찾는 용도로 쓴다. 사람 글에서 걸린 문장은 모두 읽고, 잘못 걸린 형태는 정규식에서 뺀다.
+New items are mostly policy or review candidates (CHECK), not thresholds set from the human distribution. So this
+script does not calculate thresholds; it is for finding false positives. Read every sentence flagged in human articles
+and remove wrongly flagged forms from the regex.
 
-- 사람 글: measure.py collect로 모은 캐시의 글 중 stats.json에 들어간 글(그룹별)
-- --extra 이름=경로: 비교할 글(예시 글, 실행 결과)
-- --notes GLOB: StudyNote 노트(.mdx). frontmatter, import와 export 줄, 컴포넌트 줄, 각주 정의, "참고 자료" 절을
-  메모리에서 걷어 내고 잰다. 원본 파일은 바꾸지 않는다.
-- --pairs DIR: 같은 글의 수정 전후 파일 쌍(<이름>.before.md, <이름>.after.md). 수정 전 글에서 바뀐 문장과
-  그대로 둔 문장으로 나눠 항목별로 걸린 수를 센다. 사람이 고친 문장을 얼마나 잡는지(recall)와
-  고치지 않은 문장을 얼마나 잡는지(오탐)를 보는 용도다.
-- --rates: 그룹마다 항목별 합산 비율(1,000자당 문장 수)을 낸다. poisson 기준치의 rate_per_1k를 정할 때 쓴다.
-- --verbs: 같은 뜻의 고유어 동사와 한자어 동사(쓰다와 사용하다 등)가 1,000자당 몇 번 나오는지 그룹마다 낸다.
-- --verdicts ID ...: 지금 thresholds.json으로 사람 글(합니다체, 해요체 그룹)을 판정해, 주어진 항목의 WARN과 FAIL 수와
-  holdout 글의 통과율(policy 항목과 어투 Gate는 뺀다)을 낸다. 새 항목이 사람 글 통과율을 떨어뜨리는지 볼 때 쓴다.
+- Human articles: articles in stats.json from the cache collected by measure.py collect (per group)
+- --extra name=path: articles to compare (example articles, run results)
+- --notes GLOB: StudyNote notes (.mdx). Strips frontmatter, import and export lines, component lines, footnote
+  definitions, and the "참고 자료" section in memory, then measures. Source files are not changed.
+- --pairs DIR: before and after file pairs of the same article (<name>.before.md, <name>.after.md). Splits the sentences
+  of the before article into changed and kept sentences and counts flags per item. Shows how many sentences a person
+  edited are caught (recall) and how many sentences a person did not edit are caught (false positives).
+- --rates: print each group's pooled rate per item (sentences per 1,000 characters). Used to set rate_per_1k for poisson
+  thresholds.
+- --verbs: print how many times per 1,000 characters native and Sino-Korean verbs with the same meaning ("쓰다" and
+  "사용하다", etc.) occur in each group.
+- --verdicts ID ...: judge human articles ("합니다체" and "해요체" groups) with the current thresholds.json, and print the
+  WARN and FAIL counts of the given items and the pass rate of holdout articles (excluding policy items and tone Gates). Used
+  to check whether a new item lowers the human pass rate.
 
-- --by-site: 그룹마다 사이트별 표를 함께 낸다. 새 사이트에서 기존 사이트보다 훨씬 많이 걸리는 항목(오탐 후보)을 찾을 때 쓴다.
-- --stats PATH: 읽을 stats.json. 기본값은 dev/baseline/techblog/stats.json이다.
+- --by-site: also print per-site tables for each group. Used to find items flagged far more on a new site than on
+  existing sites (false positive candidates).
+- --stats PATH: stats.json to read. The default is dev/baseline/techblog/stats.json.
 
-사용법
+Usage
   python dev/baseline/techblog/ko_stats.py --cache DIR [--stats PATH]
                                   [--groups default casual mid-default mid-casual drift-default drift-casual]
-                                  [--extra 이름=경로 ...] [--notes GLOB] [--pairs DIR] [--samples N]
+                                  [--extra name=path ...] [--notes GLOB] [--pairs DIR] [--samples N]
                                   [--no-holdout] [--rates] [--verbs] [--verdicts ID ...] [--by-site]
 """
 
@@ -38,18 +43,19 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.a
 sys.path.insert(0, os.path.join(ROOT, "skills", "techblog", "scripts"))
 import lint_ko as L  # noqa: E402
 
-# lint에 넣은 항목
+# Items added to lint
 ADOPTED = ("G6.emdash", "G6.punct_policy", "G10.num_particle", "A6.window_range", "A14.quoted_english_token",
            "A14.quoted_english_check", "A5.archaic_words", "A6.calque_check", "A18.negation_scope", "A19.term_mix",
            "A20.species_first", "A20.abbr_first", "A14.report_write", "A14.report_write_check",
            "A18.bare_author", "A21.sseuda_senses", "A20.term_in_list", "A14.doeeojida", "G11.spelling",
            "A14.causative", "A5.pleonasm", "A14.adverb_pair", "A21.jeokda_as", "A5.native_verbs", "A7.see_judgment",
            "A8.same_predicate_adjacent",
-           # 서술어 항목. CANDIDATES는 본문 문장만 보므로 헤딩과 표까지 보는 lint 항목으로 잰다.
+           # Predicate items. CANDIDATES checks only body sentences, so these use the lint items, which also check headings
+           # and tables.
            "A6.open_close", "A6.open_close_check",
-           # 같은 대상을 부르는 말과 빗댄 말
+           # names for the same thing, and metaphorical words
            "A6.version_pan", "A5.plain_terms", "A6.metaphor_check")
-# lint에 넣을지 정하려고 따로 재는 후보. 문장 단위로 센다.
+# Candidates measured separately to decide whether to add them to lint. Counted per sentence.
 CANDIDATES = {
     "옛(관형사)": r"(?<![가-힣])옛\s",
     "수치적으로(전체)": r"수치적으로",
@@ -61,7 +67,7 @@ CANDIDATES = {
     "~에 기인": r"에\s?기인(?:한|하|합|해|했)",
     "무비판적": r"무비판적",
     "해당 + 명사": r"(?<![가-힣])해당\s+[가-힣]+",
-    # 일반 표현 후보(사용자 2차 검토: "쓰다"만이 아니라 글쓰기에서 일반적으로 점검하는 표현)
+    # Common expression candidates (user's second review: expressions generally checked in writing, not only "쓰다")
     "이중 피동(되어지다)": r"되어(?:지|진|질|집|져|졌)",
     "이중 피동(보여지다 등)": r"(?<![가-힣])(?:보여|쓰여|씌여|잊혀|짜여|불려|나뉘어|믿겨)(?:지|진|질|집|져|졌)",
     "이중 피동 후보(열려지다 등)": r"(?<![가-힣])(?:열려|닫혀|읽혀|놓여|담겨|바뀌어|쌓여|섞여|묶여)(?:지|진|질|집|져|졌)",
@@ -74,7 +80,7 @@ CANDIDATES = {
              r"|과반수\s?(?:이상|넘게|를\s?넘)|가장\s+최(?:선|고|적)|먼저\s+선행|새로(?:이|게)?\s+신설|서로\s+상충"
              r"|함께\s+공존|미리\s+(?:예약|예측|예상|예고)"),
     "겹말 후보(가장 최대 등)": r"가장\s+최(?:대|소|신|초)|다시\s+반복|계속\s+지속|사전에\s+미리",
-    # 문장 안의 "Next.js" 같은 마침표에서 멈추지 않게 문장 끝까지(.*) 본다.
+    # Match to the end of the sentence (.*) so that a period inside a sentence, as in "Next.js", does not stop the match.
     "부사 호응(결코, 비록, 왜냐하면, 만약)": (
         r"(?<![가-힣])결코\s(?!.*(?:않|없|못|아니|아닌|아닙|말|모르|모릅|몰라|안\s))"
         r"|(?<![가-힣])비록\s(?!.*(?:지만|더라도|어도|아도|여도|해도|라도|으나|이나|는데|은데|인데|지언정|망정))"
@@ -89,7 +95,7 @@ CANDIDATES = {
     "X를 Y로 적다": r"(?:을|를)\s+(?:\S+\s+){0,2}?\S+(?:으로|로)\s+(?:적습니다|적어요|적는다|적었|적고|적으며|적을|적겠|적기로)",
     "~의 세 번 연쇄": r"[가-힣]+의\s+[가-힣]+의\s+[가-힣]+의\s",
 }
-# 같은 뜻의 고유어 동사와 한자어 동사. 낱말이 나온 횟수를 센다(문장 수가 아님).
+# Native and Sino-Korean verbs with the same meaning. Counts word occurrences, not sentences.
 VERB_PAIRS = [
     ("쓰다(모든 뜻)", r"(?<![가-힣])(?:쓰(?!레|로|루|리|러)[가-힣]*|써(?!드|머|니)[가-힣]*|썼[가-힣]*|씁[가-힣]*|쓴(?!맛)[가-힣]*"
                    r"|쓸(?!모|데|쓸)[가-힣]*)"),
@@ -112,7 +118,7 @@ VERB_PAIRS = [
     ("선택하다", r"선택(?:하|했|해|합|한|할|함|됩|되|된|돼|될|됐)"),
     ("나오다", r"(?<![가-힣])(?:나오|나와|나왔|나옵|나온|나올)"),
     ("나타나다, 발생하다", r"(?:나타나|나타났|나타납|나타난|나타날|발생(?:하|했|해|합|한|할|함|됩|되|된|돼|될|됐))"),
-    # style-guide.md는 문제가 새로 생긴 일에 생기다와 발생하다를 함께 권한다. 두 말의 사람 글 빈도를 잰다.
+    # style-guide.md recommends both "생기다" and "발생하다" for a new problem. Measures how often human articles use each.
     ("생기다", r"(?<![가-힣])(?:생기|생겨|생겼|생깁|생긴|생길)"),
     ("발생하다", r"발생(?:하|했|해|합|한|할|함|됩|되|된|돼|될|됐)"),
     ("줄다, 줄이다", r"(?<![가-힣])(?:줄어|줄었|줄고|줄면|줄인|줄이|줄여|줄일|줄였|줄입)"),
@@ -124,7 +130,7 @@ VERB_PAIRS = [
     ("판단의 보다(~라고/다고/것으로 봅니다)", r"(?:다고|라고|것으로)\s*(?:봅니다|봐요|봤|본다|보았|보고(?![가-힣])|보는\s|봐야|보며|보지)"),
     ("추정하다, 해석하다", r"(?:추정|해석)(?:하|했|해|합|한|할|함|됩|되|된|돼|될|됐)"),
 ]
-# 쓰다로 세지 않는 낱말(쓰레드, 쓰기 비율처럼 명사로 굳은 말, 덮어쓰다)
+# Words not counted as "쓰다" (established nouns such as "쓰레드" and "쓰기 비율", and "덮어쓰다")
 SSEUDA_EXCL_RE = re.compile(r"(?:쓰레드|쓰레기|쓰로틀|쓰루풋|쓰리|덮어쓰|덮어써|덮어썼|글쓰기|쓰기\s*(?:요청|작업|연산|비율|성능|"
                             r"지연|부하|경로|트래픽|버퍼|락|권한|모드|속도|량)|쓰기와|쓰기가|쓰기를|쓰기는|쓰기에|쓰기의)")
 NOUN_END = set("은는이가을를의에와과도만로서고며면다요지게한할된될던인히니까야여나든엔랑께럼터")
@@ -132,7 +138,8 @@ TONE_RULES = ("G4.off_tone", "G4.banned_ending")
 
 
 def noun_stack(masked, n=4):
-    """조사나 어미 없이 이어진 한글 낱말이 n개 이상인지(형태소 분석 없는 어림). 명사 쌓기 후보 측정용."""
+    """Whether n or more Hangul words run on without a particle or ending (an estimate without morphological analysis).
+    Used to measure noun stack candidates."""
     run = 0
     for tok in L.PH_RE.sub(" ", masked).replace(",", " ").split():
         bare = re.fullmatch(r"[가-힣]{2,}", tok) is not None and tok[-1] not in NOUN_END
@@ -143,7 +150,7 @@ def noun_stack(masked, n=4):
 
 
 def measure(text):
-    """항목별 걸린 수와 걸린 문장. 후보는 문장마다 한 번 센다."""
+    """Flag counts and flagged sentences per item. A candidate counts once per sentence."""
     a = L.analyze(text)
     out = {k: [h.get("match", "") + " | " + h["text"] for h in a["metrics"].get(k, {}).get("hits", [])]
            for k in ADOPTED}
@@ -155,7 +162,7 @@ def measure(text):
 
 
 def verb_counts(text):
-    """VERB_PAIRS의 낱말이 본문(참고자료 절 밖 문장)에 나온 횟수."""
+    """How many times each VERB_PAIRS word occurs in the body (sentences outside the references section)."""
     a = L.analyze(text)
     body = " ".join(s.masked for s in a["_sentences"] if not s.in_refs)
     clean = SSEUDA_EXCL_RE.sub(" ", body)
@@ -164,7 +171,7 @@ def verb_counts(text):
 
 
 def strip_note(text):
-    """StudyNote 노트(.mdx)에서 글 본문만 남긴다."""
+    """Keep only the article body of a StudyNote note (.mdx)."""
     text = re.sub(r"\A---\n.*?\n---\n", "", text, flags=re.S)
     text = re.sub(r"^\s*(?:import|export)\s.*$", "", text, flags=re.M)
     text = re.sub(r"^\s*<[A-Za-z][^>]*/?>\s*$", "", text, flags=re.M)
@@ -186,7 +193,7 @@ def report_group(name, rows, samples):
     keys = list(ADOPTED) + list(CANDIDATES) + ["명사 4개 이상 연속"]
     chars = sum(r[1] for r in rows) or 1
     print(f"\n## {name}: {len(rows)}편, 본문 {chars:,}자")
-    print("| 항목 | 걸린 글 | p50 | p90 | 최댓값 | 합계 | 1,000자당 |")
+    print("| 항목 | 검출된 글 | p50 | p90 | 최댓값 | 합계 | 1,000자당 |")
     print("|---|---|---|---|---|---|---|")
     for k in keys:
         vals = [len(r[2][k]) for r in rows]
@@ -203,9 +210,9 @@ def report_group(name, rows, samples):
 
 
 def report_verbs(groups):
-    """groups: [(이름, [(chars, counts)])]. 1,000자당 횟수와 낱말이 나온 글 수."""
+    """groups: [(name, [(chars, counts)])]. Counts per 1,000 characters and the number of articles where the word occurs."""
     print("\n## 같은 뜻의 고유어 동사와 한자어 동사(1,000자당 횟수, 괄호는 나온 글 수)")
-    print("| 낱말 | " + " | ".join(f"{g} ({len(rows)}편)" for g, rows in groups) + " |")
+    print("| 단어 | " + " | ".join(f"{g} ({len(rows)}편)" for g, rows in groups) + " |")
     print("|---|" + "---|" * len(groups))
     for name, _ in VERB_PAIRS:
         cells = []
@@ -217,7 +224,8 @@ def report_verbs(groups):
 
 
 def report_verdicts(arts, cache, ids):
-    """지금 thresholds.json으로 사람 글을 판정한다. 주어진 항목의 WARN, FAIL 수와 holdout 통과율."""
+    """Judge human articles with the current thresholds.json. Prints the WARN and FAIL counts of the given items and the
+    holdout pass rate."""
     th = L.load_thresholds()
     skip = {mid for mid, spec in th["metrics"].items() if spec.get("policy")} | set(TONE_RULES)
     th_judged = dict(th, metrics={mid: spec for mid, spec in th["metrics"].items() if mid not in skip})
@@ -234,7 +242,7 @@ def report_verdicts(arts, cache, ids):
         if a.get("holdout"):
             hold_n += 1
             hold_pass += ev["summary"]["verdict"] == "PASS"
-    print("\n## 사람 글 판정(합니다체, 해요체 그룹. policy 항목과 어투 Gate는 뺌)")
+    print("\n## 사람 글 판정(합니다체, 해요체 그룹. policy 항목과 어투 Gate는 제외)")
     print(f"holdout {hold_n}편 중 {hold_pass}편 통과({hold_pass / max(hold_n, 1):.0%})")
     print("| 항목 | WARN | FAIL | GATE |\n|---|---|---|---|")
     for mid, c in per.items():
@@ -252,9 +260,9 @@ def report_rates(name, rows):
 
 
 def report_pairs(folder):
-    """수정 전후 쌍에서 바뀐 문장과 그대로 둔 문장에 걸린 수."""
+    """Flag counts in changed and kept sentences of before and after pairs."""
     keys = list(ADOPTED) + list(CANDIDATES) + ["명사 4개 이상 연속"]
-    count = {k: [0, 0, 0] for k in keys}  # 바뀐 문장, 그대로 둔 문장, 수정 뒤 글
+    count = {k: [0, 0, 0] for k in keys}  # changed sentences, kept sentences, after article
     n_changed = n_kept = 0
     for before in sorted(glob.glob(os.path.join(folder, "*.before.md"))):
         after = before[:-len(".before.md")] + ".after.md"
@@ -278,7 +286,7 @@ def report_pairs(folder):
                 count[k][0 if in_changed else 1] += 1
             count[k][2] += len(ma[k])
     print(f"\n## 수정 전후 쌍: 수정 전 글의 문장 중 바뀐 문장 {n_changed}, 그대로 둔 문장 {n_kept}")
-    print("| 항목 | 바뀐 문장에 걸림 | 그대로 둔 문장에 걸림 | 수정 뒤 글에 걸림 |")
+    print("| 항목 | 바뀐 문장에서 검출 | 그대로 둔 문장에서 검출 | 수정 뒤 글에서 검출 |")
     print("|---|---|---|---|")
     for k in keys:
         print(f"| {k} | {count[k][0]} | {count[k][1]} | {count[k][2]} |")
@@ -287,19 +295,21 @@ def report_pairs(folder):
 def main():
     L.setup_stdio()
     ap = argparse.ArgumentParser()
-    ap.add_argument("--cache", help="measure.py collect의 캐시 폴더")
+    ap.add_argument("--cache", help="Cache folder from measure.py collect")
     ap.add_argument("--stats", default=os.path.join(ROOT, "dev", "baseline", "techblog", "stats.json"))
     ap.add_argument("--groups", nargs="*", default=["default", "casual", "mid-default", "mid-casual",
                                                     "drift-default", "drift-casual"])
-    ap.add_argument("--by-site", action="store_true", help="그룹마다 사이트별 표를 함께 낸다")
-    ap.add_argument("--extra", action="append", default=[], help="비교할 글: 이름=경로")
-    ap.add_argument("--notes", help="StudyNote 노트 glob(.mdx). 본문만 남겨 잰다")
-    ap.add_argument("--pairs", help="<이름>.before.md, <이름>.after.md 쌍이 있는 폴더")
-    ap.add_argument("--samples", type=int, default=8, help="항목마다 보여 줄 걸린 문장 수")
-    ap.add_argument("--no-holdout", action="store_true", help="holdout 글을 뺀다(기준치 계산과 같은 조건)")
-    ap.add_argument("--rates", action="store_true", help="그룹마다 항목별 합산 비율을 낸다")
-    ap.add_argument("--verbs", action="store_true", help="같은 뜻의 고유어 동사와 한자어 동사 비율을 낸다")
-    ap.add_argument("--verdicts", nargs="*", help="지금 기준치로 사람 글을 판정할 항목 ID")
+    ap.add_argument("--by-site", action="store_true", help="Also print per-site tables for each group")
+    ap.add_argument("--extra", action="append", default=[], help="Article to compare: name=path")
+    ap.add_argument("--notes", help="Glob of StudyNote notes (.mdx). Measures only the body")
+    ap.add_argument("--pairs", help="Folder holding <name>.before.md and <name>.after.md pairs")
+    ap.add_argument("--samples", type=int, default=8, help="Number of flagged sentences to show per item")
+    ap.add_argument("--no-holdout", action="store_true",
+                    help="Exclude holdout articles (same condition as threshold calculation)")
+    ap.add_argument("--rates", action="store_true", help="Print each group's pooled rate per item")
+    ap.add_argument("--verbs", action="store_true", help="Print rates of native and Sino-Korean verbs with the same meaning")
+    ap.add_argument("--verdicts", nargs="*",
+                    help="Item IDs to report when judging human articles with the current thresholds")
     args = ap.parse_args()
     verb_groups = []
     if args.cache:

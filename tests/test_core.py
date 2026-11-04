@@ -1,11 +1,11 @@
-"""core/와 skill 폴더 사이의 약속을 검사한다.
+"""Checks the contract between core/ and the skill folders.
 
-- core 사본: core/의 파일이 모든 skill 폴더에 바이트 단위로 같게 있다(dev/sync_core.py).
-- slot: skill마다 SKILL.md, references/settings.md, genre.md, rubric.md, scripts/thresholds.json이 있다.
-- 의존 방향: core 문서와 데이터는 skill의 단계 번호와 skill 전용 문서를 가리키지 않는다.
-- 절 참조: 문서가 'X.md의 "Y"'로 가리킨 절이 같은 skill 폴더의 X.md 헤딩에 있다.
-- 기준치: rules.json과 thresholds.json을 합치는 함수와 나누는 함수가 서로 반대이고, 보정하지 않은 분포 지표는 INFO다.
-- 새 skill 도구: dev/new_skill.py가 slot 파일과 core 사본을 만든다.
+- Core copies: files in core/ exist byte-identical in every skill folder (dev/sync_core.py).
+- Slots: each skill has SKILL.md, references/settings.md, genre.md, rubric.md, and scripts/thresholds.json.
+- Dependency direction: core documents and data do not refer to a skill's step numbers or skill-only documents.
+- Section references: a section a document cites as 'X.md의 "Y"' exists as a heading in X.md in the same skill folder.
+- Thresholds: the function that merges rules.json and thresholds.json and the function that splits them are inverses, and uncalibrated distribution metrics are INFO.
+- New skill tool: dev/new_skill.py creates the slot files and core copies.
 """
 import importlib.util
 import json
@@ -38,7 +38,7 @@ CORE_NAMES = {name for _, name in SYNC.core_files(str(ROOT))}
 SLOTS = ("SKILL.md", "references/settings.md", "references/genre.md", "references/rubric.md",
          "scripts/thresholds.json")
 STEP_RE = re.compile(r"[1-8](?:~[1-8])?단계")
-# 단계 번호가 아니라 라벨 구분자의 예문에 든 "1단계"
+# "1단계" in the label separator examples, not a step number
 STEP_EXAMPLES = ("1단계: 설정", "1단계 — 설정")
 SECTION_REF = re.compile(r"([A-Za-z][\w-]*\.md)(?:의|에서)?\s*\"([^\"\n]{2,80})\"")
 
@@ -49,7 +49,7 @@ def frontmatter(text):
 
 
 def owned_files(skill):
-    """skill이 가진 문서와 데이터(core 사본이 아닌 파일)."""
+    """Documents and data a skill owns (files that are not core copies)."""
     out = [skill / "SKILL.md"]
     for part in ("references", "scripts"):
         for p in sorted((skill / part).glob("*")):
@@ -97,7 +97,7 @@ class SlotTest(unittest.TestCase):
 
 
 class CoreLayeringTest(unittest.TestCase):
-    """core는 어느 skill의 단계 번호나 skill 전용 문서에 기대지 않는다. skill 문서는 slot 이름으로만 가리킨다."""
+    """Core does not depend on any skill's step numbers or skill-only documents. It refers to skill documents only by slot name."""
 
     def core_texts(self):
         paths = sorted((ROOT / "core" / "references").glob("*.md")) + sorted((ROOT / "core" / "scripts").glob("*.json"))
@@ -135,7 +135,7 @@ class SectionReferenceTest(unittest.TestCase):
                 for m in SECTION_REF.finditer(p.read_text(encoding="utf-8")):
                     target, section = m.group(1), m.group(2)
                     if target not in docs:
-                        continue  # 저장소 문서(dev/baseline/techblog/README.md)나 명령 예에 든 파일 이름
+                        continue  # a repo document (dev/baseline/techblog/README.md) or a file name in a command example
                     checked += 1
                     with self.subTest(skill=skill.name, doc=name, ref=f"{target} {section}"):
                         self.assertTrue(any(h.startswith(section) for h in heads[target]))
@@ -164,7 +164,7 @@ class ThresholdsTest(unittest.TestCase):
             self.assertEqual(results["A2.comma_per_sentence"]["status"], "INFO")
             self.assertEqual(results["A2.comma_per_sentence"]["limit"], {"note": L.UNCALIBRATED_NOTE})
             self.assertIn(results["G6.emdash"]["status"], ("PASS", "GATE"))
-            self.assertIn("pass_max", results["A1.np_simple"]["limit"])  # fixed 기준은 core 값으로 판정
+            self.assertIn("pass_max", results["A1.np_simple"]["limit"])  # fixed thresholds are judged with the core values
             self.assertEqual(L.standard_text(th), "사람이 쓴 한국어 시험 글")
 
     def test_drop_removes_metrics(self):
@@ -199,7 +199,7 @@ class NewSkillTest(unittest.TestCase):
             self.assertEqual(frontmatter(text)["name"], "demo-skill")
             version = json.loads((root / "plugin.json").read_text(encoding="utf-8"))["version"]
             self.assertIn(f'  version: "{version}"', text)
-            self.assertTrue(todo_markers(skill))  # 채우기 전에는 test_no_todo_left가 실패한다
+            self.assertTrue(todo_markers(skill))  # test_no_todo_left fails until the slots are filled in
             result = subprocess.run([sys.executable, str(skill / "scripts" / "lint_ko.py"),
                                      str(ROOT / "examples" / "paged-attention.default.md"), "--tone", "default"],
                                     capture_output=True, text=True, encoding="utf-8",

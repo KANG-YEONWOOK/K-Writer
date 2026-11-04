@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""사람 글에 revise_ko.py의 반복 후보 탐지를 돌려 후보 수 분포를 잰다.
+"""Run the repeat candidate detection of revise_ko.py on human articles and measure the distribution of candidate counts.
 
-후처리 단계의 반복 후보는 판정이 아니라 다시 읽을 위치다. 사람 글에서도 후보가 많이 나오면 후보 목록이 쓸모없는
-목록이 된다. 이 스크립트로 기준 기간(2018-01-01~2022-11-30) 합니다체 사람 글(stats.json의 default 그룹)에서
-후보가 몇 개 나오는지 잰다.
+Repeat candidates in the post-processing step are positions to reread, not verdicts. If human articles also produce many
+candidates, the candidate list is useless. This script measures how many candidates come up in base period
+(2018-01-01~2022-11-30) "합니다체" human articles (the default group in stats.json).
 
-사용법
-  python dev/baseline/techblog/repeats_stats.py --cache DIR [--stats PATH] [--group default] [--extra 이름=경로 ...]
+Usage
+  python dev/baseline/techblog/repeats_stats.py --cache DIR [--stats PATH] [--group default] [--extra name=path ...]
 """
 
 import argparse
@@ -45,7 +45,7 @@ def main():
     ap.add_argument("--cache", required=True)
     ap.add_argument("--group", default="default")
     ap.add_argument("--stats", default=os.path.join(ROOT, "dev", "baseline", "techblog", "stats.json"))
-    ap.add_argument("--extra", action="append", default=[], help="비교할 글: 이름=경로")
+    ap.add_argument("--extra", action="append", default=[], help="Article to compare: name=path")
     args = ap.parse_args()
     stats = json.load(open(args.stats, encoding="utf-8"))
     rows = []

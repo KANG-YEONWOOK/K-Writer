@@ -1,4 +1,4 @@
-"""짧은 글 모드(SKILL.md의 short): lint_ko.py --short의 기준과 원문 대조(F 항목)."""
+"""Short mode (short in SKILL.md): the lint_ko.py --short thresholds and the source comparison (F items)."""
 import json
 import os
 import subprocess
@@ -77,7 +77,7 @@ class ShortModeTest(unittest.TestCase):
     def test_direct_address_and_requests_are_allowed_only_in_short_mode(self):
         ko = self.write("good.md", GOOD)
         _, article = L.run(ko, "default")
-        self.assertEqual(article, "FAIL")                 # 아티클로는 "원하시면"과 "주세요"가 걸린다
+        self.assertEqual(article, "FAIL")                 # as an article, "원하시면" and "주세요" are flagged
         _, short = L.run(ko, "default", short=True)
         self.assertEqual(short, "PASS")
 
@@ -121,14 +121,14 @@ class ShortModeTest(unittest.TestCase):
         self.assertEqual(done.returncode, 0, done.stdout)
 
     def test_a_default_question_may_end_in_ingayo(self):
-        """references/short.md 4번: Default 글의 질문은 "~인가요?"도 쓴다."""
+        """references/short.md item 4: a question in a Default post may also end in "~인가요?"."""
         text = GOOD.replace("개발 서버는 어떤 포트를 쓸까요?", "개발 서버의 포트는 무엇인가요?")
         report, verdict = self.lint(text)
         self.assertNotIn("G4.off_tone", self.failed(report))
         self.assertEqual(verdict, "PASS", self.failed(report))
 
     def test_terms_are_not_looked_for_in_code_and_names_match_as_written(self):
-        """용어표: 인라인 코드와 코드 블록 안은 찾지 않고, 대문자가 있는 표기는 쓴 그대로 찾는다."""
+        """Glossary: inline code and code blocks are not searched, and a term with capitals is matched as written."""
         source = "- `report.leaf_started`: {task}: started.\n- `reply.skip`: reply skip to keep it local.\n"
         ko = "- `report.leaf_started`: {task}: 시작했습니다.\n- `reply.skip`: 로컬에 그대로 두려면 건너뛰기라고 답해 주세요.\n"
         report, _ = self.lint(ko, ("Leaf", "말단"), ("Keep", "보관"), source=source)
@@ -137,7 +137,7 @@ class ShortModeTest(unittest.TestCase):
         self.assertIn("F8.terms", self.failed(report))
 
     def test_a_long_list_keeps_the_sources_shape(self):
-        """긴 목록(UI 문구 표)은 원문의 구조라서 문장 길이·문단 모양(A8)과 목록 비중(A9)으로 걸지 않는다."""
+        """A long list (a UI string table) is the source's structure, so it is not flagged for sentence length and paragraph shape (A8) or list share (A9)."""
         items = [("first", "처음"), ("second", "두 번째"), ("third", "세 번째"), ("fourth", "네 번째"),
                  ("fifth", "다섯 번째"), ("sixth", "여섯 번째"), ("seventh", "일곱 번째"), ("eighth", "여덟 번째")]
         source = "".join(f"- `key.{en}{i}`: When the run starts, Barrel shows the {en} label in this channel and "
@@ -145,7 +145,7 @@ class ShortModeTest(unittest.TestCase):
         endings = ("기록에도 남깁니다", "기록에도 남아 있습니다", "기록에도 남겼습니다", "기록으로도 볼 수 있습니다",
                    "기록의 첫 항목입니다")
         ko = "".join(f"- `key.{en}{i}`: 실행이 시작되면 Barrel이 이 채널에 {k} 라벨을 바로 보여 주고 "
-                     f"{endings[(i + j) % 5]}.\n" for i in range(5) for j, (en, k) in enumerate(items))  # 1,500자 넘는 목록
+                     f"{endings[(i + j) % 5]}.\n" for i in range(5) for j, (en, k) in enumerate(items))  # a list over 1,500 characters
         report, verdict = self.lint(ko, source=source)
         failed = self.failed(report)
         self.assertFalse({m for m in failed if m.startswith(("A8.sent_len", "A8.long", "A8.single", "A9."))}, failed)

@@ -1,6 +1,6 @@
 {
   "name": "k-writer",
-  "description": "한국어 글쓰기 plugin K-Writer를 배포한다.",
+  "description": "한국어 글쓰기 플러그인 K-Writer를 배포합니다.",
   "owner": {
     "name": "KANG-YEONWOOK",
     "url": "https://github.com/KANG-YEONWOOK"
@@ -10,7 +10,7 @@
       "name": "k-writer",
       "displayName": "K-Writer",
       "source": "./",
-      "description": "자연스러운 한국어 글쓰기를 위한 skill 모음이다. 모든 skill이 공통 한국어 규칙과 검사기를 쓰고, skill마다 글의 종류에 맞는 독자, 어투, 구성을 정한다. 지금은 논문 PDF, 문서, 웹 페이지, 붙여넣은 텍스트의 핵심 내용을 토스, 카카오, 당근, 우아한형제들, 네이버 D2 기술 블로그 문체의 한국어 아티클로 정리하는 techblog skill을 담고 있다. 글의 어투는 Default(합니다체)와 Casual(해요체) 중에서 고를 수 있다.",
+      "description": "AI가 사람처럼 자연스러운 한국어 글을 쓰게 하는 스킬 모음입니다. 모든 스킬이 공통 한국어 규칙과 검사 스크립트를 사용하고, 스킬마다 글의 종류에 맞는 독자, 어투, 구성을 정합니다. 지금은 논문 PDF, 문서, 웹 페이지, 붙여넣은 텍스트의 핵심 내용을 토스, 카카오, 당근, 우아한형제들, 네이버 D2 기술 블로그 문체의 한국어 글로 정리하는 techblog 스킬을 제공합니다. 글의 어투는 Default(합니다체)와 Casual(해요체) 중에서 선택할 수 있습니다.",
       "category": "writing",
       "tags": ["korean", "writing", "tech-blog"]
     }

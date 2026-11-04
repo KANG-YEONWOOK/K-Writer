@@ -1,10 +1,10 @@
 # 기준치 계산 보고서
 
-`dev/baseline/techblog/calibrate.py --write`가 만든 문서다. 손으로 고치지 않는다. 측정 기록과 해석은 [README.md](README.md)에 있다.
+`dev/baseline/techblog/calibrate.py --write`가 만든 문서다. 직접 수정하지 않는다. 측정 기록과 해석은 [README.md](README.md)에 있다.
 
 - 기간과 그룹: base(2018-01-01~2022-11-30)는 default/casual, mid(2022-12-01~2024-12-31)는 mid-default/mid-casual, drift(2025-01-01~)는 drift-default/drift-casual이다.
 - 가중치: base 1.0, mid 0.5(기준 기간 전용 항목 A1., A2., A3., A4., A5., A6., A7., A9.bold, A9.label_list, A9.list_ratio, A10., A12., A13., A14.은 0), drift 0.0. 지표 pool마다 한 사이트의 가중치는 40% 이하(글 5편 이상인 사이트가 3개 이상일 때).
-- 경계: PASS는 가중 p95(하한은 p5), WARN은 가중 p99.5(하한은 p0.5×0.8)에 여유(횟수 +1, 비율 ×1.2). "bound": "extreme" 항목은 최댓값과 최솟값을 쓴다.
+- 경계: PASS는 가중 p95(하한은 p5), WARN은 가중 p99.5(하한은 p0.5×0.8)에 여유(횟수 +1, 비율 ×1.2)를 적용한 값이다. "bound": "extreme" 항목은 최댓값과 최솟값을 사용한다.
 
 ## 그룹
 
@@ -70,7 +70,7 @@
 
 ## 사람 글의 Gate 위반 비율 (base 그룹)
 
-policy 표시 항목은 이 skill의 출력에만 적용하는 규칙이라 사람 글 판정에서 뺀다.
+policy 표시 항목은 이 스킬의 출력에만 적용하는 규칙이라 사람 글 판정에서 제외한다.
 
 | Gate | 구분 | default | casual |
 |---|---|---|---|
@@ -103,7 +103,7 @@ policy 표시 항목은 이 skill의 출력에만 적용하는 규칙이라 사�
 
 ## holdout 검증
 
-기준치를 만들 때 쓰지 않은 base 사람 글 31편 중 28편이 통과했다(통과율 90%). 목표는 85% 이상이다. 통과 조건은 skill 출력과 같다(Gate 0, FAIL 0, WARN 3 이하). policy Gate는 뺀다.
+기준치를 만들 때 사용하지 않은 base 사람 글 31편 중 28편이 통과했다(통과율 90%). 목표는 85% 이상이다. 통과 조건은 스킬 출력과 같다(Gate 0, FAIL 0, WARN 3 이하). policy Gate는 제외한다.
 
 | 사이트 | 통과 / holdout | 통과율 |
 |---|---|---|

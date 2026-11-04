@@ -1,5 +1,5 @@
 schema_version: "1.1"
 name: word-choice-draft
-description: 영어 비유 동사가 많은 자료로 새 글을 쓸 때 서술어 직역이 초안 단계에서 생기지 않는지 본다
+description: 영어 비유 동사가 많은 자료로 새 글을 쓸 때 초안 단계에서 서술어 직역이 나오지 않는지 확인한다
 context:
   scaffold_script: setup.sh

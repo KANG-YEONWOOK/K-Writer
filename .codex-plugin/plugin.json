@@ -1,7 +1,7 @@
 {
   "name": "k-writer",
-  "version": "0.4.0",
-  "description": "자연스러운 한국어 글을 쓰는 skill 모음입니다. 모든 skill이 공통 한국어 규칙과 검사기를 쓰고, skill마다 글의 종류에 맞는 독자, 어투, 구성을 정합니다. 지금은 자료를 한국어 기술 블로그 글로 정리하고 사실과 문체를 점검하는 techblog skill을 담고 있습니다.",
+  "version": "0.4.1",
+  "description": "AI가 사람처럼 자연스러운 한국어 글을 쓰게 하는 스킬 모음입니다. 모든 스킬이 공통 한국어 규칙과 검사 스크립트를 사용하고, 스킬마다 글의 종류에 맞는 독자, 어투, 구성을 정합니다. 지금은 자료를 한국어 기술 블로그 글로 정리하고 사실과 문체를 점검하는 techblog 스킬을 제공합니다.",
   "author": {
     "name": "KANG-YEONWOOK",
     "url": "https://github.com/KANG-YEONWOOK"
@@ -12,8 +12,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "K-Writer",
-    "shortDescription": "자연스러운 한국어 글쓰기 skill 모음",
-    "longDescription": "글의 종류마다 skill을 하나씩 담는 한국어 글쓰기 plugin입니다. 모든 skill이 공통 한국어 문장 규칙, 어투 규칙, 검사기를 쓰고, skill은 그 글의 독자, 어투 선택지, 구성, 기준치를 정합니다. 지금 담은 techblog skill은 논문 PDF, 문서, 웹 페이지, 붙여넣은 텍스트를 한국어 기술 블로그 글로 정리하고, 합니다체와 해요체, 기존 글의 어투 변환, 사실 대조와 문체 검사를 지원합니다.",
+    "shortDescription": "자연스러운 한국어 글쓰기 스킬 모음",
+    "longDescription": "글의 종류마다 스킬을 하나씩 제공하는 한국어 글쓰기 플러그인입니다. 모든 스킬이 공통 한국어 문장 규칙, 어투 규칙, 검사 스크립트를 사용하고, 스킬마다 그 글의 독자, 어투 선택지, 구성, 기준치를 정합니다. 지금 제공하는 techblog 스킬은 논문 PDF, 문서, 웹 페이지, 붙여넣은 텍스트를 한국어 기술 블로그 글로 정리하고, 합니다체와 해요체, 기존 글의 어투 변환, 사실 대조와 문체 검사를 지원합니다.",
     "developerName": "KANG-YEONWOOK",
     "category": "Productivity",
     "capabilities": ["Read", "Write"],

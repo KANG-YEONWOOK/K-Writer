@@ -1,20 +1,21 @@
 #!/usr/bin/env python3
-"""core/의 공통 문서와 검사 스크립트를 모든 skill 폴더에 복사한다.
+"""Copy the shared documents and check scripts in core/ into every skill folder.
 
-- core/references/의 파일은 skills/<이름>/references/로, core/scripts/의 파일은 skills/<이름>/scripts/로 같은
-  이름으로 복사한다. skill 폴더는 skills/ 아래에서 SKILL.md가 있는 폴더다.
-- skill 폴더의 같은 이름 파일은 core의 복사본이라 덮어쓴다. 복사본은 손으로 고치지 않고 core를 고친 뒤 다시 복사한다.
-- skill이 가지는 파일(SLOT_FILES)과 이름이 같은 파일은 core에 둘 수 없다.
-- core에서 파일을 지우거나 이름을 바꾸면 --remove로 모든 skill에서 그 복사본도 지운다.
+- Files in core/references/ go to skills/<name>/references/ and files in core/scripts/ go to skills/<name>/scripts/,
+  under the same names. A skill folder is a folder under skills/ that contains SKILL.md.
+- A file with the same name in a skill folder is a copy of the core file and gets overwritten. Do not edit copies
+  directly. Edit core and copy again.
+- core cannot hold a file with the same name as a file a skill owns (SLOT_FILES).
+- After deleting or renaming a file in core, use --remove to delete its copies from every skill.
 
-사용법
-  python dev/sync_core.py                  # 모든 skill에 복사
-  python dev/sync_core.py --check          # 복사본이 원본과 바이트 단위로 같은지 확인
-  python dev/sync_core.py --skill techblog # 한 skill에만 복사
-  python dev/sync_core.py --remove NAME    # core에 없는 NAME 복사본을 모든 skill에서 지운다
+Usage
+  python dev/sync_core.py                  # copy into every skill
+  python dev/sync_core.py --check          # check that copies match the originals byte for byte
+  python dev/sync_core.py --skill techblog # copy into one skill only
+  python dev/sync_core.py --remove NAME    # delete copies of NAME, which is not in core, from every skill
 
-종료 코드: 0 정상, 1 --check에서 다른 복사본이나 없는 복사본이 있음, 2 사용법 또는 입력 오류
-표준 라이브러리만 쓴다(Python 3.8 이상).
+Exit codes: 0 OK, 1 --check found a differing or missing copy, 2 usage or input error
+Uses only the standard library (Python 3.8+).
 """
 
 import argparse
@@ -24,13 +25,13 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PARTS = ("references", "scripts")
-# skill마다 따로 쓰는 파일. core에 같은 이름이 있으면 skill의 파일을 덮어쓰게 되므로 막는다.
+# Files each skill owns. A core file with one of these names would overwrite the skill's file, so it is rejected.
 SLOT_FILES = ("SKILL.md", "settings.md", "genre.md", "rubric.md", "thresholds.json")
 SKIP_DIRS = ("__pycache__",)
 
 
 def core_files(root=ROOT):
-    """(하위 폴더, 파일 이름) 목록. 하위 폴더는 references 또는 scripts다."""
+    """List of (subfolder, file name). The subfolder is references or scripts."""
     out = []
     for part in PARTS:
         folder = os.path.join(root, "core", part)
@@ -40,7 +41,7 @@ def core_files(root=ROOT):
                 out.append((part, name))
     clash = sorted({name for _, name in out} & set(SLOT_FILES))
     if clash:
-        raise ValueError(f"core에 skill 파일과 같은 이름이 있다: {', '.join(clash)}")
+        raise ValueError(f"core에 스킬 파일과 이름이 같은 파일이 있다: {', '.join(clash)}")
     return out
 
 
@@ -58,7 +59,8 @@ def _same(a, b):
 
 
 def check(root=ROOT, skills=None):
-    """원본과 다르거나 없는 복사본 목록. 항목은 (skill 폴더, 하위 폴더, 파일 이름, "없음" 또는 "다름")."""
+    """List copies that differ from the original or are missing.
+    Each item is (skill folder, subfolder, file name, "없음" or "다름")."""
     problems = []
     for sdir in skills or skill_dirs(root):
         for part, name in core_files(root):
@@ -72,7 +74,7 @@ def check(root=ROOT, skills=None):
 
 
 def sync(root=ROOT, skills=None):
-    """복사본을 만들거나 덮어쓴다. 바뀐 복사본의 경로 목록을 돌려준다."""
+    """Create or overwrite the copies. Return the paths of the copies that changed."""
     written = []
     for sdir in skills or skill_dirs(root):
         for part, name in core_files(root):
@@ -87,9 +89,9 @@ def sync(root=ROOT, skills=None):
 
 
 def remove(name, root=ROOT):
-    """core에 없는 name의 복사본을 모든 skill에서 지운다. 지운 경로 목록을 돌려준다."""
+    """Delete copies of name, which is not in core, from every skill. Return the deleted paths."""
     if name in SLOT_FILES or os.path.basename(name) != name:
-        raise ValueError(f"지울 수 없는 이름: {name}")
+        raise ValueError(f"삭제할 수 없는 이름: {name}")
     if any(n == name for _, n in core_files(root)):
         raise ValueError(f"core에 아직 있는 파일이다: {name}")
     removed = []
@@ -108,10 +110,10 @@ def main(argv=None):
             stream.reconfigure(encoding="utf-8")
         except (AttributeError, ValueError):
             pass
-    ap = argparse.ArgumentParser(description="core 파일을 skill 폴더에 복사한다")
-    ap.add_argument("--check", action="store_true", help="복사본이 원본과 같은지 확인만 한다")
-    ap.add_argument("--skill", help="이 skill에만 복사하거나 확인한다")
-    ap.add_argument("--remove", metavar="NAME", help="core에서 지운 파일의 복사본을 모든 skill에서 지운다")
+    ap = argparse.ArgumentParser(description="Copy core files into skill folders")
+    ap.add_argument("--check", action="store_true", help="Only check that copies match the originals")
+    ap.add_argument("--skill", help="Copy to or check this skill only")
+    ap.add_argument("--remove", metavar="NAME", help="Delete copies of a file deleted from core from every skill")
     try:
         args = ap.parse_args(argv)
     except SystemExit as e:
@@ -125,7 +127,7 @@ def main(argv=None):
         if args.skill:
             sdir = os.path.join(ROOT, "skills", args.skill)
             if not os.path.isfile(os.path.join(sdir, "SKILL.md")):
-                print(f"skill이 없다: {args.skill}", file=sys.stderr)
+                print(f"스킬이 없다: {args.skill}", file=sys.stderr)
                 return 2
             skills = [sdir]
         if args.check:
@@ -133,9 +135,9 @@ def main(argv=None):
             for sdir, part, name, why in problems:
                 print(f"{why}: {os.path.relpath(os.path.join(sdir, part, name), ROOT)}")
             if problems:
-                print("core를 고쳤으면 python dev/sync_core.py로 다시 복사한다. 복사본을 고쳤으면 그 수정을 core로 옮긴다.")
+                print("core를 수정했으면 python dev/sync_core.py로 다시 복사한다. 복사본을 수정했으면 수정 내용을 core로 옮긴다.")
                 return 1
-            print(f"복사본 확인: skill {len(skills or skill_dirs())}개, core 파일 {len(core_files())}개 모두 같음")
+            print(f"복사본 확인: 스킬 {len(skills or skill_dirs())}개, core 파일 {len(core_files())}개 모두 같음")
             return 0
         written = sync(skills=skills)
         for path in written:

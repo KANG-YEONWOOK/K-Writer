@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-"""설치된 techblog 스킬을 headless Claude Code(`claude -p`)로 실행해 dogfooding 결과를 모은다.
+"""Run the installed techblog skill with headless Claude Code (`claude -p`) and collect dogfooding results.
 
-- 사용자 ~/.claude/CLAUDE.md와 auto memory를 끄고 실행한다(CLAUDE_CODE_DISABLE_CLAUDE_MDS=1).
-  그래야 다른 사용자가 스킬만 설치했을 때와 같은 조건이 된다.
-- 자료 파일은 실행 폴더에 복사한다. 원본 폴더를 --add-dir로 열지 않는다.
-- 결과: <work>/<iter>/<case>/ 아래 article.md, 작업 파일, run.jsonl(stream-json), run.err, meta.json
+- Runs with the user's ~/.claude/CLAUDE.md and auto memory turned off (CLAUDE_CODE_DISABLE_CLAUDE_MDS=1), so the
+  conditions match another user who has installed only the skill.
+- Source files are copied into the run folder. The original folder is not opened with --add-dir.
+- Output under <work>/<iter>/<case>/: article.md, work files, run.jsonl (stream-json), run.err, meta.json
 
-사용법
+Usage
   python dev/dogfood/run.py --cases dev/dogfood/cases.json --iter iter-1 [--only A B] [--jobs 2]
   python dev/dogfood/run.py --iter iter-11r --revise-from iter-11 [--only B] [--jobs 1]
-    (iter-11 케이스의 초안 복사본에 새 세션으로 6단계 후처리만 한다. 결과 케이스 이름은 원래 케이스와 같다.)
+    (A new session runs only step 6 post-processing on the draft copy of each iter-11 case. Result case names match
+    the original cases.)
 """
 
 import argparse
@@ -26,16 +27,17 @@ SKILL_DIR = os.path.join(ROOT, "skills", "techblog")
 DEFAULT_WORK = os.path.join(os.environ.get("TEMP", "/tmp"), "techblog-work", "dogfood")
 BASELINE_PROMPT = ("{src} 자료의 핵심 내용을 한국어 기술 블로그 아티클로 정리해서 article.md 파일로 저장해줘. "
                    "어투는 {tone_ko}로 써줘.")
-# revise 모드: 초안을 쓴 세션의 context 없이 새 세션에서 6단계(후처리)만 한다.
-REVISE_PROMPT = """현재 폴더의 article.md는 techblog skill이 1~5단계(초안 쓰기와 점검)를 마친 합니다체 초안이다. 이 글에 techblog skill의 6단계(후처리)만 한다. 어투 변환과 작업 파일 삭제는 하지 않는다.
-- skill 폴더: {skill}
+# revise mode: a new session, without the context of the session that wrote the draft, runs only step 6 (post-processing).
+REVISE_PROMPT = """현재 폴더의 article.md는 techblog 스킬이 1~5단계(초안 작성과 점검)를 마친 합니다체 초안이다. 이 글에는 techblog 스킬의 6단계(후처리)만 실행한다. 어투 변환과 작업 파일 삭제는 하지 않는다.
+- 스킬 폴더: {skill}
 - 자료: {src}
 - fact sheet: article.facts.md
-절차는 {skill}/references/finalization.md의 "### 6. 후처리" 절과 {skill}/references/revision.md를 따른다. 스크립트는 python "{skill}/scripts/revise_ko.py" start "article.md"처럼 한 번에 명령 하나씩 Bash로 실행한다. 끝나면 고친 문장 수와 check 결과를 짧게 보고한다."""
+절차는 {skill}/references/finalization.md의 "### 6. 후처리" 섹션과 {skill}/references/revision.md를 따른다. 스크립트는 python "{skill}/scripts/revise_ko.py" start "article.md"처럼 한 번에 명령 하나씩 Bash로 실행한다. 끝나면 수정한 문장 수와 check 결과를 짧게 보고한다."""
 
 
 def build_revise(case, run_dir, skill_dir=SKILL_DIR):
-    """다른 iteration 케이스의 초안 복사본, fact sheet, 자료를 복사하고 후처리만 하는 프롬프트를 만든다."""
+    """Copy the draft copy, fact sheet, and source from a case in another iteration, and build a prompt that runs only
+    post-processing."""
     work = os.path.dirname(os.path.dirname(os.path.dirname(run_dir)))
     src_dir = os.path.join(work, "dogfood", case["revise_from"])
     shutil.copyfile(os.path.join(src_dir, "article.unrevised.md"), os.path.join(run_dir, "article.md"))
@@ -59,7 +61,7 @@ def build_revise(case, run_dir, skill_dir=SKILL_DIR):
 
 
 def build(case, run_dir):
-    """케이스 설정으로 프롬프트와 추가 CLI 인자를 만든다."""
+    """Build the prompt and extra CLI arguments from the case settings."""
     if case.get("mode") == "revise":
         return build_revise(case, run_dir, case.get("skill_dir") or SKILL_DIR)
     src = case.get("source")
@@ -74,9 +76,9 @@ def build(case, run_dir):
         shutil.copyfile(src, os.path.join(run_dir, name))
         src_arg = "./" + name
     tone = case.get("tone", "default")
-    # skill은 요청에 없는 설정값(독자, 어투, 분량)을 묻는다. headless 실행은 답할 사람이 없으므로
-    # --defaults로 기본값을 쓰게 한다. "settings": "ask" 케이스는 어투와 --defaults를 빼고 실행해
-    # 질문할 수 없을 때 기본값으로 진행하는지 본다.
+    # The skill asks for settings the request leaves out (reader, tone, length). A headless run has nobody to answer,
+    # so --defaults makes it use the default values. A "settings": "ask" case runs without the tone and --defaults to
+    # check that the skill proceeds with the defaults when it cannot ask.
     ask = case.get("settings") == "ask"
     tone_arg = "" if ask else f"{tone} "
     defaults = "" if ask else " --defaults"
@@ -94,7 +96,7 @@ def build(case, run_dir):
     else:
         prompt = f"/techblog {tone_arg}{src_arg} -o article.md --keep-work{defaults}"
     if case.get("allowed_tools"):
-        # 스킬 없이 실행하는 baseline은 skill의 allowed-tools가 없어서 URL을 읽으려면 WebFetch를 따로 허용해야 한다.
+        # A baseline run has no skill, so it has no skill allowed-tools. WebFetch must be allowed separately to read a URL.
         extra += ["--allowedTools"] + case["allowed_tools"]
     return prompt, extra
 
@@ -109,7 +111,8 @@ def run_case(case, iter_dir, model, effort, budget, timeout):
            "--model", case.get("model", model), "--effort", case.get("effort", effort),
            "--output-format", "stream-json", "--verbose", "--no-session-persistence", "--strict-mcp-config",
            "--permission-mode", "acceptEdits", "--max-budget-usd", str(budget),
-           # 답할 사람이 없는 실행이라 설정 질문 도구를 context에서 뺀다(질문 대신 기본값을 쓰는지 본다).
+           # Nobody can answer in this run, so remove the settings question tool from context (this checks that the
+           # skill uses the defaults instead of asking).
            "--disallowedTools", "AskUserQuestion"] + extra
     env = dict(os.environ)
     env.update({"CLAUDE_CODE_DISABLE_CLAUDE_MDS": "1", "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"})
@@ -143,12 +146,13 @@ def main():
     ap.add_argument("--jobs", type=int, default=2)
     ap.add_argument("--model", default="opus")
     ap.add_argument("--effort", default="xhigh")
-    # 6단계 subagent 넷(독자 점검, 후처리, 한국어 문장 점검, 수정 후 검토)을 모두 띄우는 실행의 예산. 2026-11-02 실행은 독자 점검까지
-    # $6.75를 쓰고, 8달러 안에서는 남은 subagent 셋을 띄울 수 없다고 판단해 6단계를 줄였다.
+    # Budget for a run that starts all four step 6 subagents (reader check, post-processing, Korean sentence review,
+    # post-revision review). The 2026-11-02 run spent $6.75 through the reader check, judged that it could not start the
+    # remaining three subagents within $8, and cut step 6 short.
     ap.add_argument("--budget", type=float, default=15.0)
     ap.add_argument("--timeout", type=int, default=45 * 60)
-    ap.add_argument("--revise-from", help="이 iteration의 초안 복사본으로 revise 모드 케이스를 만든다")
-    ap.add_argument("--skill-dir", help="revise 모드에서 읽을 skill 폴더(지침 버전을 고정할 때 쓴다)")
+    ap.add_argument("--revise-from", help="Build revise mode cases from the draft copies of this iteration")
+    ap.add_argument("--skill-dir", help="Skill folder to read in revise mode (use it to pin the instruction version)")
     args = ap.parse_args()
     with open(args.cases, encoding="utf-8") as f:
         cases = json.load(f)["cases"]

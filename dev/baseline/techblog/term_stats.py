@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
-"""같은 대상을 부르는 말과 빗댄 말의 횟수를 사람 글, skill 글, 스킬 없이 쓴 AI 글에서 잰다.
+"""Count names for the same thing and metaphorical words in human articles, skill articles, and AI articles written
+without the skill.
 
-plain-terms.md의 표를 만든 도구다. lint_ko.py의 항목과 달리 문장 단위가 아니라 표면형이 나온 횟수를 세고,
-lint에 넣지 않은 말과 사람 글이 쓰는 말의 횟수도 함께 출력한다.
+This tool built the tables in plain-terms.md. Unlike the lint_ko.py items, it counts occurrences of surface forms rather
+than sentences, and also reports counts for words not in lint and words that human articles use.
 
-- 사람 글: --cache의 md 폴더에서 stats.json에 included로 표시한 글. 기간(base, mid, drift)별 횟수도 출력한다.
-- --extra 이름=glob: 비교할 글(skill이 쓴 글, skill 문서). 여러 번 줄 수 있다.
-- --sessions DIR: Claude Code 세션 기록 폴더(예: ~/.claude/projects). 모델 이름에 --model 값이 든 assistant의 대화 응답과
-  Write 도구로 쓴 .md 내용을 모은다. 프로젝트 폴더 이름에 StudyNote가 있으면 note, K-Writer나 Skill-Techblog가 있으면 뺀다.
-  나머지는 dev다. 세션 내용은 파일에 남기지 않고 횟수만 출력한다. 저장소의 표에는 프로젝트 이름을 적지 않는다.
+- Human articles: articles marked included in stats.json, from the md folder under --cache. Also reported per period
+  (base, mid, drift).
+- --extra name=glob: articles to compare (articles the skill wrote, skill documents). Can be given several times.
+- --sessions DIR: Claude Code session log folder (for example ~/.claude/projects). Collects chat responses from assistants
+  whose model name contains the --model value, and .md content written with the Write tool. A project folder whose name
+  contains StudyNote goes to note, and one containing K-Writer or Skill-Techblog is excluded. The rest go to dev. Session
+  content is not saved to files; only counts are printed. Tables in the repo do not list project names.
 
-코드 블록, 인라인 코드, URL, HTML 태그, 따옴표 안은 세지 않는다. 비율은 한글 글자 1만 자당 횟수다.
+Code blocks, inline code, URLs, HTML tags, and quoted text are not counted. Rates are counts per 10,000 Hangul characters.
 
-사용법
+Usage
   python -I dev/baseline/techblog/term_stats.py --cache docs/corpus --sessions ~/.claude/projects \
       --extra "skill=docs/dogfood/*/*/article.md" --extra "skill=examples/*.default.md" [--samples 3]
 """
@@ -30,7 +33,8 @@ L = r"(?<![가-힣])"
 PARTICLE = (r"(?:은|는|이|가|을|를|에서는|에서도|에서|에는|에도|에|의|과|와|으로|로|도|만|까지|부터|보다|입니다|이다|이고|이며|이라)?"
             r"(?=[\s,.)\]:;|]|$)")
 
-# (표에 쓸 이름, 정규식). 앞의 묶음은 lint에 넣은 말, 뒤의 묶음은 비교할 말과 자료가 지목했지만 사람 글에 흔한 말이다.
+# (table label, regex). The first set is words in lint. The later sets are comparison words, and words the sources pointed
+# out but that are common in human articles.
 TERMS = (
     ("판(영어, 숫자 뒤)", rf"(?<![가-힣A-Za-z0-9._+-])(?:[A-Za-z][A-Za-z0-9._+-]*|[0-9]+(?:\.[0-9]+)+|[0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}})\s?판{PARTICLE}"),
     ("판(수식어 뒤)", rf"{L}(?<!처음부터\s)(?:이전|예전|옛|지난|새|새로운|최신|다음|현재|지금|마지막|수정|고친|수정한|수정된|개정된|공개된|설치된|패치|안정|이번|같은|다른|두|세|네|각|모든|첫|이|그)\s판{PARTICLE}"),
@@ -64,7 +68,7 @@ TERMS = (
     ("커버리지", rf"{L}커버리지"),
     ("더하다(add)", r"(?:항목|기능|규칙|문장|설정|테스트|옵션|코드|필드|열|행|컬럼|절|예문|조건|케이스|문서|단계|지침)(?:을|를|도|만)?\s(?:\S+\s)?더(?:했|합니다|한다|하면|해|하고|한\s)"),
     ("추가하다", rf"{L}추가(?:했|합니다|한다|하면|해|하고|한\s|하는)"),
-    # lint에 넣지 않은 비교
+    # comparison words not in lint
     ("결함", rf"{L}결함"),
     ("버그", rf"{L}버그"),
     ("갱신", rf"{L}갱신"),
@@ -85,7 +89,7 @@ TERMS = (
     ("잔여", rf"{L}잔여"),
     ("묶음", rf"{L}묶음"),
     ("N곳", r"[0-9]+\s?곳"),
-    # 자료가 지목한 말
+    # words the sources pointed out
     ("못 박다", r"못\s?박(?:아|았|는|습|은)"),
     ("갈리다", r"(?<![헷가-힣])갈(?:립니다|린다|렸|려(?:\s|요|서)|리는|리며|리고|리면)"),
     ("갈래", rf"{L}갈래"),
@@ -131,7 +135,7 @@ def human_docs(cache, stats_path):
 
 
 def session_docs(roots, model):
-    """세션 기록에서 AI가 쓴 한국어 글을 모은다. 대화 응답은 세션 단위, 문서는 파일 단위로 묶는다."""
+    """Collect Korean text written by AI from session logs. Chat responses are grouped per session, documents per file."""
     grouped = defaultdict(list)
     for root in roots:
         root = os.path.expanduser(root)
@@ -174,12 +178,13 @@ def session_docs(roots, model):
 def main():
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--cache", required=True, help="measure.py collect로 모은 사람 글 cache")
+    ap.add_argument("--cache", required=True, help="Human article cache collected by measure.py collect")
     ap.add_argument("--stats", default=os.path.join(ROOT, "dev", "baseline", "techblog", "stats.json"))
-    ap.add_argument("--sessions", nargs="*", default=[], help="Claude Code 세션 기록 폴더")
-    ap.add_argument("--model", default="opus-5-5", help="세션 기록에서 고를 모델 이름의 일부")
-    ap.add_argument("--extra", action="append", default=[], help="이름=glob")
-    ap.add_argument("--samples", type=int, default=0, help="사람 글과 extra에서 말마다 보여 줄 문맥 수")
+    ap.add_argument("--sessions", nargs="*", default=[], help="Claude Code session log folders")
+    ap.add_argument("--model", default="opus-5-5", help="Part of the model name to select from session logs")
+    ap.add_argument("--extra", action="append", default=[], help="name=glob")
+    ap.add_argument("--samples", type=int, default=0,
+                    help="Number of context snippets to show per word from human articles and extra")
     args = ap.parse_args()
 
     docs = list(human_docs(args.cache, args.stats))

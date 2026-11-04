@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""iteration 결과(eval.json, judge.json)를 REPORT.md에 붙일 markdown 표로 출력한다.
+"""Print iteration results (eval.json, judge.json) as markdown tables to paste into REPORT.md.
 
-사용법
+Usage
   python dev/dogfood/report.py --iter iter-1
-  python dev/dogfood/report.py --iter iter-11 --within   # 초안 복사본과 후처리를 마친 글의 비교 표
+  python dev/dogfood/report.py --iter iter-11 --within   # table comparing the draft copy and the post-processed article
 """
 
 import argparse
@@ -12,7 +12,7 @@ import os
 import sys
 
 DEFAULT_WORK = os.path.join(os.environ.get("TEMP", "/tmp"), "techblog-work", "dogfood")
-KEYS = (("A9.list_ratio", "목록"), ("A9.bold_per_1k", "bold"), ("A10.triad_per_1k", "셋 묶음"),
+KEYS = (("A9.list_ratio", "목록"), ("A9.bold_per_1k", "bold"), ("A10.triad_per_1k", "세 항목 나열"),
         ("A2.connective_comma_ratio", "연결어미 쉼표"), ("A1.np", "부정 대구"))
 
 

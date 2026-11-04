@@ -1,25 +1,29 @@
 #!/usr/bin/env python3
-"""사람 글 측정값(stats.json)으로 techblog의 lint 기준치(skills/techblog/scripts/thresholds.json)를 다시 만든다.
+"""Rebuild techblog's lint thresholds (skills/techblog/scripts/thresholds.json) from the human article measurements
+(stats.json).
 
-- 계산은 core 규칙 정의(rules.json)와 techblog 보정값을 합친 기준치(lint_ko.load_thresholds)로 하고, --write는
-  보정값(lint_ko.split_thresholds)만 thresholds.json에 쓴다. 규칙 정의는 core/scripts/rules.json에서 고친다.
+- Calculation uses thresholds that merge the core rule definitions (rules.json) with techblog's calibrated values
+  (lint_ko.load_thresholds). --write stores only the calibrated values (lint_ko.split_thresholds) in thresholds.json.
+  Edit rule definitions in core/scripts/rules.json.
 
-- 기준치는 holdout이 아닌 사람 글에서 잡는다(holdout은 글 ID 해시로 20%).
-- 기간 가중치: base(2018-01~2022-11) 1.0, mid(2022-12~2024-12) 0.5, drift(2025~) 0. 2018~2022년 글에
-  가중치를 많이 두라는 사용자 요구를 따른다. drift 글은 비교에만 쓴다. 기준 기간 전용 항목(AI_FAMILIES)은 mid 글도
-  가중치 0이라 base 글로만 잡는다.
-- 사이트 상한: 지표 pool마다 한 사이트의 가중치 합이 40%를 넘지 않게 줄인다. 글 5편 이상인 사이트가
-  셋 이상일 때만 적용한다.
-- upper: PASS ≤ 가중 p95, WARN ≤ 가중 p99.5에 여유(횟수 +1, 비율 ×1.2) / lower: PASS ≥ 가중 p5,
-  WARN ≥ 가중 p0.5×0.8. 표본 끝의 글 몇 편이 경계를 정하지 않게 최댓값과 최솟값 대신 분위수를 쓴다.
-  thresholds.json에서 "bound": "extreme"인 항목은 이전 공식(최댓값과 p99 중 큰 값, 최솟값과 p1 중 작은 값)을 쓴다.
-- info, check: 점수에 넣지 않고 사람 글 가중 p10/p50/p90만 기록한다.
-- poisson: 사람 글 전체의 가중 1,000자당 비율(pooled rate).
-- 어투별 지표(tone 지정)는 해당 어투만, 나머지는 두 어투를 합쳐서 잡는다.
-- 만든 기준치로 base holdout 사람 글을 판정해 통과율을 보고하고, 보고서를 calibration.md에 쓴다.
-  dev/baseline/techblog/README.md는 사람이 쓴 측정 기록이라 덮어쓰지 않는다.
+- Thresholds are set from human articles outside holdout (holdout is 20% by article ID hash).
+- Period weights: base (2018-01~2022-11) 1.0, mid (2022-12~2024-12) 0.5, drift (2025~) 0. This follows the user's
+  request to give 2018~2022 articles more weight. drift articles are used only for comparison. For base-period-only
+  items (AI_FAMILIES), mid articles also get weight 0, so those thresholds come from base articles only.
+- Site cap: for each metric pool, reduce weights so that one site's total does not exceed 40%. Applied only when three
+  or more sites have 5 or more articles.
+- upper: PASS ≤ weighted p95, WARN ≤ weighted p99.5 plus margin (counts +1, ratios ×1.2) / lower: PASS ≥ weighted p5,
+  WARN ≥ weighted p0.5×0.8. Quantiles are used instead of the maximum and minimum so that a few articles at the end of
+  the sample do not set the limit.
+  Items with "bound": "extreme" in thresholds.json use the earlier formula (the larger of the maximum and p99, the
+  smaller of the minimum and p1).
+- info, check: not scored; only the human weighted p10/p50/p90 are recorded.
+- poisson: weighted rate per 1,000 characters across all human articles (pooled rate).
+- Tone-specific metrics (tone set) use only that tone; the rest combine both tones.
+- Judges base holdout human articles with the new thresholds, reports the pass rate, and writes the report to
+  calibration.md. dev/baseline/techblog/README.md is a measurement record written by a person and is not overwritten.
 
-사용법
+Usage
   python dev/baseline/techblog/calibrate.py [--stats dev/baseline/techblog/stats.json] [--write]
 """
 
@@ -43,16 +47,17 @@ SITE_CAP = 0.40
 SITE_CAP_MIN_SITES = 3
 SITE_CAP_MIN_ARTICLES = 5
 PASS_Q, TAIL_Q = 0.95, 0.995
-# 사람 글에는 적용하지 않는 Gate: 사용자 요구로 정한 어투 규칙
+# Gates not applied to human articles: tone rules set by user request
 TONE_RULES = ("G4.off_tone", "G4.banned_ending")
-# 2025년 이후 글에서 함께 높아진 AI 문체 지표(rubric.md "사람 글 측정에서 확인한 것")
+# AI style metrics that rose together in articles from 2025 onward (rubric.md "사람 글 측정에서 확인한 것")
 AI_METRICS = ("A1.np", "A2.connective_comma_ratio", "A3.salience", "A4.para_end", "A5.style_words_per_1k",
               "A9.bold_per_1k", "A10.triad_per_1k", "A13.demonstrative_start_per_1k")
-# 기준 기간 전용 항목. 2026-11-02 측정에서 mid(2022-12~2024-12) 글의 중앙값이 base의 p75를 넘은 지표가 있었다:
-# A2.connective_comma_ratio(합니다체 0.27, base p75 0.24), A13.demonstrative_start_per_1k(합니다체 0.50 대 0.40,
-# 해요체 0.27 대 0.19). A4.para_end(합니다체)는 mid 중앙값 1.0이 base p75와 같았다. 그래서 이 항목들은 base 글로만
-# 기준치를 잡고(mid 가중치 0), 문장 길이, 문단, 종결어미 분포처럼 이 묶음에 들지 않는 지표에만 mid를 PERIOD_WEIGHT로 넣는다.
-# 6단계 판정의 "AI 문체 항목"(G, A1~A7, A10~A15, T, rubric.md)과 다른 묶음이라 이름을 따로 붙였다.
+# Base-period-only items. In the 2026-11-02 measurement, the median of mid (2022-12~2024-12) articles exceeded the base
+# p75 for some metrics: A2.connective_comma_ratio ("합니다체" 0.27, base p75 0.24), A13.demonstrative_start_per_1k
+# ("합니다체" 0.50 vs 0.40, "해요체" 0.27 vs 0.19). For A4.para_end ("합니다체"), the mid median of 1.0 equaled the base p75.
+# So these items set thresholds from base articles only (mid weight 0), and mid enters with PERIOD_WEIGHT only for metrics
+# outside this set, such as sentence length, paragraphs, and ending distribution.
+# This set differs from the "AI 문체 항목" of the step 6 verdict (G, A1~A7, A10~A15, T, rubric.md), so it has its own name.
 AI_FAMILIES = ("A1.", "A2.", "A3.", "A4.", "A5.", "A6.", "A7.", "A9.bold", "A9.label_list", "A9.list_ratio",
                "A10.", "A12.", "A13.", "A14.")
 
@@ -72,7 +77,7 @@ def period_of(group):
 
 
 def wpct(values, weights, q):
-    """가중 분위수. 가중치가 모두 같으면 (n-1)q 위치를 선형 보간하는 기존 pct와 같다."""
+    """Weighted quantile. With equal weights it matches the existing pct, which interpolates linearly at position (n-1)q."""
     pairs = sorted((float(v), float(w)) for v, w in zip(values, weights) if w > 0)
     if not pairs:
         return 0.0
@@ -106,7 +111,7 @@ def n_eff(weights):
 
 
 def site_factors(pool, mid):
-    """pool 안에서 사이트마다 가중치를 줄일 비율. 한 사이트가 SITE_CAP을 넘지 않게 한다."""
+    """Factor that reduces each site's weight within the pool, so that no site exceeds SITE_CAP."""
     base_w = {}
     counts = {}
     for a in pool:
@@ -130,7 +135,7 @@ def site_factors(pool, mid):
 
 
 def weighted(pool, mid):
-    """pool의 (값, 가중치) 목록. 값이 없는 글과 이 지표에서 가중치가 0인 글은 뺀다."""
+    """(value, weight) lists for the pool. Excludes articles with no value and articles with weight 0 for this metric."""
     pool = [a for a in pool if mid in a["metrics"] and period_weight(mid, period_of(a["group"])) > 0]
     f = site_factors(pool, mid)
     return [a["metrics"][mid] for a in pool], [period_weight(mid, period_of(a["group"])) * f[a["site"]]
@@ -274,7 +279,7 @@ def report(stats, thresholds, notes, old=None):
     groups = stats["groups"]
     sites = sorted({s for g in groups.values() for s in g["sites"]})
     lines = ["# 기준치 계산 보고서", "",
-             "`dev/baseline/techblog/calibrate.py --write`가 만든 문서다. 손으로 고치지 않는다. 측정 기록과 해석은 "
+             "`dev/baseline/techblog/calibrate.py --write`가 만든 문서다. 직접 수정하지 않는다. 측정 기록과 해석은 "
              "[README.md](README.md)에 있다.", "",
              "- 기간과 그룹: base(2018-01-01~2022-11-30)는 default/casual, mid(2022-12-01~2024-12-31)는 "
              "mid-default/mid-casual, drift(2025-01-01~)는 drift-default/drift-casual이다.",
@@ -283,8 +288,8 @@ def report(stats, thresholds, notes, old=None):
              f"지표 pool마다 한 사이트의 가중치는 {SITE_CAP:.0%} 이하(글 {SITE_CAP_MIN_ARTICLES}편 이상인 사이트가 "
              f"{SITE_CAP_MIN_SITES}개 이상일 때).",
              f"- 경계: PASS는 가중 p{PASS_Q * 100:g}(하한은 p{(1 - PASS_Q) * 100:g}), WARN은 가중 "
-             f"p{TAIL_Q * 100:g}(하한은 p{(1 - TAIL_Q) * 100:g}×0.8)에 여유(횟수 +1, 비율 ×1.2). "
-             "\"bound\": \"extreme\" 항목은 최댓값과 최솟값을 쓴다.", "",
+             f"p{TAIL_Q * 100:g}(하한은 p{(1 - TAIL_Q) * 100:g}×0.8)에 여유(횟수 +1, 비율 ×1.2)를 적용한 값이다. "
+             "\"bound\": \"extreme\" 항목은 최댓값과 최솟값을 사용한다.", "",
              "## 그룹", "",
              "| 그룹 | 편수 | holdout | " + " | ".join(sites) + " |",
              "|---|---|---|" + "---|" * len(sites)]
@@ -320,7 +325,7 @@ def report(stats, thresholds, notes, old=None):
             lines.append(f"| {k} | {t} | {pct(b, .5):.2f} ({pct(b, .75):.2f}) | "
                          f"{pct(m, .5):.2f} | {pct(d, .5):.2f} |" if b else f"| {k} | {t} | - | - | - |")
     lines += ["", "## 사람 글의 Gate 위반 비율 (base 그룹)", "",
-              "policy 표시 항목은 이 skill의 출력에만 적용하는 규칙이라 사람 글 판정에서 뺀다.", "",
+              "policy 표시 항목은 이 skill의 출력에만 적용하는 규칙이라 사람 글 판정에서 제외한다.", "",
               "| Gate | 구분 | default | casual |", "|---|---|---|---|"]
     for mid, spec in thresholds["metrics"].items():
         if spec.get("kind") != "gate":
@@ -334,8 +339,8 @@ def report(stats, thresholds, notes, old=None):
     passed, n_hold, by_site, stat_count = holdout_rate(base_arts, thresholds)
     rate = passed / n_hold if n_hold else 0.0
     lines += ["", "## holdout 검증", "",
-              f"기준치를 만들 때 쓰지 않은 base 사람 글 {n_hold}편 중 {passed}편이 통과했다(통과율 {rate:.0%}). "
-              "목표는 85% 이상이다. 통과 조건은 skill 출력과 같다(Gate 0, FAIL 0, WARN 3 이하). policy Gate는 뺀다.", "",
+              f"기준치를 만들 때 사용하지 않은 base 사람 글 {n_hold}편 중 {passed}편이 통과했다(통과율 {rate:.0%}). "
+              "목표는 85% 이상이다. 통과 조건은 skill 출력과 같다(Gate 0, FAIL 0, WARN 3 이하). policy Gate는 제외한다.", "",
               "| 사이트 | 통과 / holdout | 통과율 |", "|---|---|---|"]
     for s in sorted(by_site):
         ok, n = by_site[s]
@@ -372,7 +377,7 @@ def main():
     L.setup_stdio()
     ap = argparse.ArgumentParser()
     ap.add_argument("--stats", default=os.path.join(ROOT, "dev", "baseline", "techblog", "stats.json"))
-    ap.add_argument("--write", action="store_true", help="thresholds.json과 calibration.md를 덮어쓴다")
+    ap.add_argument("--write", action="store_true", help="Overwrite thresholds.json and calibration.md")
     args = ap.parse_args()
     stats = json.load(open(args.stats, encoding="utf-8"))
     template = L.load_thresholds(THRESHOLDS)

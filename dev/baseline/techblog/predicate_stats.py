@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""이웃한 서술어 반복 후보를 기존 사람 글 목록에서 다시 측정한다.
+"""Re-measure adjacent predicate repetition candidates on the existing human article list.
 
-원문은 measure.py collect의 캐시에서 읽는다. 누락한 글을 0으로 계산하지 않으며,
-holdout을 포함한 분포와 제외한 분포를 함께 기록한다. 출력에는 원문을 저장하지 않는다.
-이 수치는 후보의 빈도이지 수정해야 할 문장의 수나 PASS/FAIL 임계값이 아니다.
+Source text is read from the measure.py collect cache. Missing articles are not counted as 0, and distributions with and
+without holdout are both recorded. The output does not store source text.
+These figures are candidate frequencies, not a count of sentences to fix or a PASS/FAIL threshold.
 
   python dev/baseline/techblog/predicate_stats.py --cache DIR [--stats PATH] [--out JSON] [--samples N]
 """
@@ -96,8 +96,8 @@ def main():
     L.setup_stdio()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cache", required=True)
-    parser.add_argument("--out", help="원문 없이 집계와 글별 측정값을 저장할 JSON 경로")
-    parser.add_argument("--samples", type=int, default=0, help="검토할 후보 수. -1이면 모두 출력")
+    parser.add_argument("--out", help="JSON path to save aggregates and per-article values, without source text")
+    parser.add_argument("--samples", type=int, default=0, help="Number of candidates to review. -1 prints all")
     parser.add_argument("--stats", default=os.path.join(ROOT, "dev", "baseline", "techblog", "stats.json"))
     args = parser.parse_args()
     stats = L.load_json(args.stats)

@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-"""사람 글 baseline, 스킬 없는 Claude, 스킬 Default, 스킬 Casual의 지표를 한 표로 모은다(README 비교표).
+"""Collect the metrics of the human article baseline, Claude without the skill, skill Default, and skill Casual into one
+table (the README comparison table).
 
-- 사람 글: dev/baseline/techblog/stats.json의 default, casual 그룹(기준 기간 2018-01~2022-11 글) 중앙값
-- 생성 글: article.md를 lint_ko.py로 다시 잰 값, eval.json의 lint 판정, judge.json(style, fidelity). 케이스 값의 중앙값
-  케이스는 `<iteration>/<case>` 형식으로 지정한다. mode가 baseline이면 "스킬 없음", 아니면 tone별로 묶는다.
+- Human articles: medians of the default and casual groups (articles from the base period 2018-01~2022-11) in
+  dev/baseline/techblog/stats.json
+- Generated articles: values from re-measuring article.md with lint_ko.py, the lint verdict in eval.json, and judge.json
+  (style, fidelity). Medians of the case values.
+  Cases are given as `<iteration>/<case>`. A case with mode baseline goes under "스킬 없음"; the others are grouped by tone.
 
-사용법
+Usage
   python dev/dogfood/summary.py --runs iter-0/A0-antislop-baseline iter-6/A-antislop-casual ...
 """
 
@@ -25,7 +28,7 @@ METRICS = (
     ("chars", "본문 글자 수(공백 제외)", 0),
     ("A9.list_ratio", "목록 줄 비율", 3),
     ("A9.bold_per_1k", "bold(1,000자당)", 2),
-    ("A10.triad_per_1k", "셋 묶음 나열(1,000자당)", 2),
+    ("A10.triad_per_1k", "세 항목 나열(1,000자당)", 2),
     ("A2.connective_comma_ratio", "연결어미 뒤 쉼표 비율", 3),
     ("A1.np", "부정 대구(X가 아니라 Y) 문장 수", 1),
     ("A8.ending_top_share", "가장 많은 종결의 비율", 2),
@@ -50,7 +53,7 @@ def main():
     except AttributeError:
         pass
     ap = argparse.ArgumentParser()
-    ap.add_argument("--runs", nargs="+", required=True, help="<iteration>/<case> 목록")
+    ap.add_argument("--runs", nargs="+", required=True, help="List of <iteration>/<case>")
     ap.add_argument("--work", default=DEFAULT_WORK)
     args = ap.parse_args()
 
@@ -78,7 +81,7 @@ def main():
         col["n"] += 1
         col["cases"].append(spec)
         lint = e.get("lint", {})
-        # eval.json에는 주요 지표만 있으므로 글을 다시 재서 모든 지표를 쓴다.
+        # eval.json holds only the key metrics, so re-measure the article to get every metric.
         a = L.analyze(L.read_text(os.path.join(d, "article.md")))
         m = {k: v["value"] for k, v in a["metrics"].items()}
         m["chars"] = a["stats"]["chars"]
@@ -98,13 +101,13 @@ def main():
         if cl and cl.get("answered"):
             col["j9"].append((cl["dependent"], cl["answered"]))
 
-    # J9 사람 글 대조군: judge.py가 work 폴더에 저장한 판정 결과
+    # J9 human control group: verdicts that judge.py saved in the work folder
     group = {a["id"]: a["group"] for a in stats["articles"]}
     hpath = os.path.join(args.work, "_clarity_humans.json")
     if os.path.exists(hpath):
         for ck, v in json.load(open(hpath, encoding="utf-8")).items():
             g = group.get(ck.split(":", 1)[1])
-            # judge.py의 clarity_controls는 기준 기간과 중간 기간(mid-) 그룹에서 고른다. 어투로 묶는다.
+            # clarity_controls in judge.py selects from the base period and mid period (mid-) groups. Group them by tone.
             if g in ("default", "casual", "mid-default", "mid-casual") and v.get("answered") and "dependent" in v:
                 cols["human-" + g.rsplit("-", 1)[-1]]["j9"].append((v["dependent"], v["answered"]))
 

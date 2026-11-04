@@ -1,21 +1,22 @@
 #!/usr/bin/env python3
-"""K-Writer tone check: Casual 글이 Default 초안에서 종결부만 바꾼 결과인지 확인한다.
+"""K-Writer tone check: verifies that a Casual article differs from its Default draft only in sentence endings.
 
-이 파일의 원본은 저장소의 core/scripts/tone_check.py이고, dev/sync_core.py가 skill마다 skills/<이름>/scripts/에 복사한다.
+The source of this file is core/scripts/tone_check.py in the repo. dev/sync_core.py copies it to skills/<name>/scripts/ for each skill.
 
-사용법
+Usage
   python tone_check.py DEFAULT.md CASUAL.md [--json]
-  python tone_check.py --cleanup FILE [FILE ...]   # .facts.md, .draft.md, .unrevised.md, .repeats.md, .reader.md, .pre-fix.md, .audit.md 작업 파일만 지운다
+  python tone_check.py --cleanup FILE [FILE ...]   # deletes only .facts.md, .draft.md, .unrevised.md, .repeats.md, .reader.md, .pre-fix.md, .audit.md work files
 
-검사 순서
-  1. 블록 종류(헤딩, 문단, 목록, 코드, 표, 인용) 순서가 같다.
-  2. 헤딩, 코드, 표, 인용, 명사구 목록 항목은 두 글에서 같다.
-  3. 문단과 문장형 목록 항목은 문장 수가 같다.
-  4. 문장마다 수치, 영문 토큰, 인용, 괄호 내용과 부정 표현 수가 같고, 앞에서부터 같은 어절이 이어지다가
-     마지막 2어절 이내에서만 달라진다. 달라진 첫 어절의 초성이 이어지지 않으면 WARN.
-  5. Default 문장은 합니다체, Casual 문장은 해요체이고 금지 어미(~더라고요, ~네요, ~잖아요, ~는데요)가 없다.
+Check order
+  1. The order of block types (heading, paragraph, list, code, table, quote) is the same.
+  2. Headings, code, tables, quotes, and noun-phrase list items are the same in both articles.
+  3. Paragraphs and sentence-form list items have the same number of sentences.
+  4. In each sentence, the numbers, Latin tokens, quotes, parenthesized content, and the count of negative expressions
+     are the same, and the words match from the start and differ only within the last 2 words. WARN if the initial
+     consonant of the first differing word does not carry over.
+  5. Default sentences are "합니다체", Casual sentences are "해요체", and there are no banned endings (~더라고요, ~네요, ~잖아요, ~는데요).
 
-종료 코드: 0 통과, 1 불일치, 2 사용법 또는 입력 오류
+Exit codes: 0 pass, 1 mismatch, 2 usage or input error
 """
 
 import argparse
@@ -39,7 +40,7 @@ CONTRACTIONS = {
 CAUSE_RE = re.compile(r"(때문|므로|어서|아서|해서|니까|덕분|이유는)")
 NEG_RE = re.compile(r"(않|없|못|아니|(?<![가-힣])안\s)")
 LATIN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_.\-+/#]*")
-CHOSEONG = 588  # 초성 하나당 음절 수(21 * 28)
+CHOSEONG = 588  # syllables per initial consonant (21 * 28)
 
 
 def _norm_ws(s):
@@ -81,7 +82,7 @@ def _is_sentence_item(text):
 
 
 def _units(text):
-    """비교 단위 목록: (종류, 줄 번호, 원문, 문장 목록 또는 None)."""
+    """List of comparison units: (kind, line number, source text, sentence list or None)."""
     units = []
     for b in L.parse_blocks(L.normalize_text(text)):
         if b.type in FROZEN:
@@ -116,7 +117,7 @@ def compare_sentence(d, c, d_line, c_line, si):
         issues.append(_issue("PREFIX", "FAIL", d_line, c_line, si, d, c,
                              f"마지막 {K_TAIL}어절 밖에서 달라졌다(D {rd}어절, C {rc}어절 남음)"))
     elif rd and rc:
-        # 활용으로 바뀌는 것은 첫 음절 뒤쪽이다(썼습니다→썼어요, 둡니다→둬요). 첫 음절 초성이 다르면 다른 단어이다.
+        # Conjugation changes what follows the first syllable (썼습니다→썼어요, 둡니다→둬요). A different initial consonant in the first syllable means a different word.
         a, b = _choseong(dw[p]), _choseong(cw[p])
         if a[:1] != b[:1]:
             issues.append(_issue("STEM", "WARN", d_line, c_line, si, d, c, "바뀐 어절의 어간이 다르다"))
@@ -130,7 +131,7 @@ def compare_sentence(d, c, d_line, c_line, si):
     elif ccls not in ("HAEYO", "Q_KKAYO", "NOUN", "OTHER"):
         issues.append(_issue("C_TONE", "FAIL", d_line, c_line, si, d, c, f"Casual 문장이 해요체가 아니다({ccls})"))
     if cword.endswith("거든요") and not CAUSE_RE.search(d):
-        issues.append(_issue("GEUDEUN", "WARN", d_line, c_line, si, d, c, "Default 문장에 원인 표지가 없는데 ~거든요를 썼다"))
+        issues.append(_issue("GEUDEUN", "WARN", d_line, c_line, si, d, c, "Default 문장에 원인 표현이 없는데 ~거든요를 사용했다"))
     return issues
 
 
@@ -184,10 +185,10 @@ def cleanup(paths):
 
 def main(argv=None):
     L.setup_stdio()
-    ap = argparse.ArgumentParser(description=f"{SKILL_NAME} 어투 불변성 검사")
+    ap = argparse.ArgumentParser(description=f"{SKILL_NAME} tone invariance check")
     ap.add_argument("files", nargs="+")
     ap.add_argument("--json", action="store_true")
-    ap.add_argument("--cleanup", action="store_true", help="주어진 작업 파일(" + ", ".join(WORK_SUFFIXES) + ")을 삭제한다")
+    ap.add_argument("--cleanup", action="store_true", help="Delete the given work files (" + ", ".join(WORK_SUFFIXES) + ")")
     try:
         args = ap.parse_args(argv)
     except SystemExit as e:

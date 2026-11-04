@@ -33,7 +33,7 @@ def prepare_case(project, case, source=None, skill_mention="$techblog"):
     """Return the user prompt and source paths whose contents must stay unchanged."""
     keep = "" if case == "cleanup" or case.startswith("retone-") else " --keep-work"
     tone = "casual" if case in ("casual", "retone-casual") else "default"
-    # skill은 요청에 없는 설정값을 묻는다. codex exec에는 답할 사람이 없으므로 --defaults를 붙인다.
+    # The skill asks for settings the request leaves out. codex exec has nobody to answer, so add --defaults.
     prefix = "{} {} -o article.md{} --defaults".format(skill_mention, tone, keep)
     if case.startswith("retone-"):
         example = "paged-attention.{}.md".format("default" if tone == "casual" else "casual")
@@ -226,7 +226,8 @@ def inspect_output(project, case, commands, hashes):
                                               lint.read_text(str(facts)) if facts.exists() else None)
     present = [s for s in WORK_SUFFIXES if (project / ("article" + s)).exists()]
     result["work_files"] = present
-    # 수정 전 사본(.pre-fix.md)은 수정 후 검토에서 고칠 곳이 나온 실행에만 생기므로 --keep-work 실행에서도 요구하지 않는다.
+    # The pre-fix copy (.pre-fix.md) exists only in runs where the post-revision review found something to fix,
+    # so even --keep-work runs do not require it.
     required = [s for s in WORK_SUFFIXES if s != ".pre-fix.md" and (s != ".draft.md" or tone == "casual")]
     result["work_files_ok"] = (not present if case == "cleanup" or case.startswith("retone-") else
                                all(s in present for s in required))
@@ -235,8 +236,9 @@ def inspect_output(project, case, commands, hashes):
     successful = [call for c in commands if c.get("exit_code") == 0
                   for call in checker_invocations(c["command"])]
     if case.startswith("retone-"):
-        # retone은 문장 끝만 바꾸고 내용은 고치지 않는다. 입력 글이 내용 항목(A5.native_verbs 등)에 걸려
-        # lint가 1(판정 FAIL)로 끝나도 검사는 실행된 것이다. 어투는 아래 tone_items_ok와 tone_check로 본다.
+        # retone changes only sentence endings, not content. If a content item (A5.native_verbs etc.) flags the input
+        # article and lint exits with 1 (verdict FAIL), the check still ran. Tone is checked by tone_items_ok below
+        # and tone_check.
         successful += [call for c in commands if c.get("exit_code") == 1
                        for call in checker_invocations(c["command"]) if call["script"] == "lint_ko.py"]
         result["tone_items_ok"] = not any(r["status"] in ("FAIL", "GATE") for r in result["lint"]["results"]

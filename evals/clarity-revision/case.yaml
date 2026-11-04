@@ -1,5 +1,5 @@
 schema_version: "1.1"
 name: clarity-revision
-description: 인접 서술어 반복, 구절의 대상 부재, 절별 주어와 조건 누락의 회귀 평가
+description: 인접한 서술어의 반복, 구절이 가리키는 대상의 누락, 절별 주어와 조건의 누락을 확인하는 회귀 평가
 context:
   scaffold_script: setup.sh

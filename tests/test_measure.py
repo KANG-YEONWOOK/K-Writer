@@ -1,6 +1,6 @@
-"""dev/baseline/techblog/measure.py의 사이트별 parser, 기간과 그룹, 번역 글 필터, 저자 키.
+"""Per-site parsers, periods and groups, the translated-post filter, and author keys in dev/baseline/techblog/measure.py.
 
-실제 블로그 글의 문장은 쓰지 않고 짧은 합성 응답만 쓴다.
+Uses only short synthetic responses, no sentences from real blog posts.
 """
 import importlib.util
 import json
@@ -90,7 +90,7 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(M.kakao_sitemap_ids(raw), [(844, "2026-10-28"), (306, "2014-05-28")])
 
     def test_d2_entries_and_kst_date(self):
-        # 2019-04-30T08:43:00Z는 한국 시간으로 2019-04-30 17:43이다. 2018-12-31T16:00:00Z는 2019-01-01 01:00이다.
+        # 2019-04-30T08:43:00Z is 2019-04-30 17:43 in Korea time. 2018-12-31T16:00:00Z is 2019-01-01 01:00.
         raw = json.dumps({"content": [
             {"postTitle": "A &amp; B", "postPublishedAt": "1556613780000", "url": "/helloworld/6204533"},
             {"postTitle": "소식", "postPublishedAt": "1546272000000", "url": "/news/0568192"},
@@ -132,7 +132,7 @@ class ParserTest(unittest.TestCase):
 
 
 class TermStatsTest(unittest.TestCase):
-    """dev/baseline/techblog/term_stats.py: plain-terms.md의 표를 만드는 정규식."""
+    """dev/baseline/techblog/term_stats.py: the regexes that build the tables in plain-terms.md."""
 
     @classmethod
     def setUpClass(cls):

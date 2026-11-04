@@ -152,7 +152,7 @@ class AdjacentPredicateTest(unittest.TestCase):
                 "첫 이유를 들어요.\n둘째 이유도 들어요."):
             with self.subTest(text=text):
                 self.assertEqual(self.metric(text)["value"], 1)
-        # 코드나 인용된 서술어 자체를 바꾸라는 후보는 만들지 않는다.
+        # No candidate asks to change a predicate that is itself code or a quotation.
         self.assertEqual(self.metric("첫 표현은 `들어요`. 둘째 표현은 `들어요`.")["value"], 0)
         self.assertEqual(self.metric('첫 표현은 "들어요". 둘째 표현은 "들어요".')["value"], 0)
 
@@ -169,7 +169,7 @@ class AdjacentPredicateTest(unittest.TestCase):
         text = L.render_text("sample.md", "casual", a, ev)
         self.assertIn("서술어 반복 점검 후보", text)
         self.assertIn("앞 문장 L1: 입력을 받아요.", text)
-        self.assertIn("나머지 2곳", text)
+        self.assertIn("나머지 2개 항목", text)
         self.assertNotIn("단독 읽기 점검 후보", text)
 
 
@@ -187,7 +187,7 @@ class DistributionReferenceTest(unittest.TestCase):
                 analysis = L.analyze("\n\n".join([sentence] * 200))
                 self.assertGreater(analysis["stats"]["chars"], 1500)
                 mean = analysis["metrics"][metric_id]["value"]
-                self.assertTrue(mean < 34.4 or mean > 109.68)  # 이전 FAIL 범위 밖
+                self.assertTrue(mean < 34.4 or mean > 109.68)  # outside the previous FAIL range
                 result = L.evaluate(analysis, only_mean, "default")
                 self.assertEqual(result["results"][0]["status"], "INFO")
                 self.assertEqual(result["summary"]["verdict"], "PASS")
@@ -231,7 +231,7 @@ class PatternTest(unittest.TestCase):
     def test_gates(self):
         self.assertGreaterEqual(self.m["G7.conj_comma"]["value"], 1)
         self.assertGreaterEqual(self.m["G3.source_meta"]["value"], 1)
-        self.assertGreaterEqual(self.m["G8.beyond_simple"]["value"], 1)  # 제목
+        self.assertGreaterEqual(self.m["G8.beyond_simple"]["value"], 1)  # title
         self.assertGreaterEqual(self.m["G9.cliche_intro"]["value"], 1)
         self.assertGreaterEqual(self.m["G9.cliche_outro"]["value"], 1)
         self.assertGreaterEqual(self.m["A4.summary_opener"]["value"], 1)
@@ -254,7 +254,7 @@ class PatternTest(unittest.TestCase):
                 self.assertEqual(m["value"], 0, (mid, m["hits"]))
 
     def test_emdash_policy_includes_labels(self):
-        # 라벨 구분자의 em dash도 Gate다. 라벨은 콜론으로 쓴다.
+        # An em dash used as a label separator is also a Gate. Labels use a colon.
         a = L.analyze("- 1단계 — 설정을 바꿉니다.\n- 2단계: 배포합니다.\n\n문단 안에서 — 이렇게 — 쓰면 걸립니다.\n")
         self.assertEqual(a["metrics"]["G6.emdash"]["value"], 3)
 
@@ -288,7 +288,7 @@ class PatternTest(unittest.TestCase):
                 "측정 대상(write-back 캐시만 해당, 12개 서비스)은 로그로 골랐습니다. 입력/출력 길이를 따로 쟀습니다.\n\n"
                 "지연의 72%는 배치 대기 시간이었습니다. 요청 수만큼 스레드를 띄웠습니다.\n")
         m = L.analyze(text)["metrics"]
-        self.assertEqual(m["A18.number_predicate"]["value"], 1)  # 45자를 넘는 첫 문장은 후보에서 빠진다
+        self.assertEqual(m["A18.number_predicate"]["value"], 1)  # the first sentence, over 45 characters, is not a candidate
         self.assertEqual(m["A18.generic_predicate"]["value"], 1)
         self.assertEqual(m["A18.bare_reference"]["value"], 1)
         self.assertEqual(m["A18.paren_clause"]["value"], 1)
@@ -299,7 +299,7 @@ class PatternTest(unittest.TestCase):
                 "이 설정이 처리량을 낮췄다고 볼 수 있어요. "
                 "그래프에서 p99 지연이 줄어든 결과를 볼 수 있습니다.\n")
         m = L.analyze(text)["metrics"]
-        self.assertEqual(m["A7.see_as"]["value"], 2)  # "결과를 볼 수 있습니다"는 추론 표지가 아니다
+        self.assertEqual(m["A7.see_as"]["value"], 2)  # "결과를 볼 수 있습니다" is not an inference marker
 
     def test_a16_source_subject(self):
         text = ("원문은 배치 크기를 10으로 줄였다고 씁니다. 논문은 지연을 쟀습니다. 저자들은 원인을 추정합니다. "
@@ -313,7 +313,7 @@ class PatternTest(unittest.TestCase):
         ev = L.evaluate(a, L.load_thresholds(), "default")
         st = {r["id"]: r["status"] for r in ev["results"]}
         self.assertEqual(st["A18.number_predicate"], "CHECK")
-        self.assertEqual(st["A18.bundle"], "INFO")  # 사람 글과 비율이 비슷한 후보는 참고 지표로만 센다
+        self.assertEqual(st["A18.bundle"], "INFO")  # a candidate whose rate is similar to human posts counts only as a reference metric
         self.assertEqual(ev["summary"]["fail"] + ev["summary"]["gate_fail"], 0)
         self.assertIn("단독 읽기 점검 후보", L.render_text("x.md", "default", a, ev))
 
@@ -335,7 +335,7 @@ class PatternTest(unittest.TestCase):
 
 
 class PunctPolicyTest(unittest.TestCase):
-    """문장 부호 정책(G6): 사용자 검토에서 가운뎃점, em dash, en dash, 빼기 기호를 쓰지 않기로 정했다."""
+    """Punctuation policy (G6): user review decided not to use the middle dot, em dash, en dash, or minus sign."""
 
     def m(self, text):
         return L.analyze(text)["metrics"]
@@ -344,8 +344,8 @@ class PunctPolicyTest(unittest.TestCase):
         text = ("# 결과 — 요약\n\nPD·LP·PY 뉴런은 Morris–Lecar 모델로 씁니다. 막전위는 −52 mV입니다.\n\n"
                 "| 지표 | 범위 |\n|---|---|\n| 적분 기간 | 12–24시간 |\n\n> 인용 — 문장입니다.\n")
         m = self.m(text)
-        self.assertEqual(m["G6.emdash"]["value"], 2)  # 헤딩, 인용
-        self.assertEqual(m["G6.punct_policy"]["value"], 5)  # 가운뎃점 2, en dash 2, 빼기 기호 1
+        self.assertEqual(m["G6.emdash"]["value"], 2)  # heading, quote
+        self.assertEqual(m["G6.punct_policy"]["value"], 5)  # middle dot 2, en dash 2, minus sign 1
 
     def test_spaced_hyphen_label_is_emdash(self):
         m = self.m("1단계 - 설정을 바꿉니다. 값은 n - 1입니다. Morris-Lecar 모델을 씁니다.\n")
@@ -366,7 +366,7 @@ class PunctPolicyTest(unittest.TestCase):
         self.assertEqual(m["G6.punct_policy"]["value"], 1)
 
     def test_reference_heading_must_be_whole_heading(self):
-        # "데이터 출처와 전처리"는 본문 절이다. 예전 정규식은 이 헤딩 뒤의 em dash를 세지 않았다.
+        # "데이터 출처와 전처리" is a body section. The old regex did not count em dashes after this heading.
         for heading in ("참고자료", "참고 자료", "References", "출처", "더 읽을 거리", "참고 자료 및 링크"):
             self.assertTrue(L.REF_HEADING_RE.search(heading), heading)
         for heading in ("데이터 출처와 전처리", "참고할 설정", "출처를 밝히지 않은 수치"):
@@ -376,7 +376,7 @@ class PunctPolicyTest(unittest.TestCase):
 
 
 class NumParticleTest(unittest.TestCase):
-    """숫자 뒤 조사(G10). 사례는 사용자 검토에서 나온 interactive component 출력이다."""
+    """Particles after numbers (G10). The cases are interactive component output from user review."""
 
     def hits(self, text):
         return [h["match"] for h in L.analyze(text)["metrics"]["G10.num_particle"]["hits"]]
@@ -402,7 +402,7 @@ class NumParticleTest(unittest.TestCase):
 
 
 class KoreanPatternTest(unittest.TestCase):
-    """사용자 검토에서 고친 문장(신경과학 학습 노트)과 고치지 않기로 한 표현(과교정 예외)."""
+    """Sentences fixed in user review (neuroscience study notes) and expressions chosen to stay unfixed (overcorrection exceptions)."""
 
     def m(self, text, facts=None):
         return L.analyze(text, facts_text=facts)["metrics"]
@@ -441,12 +441,12 @@ class KoreanPatternTest(unittest.TestCase):
         self.assertEqual(m["A5.archaic_words"]["value"], 0)
         self.assertEqual(m["A6.calque_check"]["value"], 0)
 
-    # 사용자 검토(2026-11-02): "새로운 문제가 열렸다", "문제가 닫혔다"는 한국어 글에서 쓰지 않는다.
+    # User review (2026-11-02): "새로운 문제가 열렸다" and "문제가 닫혔다" are not used in Korean writing.
     OPEN_CLOSE_HITS = ("새로운 문제가 열렸습니다.", "이 문제는 다음 릴리스에서 닫혔습니다.", "문제가 닫혔어요.",
                        "질문이 열려 있습니다.", "이 문제를 닫았습니다.", "문제를 열어 두었습니다.",
                        "새 질문이 다시 열렸습니다.", "문제는 0.4 버전에서 닫혔습니다.", "문제는 결국 닫혔습니다.",
                        "이 질문은 2023년까지 열려 있었습니다.")
-    # 실제로 열고 닫는 대상, 도구의 기능, 굳은 말, "열" 자로 시작하는 다른 낱말
+    # Things that really open and close, tool features, fixed expressions, and other words starting with "열"
     OPEN_CLOSE_KEEP = ("파일을 열고 문제를 확인합니다.", "문제를 열거하면 다음과 같습니다.", "회의가 열렸습니다.",
                        "가능성을 열어 둡니다.", "아직 풀리지 않은 문제로 남아 있습니다.", "새 창을 열면 문제가 보입니다.",
                        "연결을 닫습니다.", "이슈를 닫으면 배포가 시작됩니다.", "문제를 연 단위로 집계합니다.",
@@ -476,7 +476,7 @@ class KoreanPatternTest(unittest.TestCase):
             self.assertEqual(m["A6.open_close_check"]["value"], 1, text)
             self.assertEqual(m["A6.open_close"]["value"], 0, text)
 
-    # 사용자 지적(2026-11-04): AI 글이 version을 "판"으로 쓴다. 책의 판, 배포판, 판단, 굳은 말은 세지 않는다.
+    # Pointed out by the user (2026-11-04): AI writing renders "version" as "판". The "판" of a book, "배포판", "판단", and fixed expressions are not counted.
     VERSION_PAN_HITS = ("Python 판과 Rust 판을 함께 배포했습니다.", "arXiv판과 IEEE판은 수식 번호가 다릅니다.",
                         "이전 판으로 되돌렸습니다.", "두 번째 판에서는 그 절을 삭제했습니다.", "0.3.1판에서 수정했습니다.",
                         "2026-10-29 판의 요구입니다.", "설치된 판 번호를 읽습니다.", "core 판을 올립니다.",
@@ -504,12 +504,14 @@ class KoreanPatternTest(unittest.TestCase):
                         "후보 세 개 가운데 하나입니다.", "효과의 세기를 정하는 값입니다.", "α로 세기를 조절합니다.",
                         "이전 바이너리 사본을 남겨 둡니다.", "실측 비용을 근거로 판단했습니다.", "절마다 되풀이했습니다.",
                         "이웃한 문장을 함께 읽습니다.", "테스트가 이 경로를 덮습니다.", "설정 항목을 더했습니다.",
+                        "결과 표를 함께 냅니다.", "글마다 값과 검출된 표현을 냅니다.",
                         "실행 결과 글마다 새 lint 항목의 값과 걸린 말을 낸다.", "그룹마다 합산 비율을 냅니다.")
     PLAIN_TERMS_KEEP = ("여러 항목을 나열합니다.", "짝수 번째 행입니다.", "예시를 짝지어 보완했어요.", "가운데 정렬을 사용합니다.",
                         "화면 가운데에 표시합니다.", "21세기 기술입니다.", "걸음수 세기 기능입니다.", "시험 삼아 실행했습니다.",
                         "자격증 시험에 합격했습니다.", "신분증 사본을 제출합니다.", "쓰기 연산일 수 있다는 뜻입니다.",
                         "이름은 '기록할 때 복사한다'는 뜻입니다.", "파일을 덮어쓰지 않습니다.", "두 값을 더합니다.",
                         "당근 이웃과 거래합니다.", "뜻밖의 결과입니다.", "단어와 의미를 대응합니다.", "단짝이라는 이름입니다.",
+                        "좋은 결과를 냈습니다.", "평균을 냈습니다.", "밥값을 냅니다.", "사표를 냈습니다.",
                         "실행 시간의 평균을 냅니다.", "좋은 결과를 냅니다.", "해시값을 만들어 냅니다.")
 
     def test_plain_terms(self):
@@ -556,7 +558,7 @@ class KoreanPatternTest(unittest.TestCase):
             self.assertEqual(self.m(text)["A18.negation_scope"]["value"], 0, text)
 
     def test_term_mix(self):
-        # 사용자 검토의 7편: 제목은 retina, 본문은 첫 등장의 retina(망막) 뒤로 망막을 썼다.
+        # Post 7 in user review: the title used retina, and the body used "망막" after the first appearance, "retina(망막)".
         m = self.m("# retina와 회로\n\nretina(망막)는 빛을 받습니다. 망막의 회로는 작습니다.\n")
         self.assertEqual(m["A19.term_mix"]["value"], 1)
         m = self.m("호르몬(hormone)이 퍼집니다. 이 hormone은 혈액으로 갑니다. 호르몬이 다시 줄어듭니다.")
@@ -578,7 +580,7 @@ class KoreanPatternTest(unittest.TestCase):
         self.assertNotIn("A19.term_avoid", self.m("보고자 유전자를 넣었습니다."))
 
     def test_term_table_with_description_column(self):
-        # 용어 표에 "처음 나올 때 설명" 열을 더해도 A19.term_avoid는 "쓰지 않을" 열만 읽는다.
+        # Even with a "처음 나올 때 설명" column added to the term table, A19.term_avoid reads only the "쓰지 않을" column.
         facts = ("| 원어 | 글에 쓸 표기 | 근거 | 쓰지 않을 표기 | 처음 나올 때 설명(근거) |\n|---|---|---|---|---|\n"
                  "| lease | lease | 원어로 씀 | 임대 | 캐시 노드가 정해진 시간 동안 값을 바꿀 수 있는 권한(자료 2쪽) |\n"
                  "| service | 서비스 | 일상에서 쓰는 말 | - | 설명하지 않음(일상어) |\n"
@@ -592,7 +594,7 @@ class KoreanPatternTest(unittest.TestCase):
         self.assertNotIn("A20.term_first", self.m("lease가 끝납니다."))
 
     def test_species_first(self):
-        # 사용자 검토 1편: "C. elegans라는 선충"은 이름과 범주만 쓰고 무엇인지 설명하지 않았다.
+        # Post 1 in user review: "C. elegans라는 선충" gave only the name and category and did not explain what it is.
         m = self.m("C. elegans라는 선충의 신경계에는 뉴런이 302개 있습니다. C. elegans는 작습니다.\n\n"
                    "게 *Cancer borealis*의 STG를 봅니다. _Homarus americanus_에서도 잽니다. *In vivo* 실험입니다.\n")
         self.assertEqual([h["match"] for h in m["A20.species_first"]["hits"]],
@@ -604,7 +606,7 @@ class KoreanPatternTest(unittest.TestCase):
     def test_abbr_first(self):
         m = self.m("STG는 신경절입니다. STG에는 뉴런이 있습니다. STG는 리듬을 만듭니다.")
         self.assertEqual([h["match"] for h in m["A20.abbr_first"]["hits"]], ["STG"])
-        # 독자를 개발자로 가정하지 않으므로 API 같은 분야 약어도 후보에 오른다.
+        # The reader is not assumed to be a developer, so field abbreviations like API are also candidates.
         m = self.m("API를 부릅니다. API는 빠릅니다. API도 느려집니다.")
         self.assertEqual([h["match"] for h in m["A20.abbr_first"]["hits"]], ["API"])
         for text in ("STG(stomatogastric ganglion)는 신경절입니다. STG는 작습니다. STG에는 뉴런이 있습니다.",
@@ -619,7 +621,7 @@ class KoreanPatternTest(unittest.TestCase):
     TERM_HEADER = "| 원어 | 글에 쓸 표기 | 근거 | 쓰지 않을 표기 | 처음 나올 때 설명(근거) |\n|---|---|---|---|---|\n"
 
     def test_term_table_split_and_combined_rows(self):
-        # Skill-Techblog 0.8.0 실행의 fact sheet는 "수평 세포 / 양극 세포 / amacrine 세포"를 한 행에 묶어서 lint가 세 용어를 찾지 못했다.
+        # The fact sheet from the Skill-Techblog 0.8.0 run put "수평 세포 / 양극 세포 / amacrine 세포" in one row, so lint could not find the three terms.
         facts = (self.TERM_HEADER +
                  "| horizontal / bipolar / amacrine cell | 수평 세포 / 양극 세포 / amacrine 세포 | 교과서 | - | 망막 뉴런 부류(자료 6쪽) |\n"
                  "| spike | 스파이크 | 교과서 | - | 뉴런이 내는 짧은 전기 신호(자료 2쪽) |\n\n"
@@ -632,7 +634,7 @@ class KoreanPatternTest(unittest.TestCase):
         self.assertIn("fact sheet «수평 세포 / 양극 세포 / amacrine 세포»", L.render_text("x.md", "default", a, ev))
 
     def test_term_first_lists_every_first_appearance(self):
-        # 처음 규칙은 앞쪽 용어 몇 개만 보여 줘서 뒤 절의 용어(pyloric 리듬, amacrine 세포)가 점검 목록에 오르지 않았다.
+        # The original rule showed only the first few terms, so terms in later sections ("pyloric 리듬", "amacrine 세포") were not on the check list.
         names = ["가지돌기", "축삭", "신경절", "시냅스", "막전위", "수용체", "도파민", "활동전위", "억제성", "흥분성",
                  "교세포", "척수"]
         facts = self.TERM_HEADER + "".join(f"| x{i} | {n} | 교과서 | - | 설명 {i}(자료 1쪽) |\n" for i, n in enumerate(names))
@@ -642,9 +644,9 @@ class KoreanPatternTest(unittest.TestCase):
         r = next(r for r in ev["results"] if r["id"] == "A20.term_first")
         self.assertEqual((len(r["hits"]), len(r["more"])), (5, 7))
         out = L.render_text("x.md", "default", a, ev)
-        self.assertIn("나머지 7곳", out)
+        self.assertIn("나머지 7개 항목", out)
         self.assertIn("«척수»", out)
-        # 같은 문장에 처음 나온 용어는 한 줄로 묶는다. 다른 영어 낱말에 붙은 자리는 세지 않는다.
+        # Terms that first appear in the same sentence are grouped on one line. An occurrence attached to another English word is not counted.
         facts2 = (self.TERM_HEADER + "| a | amacrine 세포 | 교과서 | - | 망막 뉴런(자료 6쪽) |\n"
                   "| b | 양극 세포 | 교과서 | - | 망막 뉴런(자료 6쪽) |\n")
         m = self.m("starburst amacrine 세포가 있습니다. 양극 세포와 amacrine 세포가 있습니다.", facts2)
@@ -659,12 +661,12 @@ class KoreanPatternTest(unittest.TestCase):
         facts = self.TERM_HEADER + "| amacrine cell | amacrine 세포 | 원어로 씀 | - | 망막 뉴런(자료 6쪽) |\n"
         hits = self.m(listed, facts)["A20.term_in_list"]["hits"]
         self.assertEqual([h["match"].split(":")[0] for h in hits], ["amacrine 세포"])
-        self.assertIn("목록 L1, 혼자 L5", hits[0]["match"])
+        self.assertIn("목록 L1, 단독 L5", hits[0]["match"])
         for text in (
-                # 나열 바로 다음 문장에서 설명한다
+                # explained in the sentence right after the list
                 "망막에는 광수용 세포, 수평 세포, amacrine 세포, 망막 신경절 세포가 있습니다. "
                 "amacrine 세포는 신호를 조절합니다.\n\namacrine 세포는 넓게 퍼집니다.\n",
-                # 꾸미는 말이 붙은 항목
+                # items with a modifier
                 "이 실험은 접촉을 감지하는 기계감각 뉴런, 신호를 전달하는 interneuron, 운동 뉴런을 찾았습니다.\n\n"
                 "다른 실험도 있습니다.\n\ninterneuron은 신호를 모읍니다. interneuron이 끊기면 반응이 사라집니다.\n"):
             self.assertEqual(self.m(text, facts)["A20.term_in_list"]["value"], 0, text)
@@ -683,7 +685,7 @@ class KoreanPatternTest(unittest.TestCase):
         self.assertNotIn("A20.untabled", self.m(text))
 
     def test_general_knowledge_numbers_do_not_count_for_a15(self):
-        # 용어 표의 일반 지식 설명(사전, 교과서)에는 수치를 쓰지 않는다. 그 칸의 수치는 자료의 수치로 치지 않는다.
+        # General-knowledge explanations in the term table (dictionary, textbook) do not use figures. A figure in that cell does not count as a source figure.
         facts = (self.TERM_HEADER +
                  "| pylorus | 유문 | 표준국어대사전 | - | 위와 십이지장이 이어지는 부분, 길이 35mm(일반 지식: 표준국어대사전) |\n\n"
                  "- STG에는 뉴런 27개가 있다(자료 2쪽).\n")
@@ -702,27 +704,27 @@ class KoreanPatternTest(unittest.TestCase):
         self.assertNotIn("단독 읽기 점검 후보", out)
 
     def test_report_write(self):
-        # 사용자 검토 2편 190줄: "저자들은 결론에서 "..."고 써요"를 "...라고 말해요"로 고쳤다.
+        # Post 2, line 190 in user review: "저자들은 결론에서 "..."고 써요" was changed to "...라고 말해요".
         for text in ('저자들은 결론에서 "성별 차이와 사춘기는 각각 관련된다"고 써요.',
                      'Sporns et al.(2005)은 "기본 요소는 정의하기 어렵다"라고 썼습니다.',
                      '저자들은 지연이 줄었다고 결론에서 써요.', '이 글은 그 값을 0이라고 적어요.',
                      'Bargmann(2012)은 100종류 넘게 있다고 쓰고 다른 글은 200개라고 했어요.',
                      '같은 글은 "규칙이 너무 많다"라고도 썼습니다.', '저자들은 효과가 작다고도 씁니다.'):
             self.assertEqual(self.m(text)["A14.report_write"]["value"], 1, text)
-        # "(이)라고도" 뒤의 현재형은 표기를 알려 주는 뜻이라 세지 않는다(2026-11-02 사람 글 측정의 D2 글).
+        # A present-tense verb after "(이)라고도" tells the reader a notation, so it is not counted (D2 post from the 2026-11-02 human-post measurement).
         for text in ('해마다 나오는 명세는 줄여서 "ES2026"이라고도 씁니다.', '이 값을 약자로 KV라고도 써요.',
                      '논문에는 "..."라고 쓰여 있어요.', '로그에는 "timeout"이라고 적혀 있습니다.', '글을 씁니다.',
                      '이 방법을 사람 뇌에 썼어요.', '뉴런 수가 적어요.', '이 값은 적어도 두 배입니다.',
                      'Herting et al.(2012)의 저자들은 결론에서 "각각 관련된다"라고 말해요.'):
             self.assertEqual(self.m(text)["A14.report_write"]["value"], 0, text)
-        # 따옴표 친 영어 낱말에 이미 걸린 문장은 다시 세지 않는다.
+        # A sentence already flagged for a quoted English word is not counted again.
         m = self.m('저자들은 "likely"라고 씁니다.')
         self.assertEqual((m["A14.quoted_english_token"]["value"], m["A14.report_write"]["value"]), (1, 0))
         m = self.m('저자들이 "~로 보인다(suggest)"고 쓴 추정입니다. 그 수보다 많다고 적은 하한입니다.')
         self.assertEqual((m["A14.report_write"]["value"], m["A14.report_write_check"]["value"]), (0, 2))
 
     def test_new_site_false_positives(self):
-        # 2026-11-02 사람 글 측정(우아한형제들, D2)에서 찾은 오탐. 그림 번호와 출처, "~을 토대로", UX 용어 "사용자 여정"은 세지 않는다.
+        # False positives found in the 2026-11-02 human-post measurement (Woowahan, D2). Figure numbers and sources, "~을 토대로", and the UX term "사용자 여정" are not counted.
         for text, pid in (('아래 [그림 2]처럼 세 단계로 나눕니다.', "G3.placeholder"),
                           ('[출처: 사내 위키] 표는 응답 시간을 보여 줍니다.', "G3.placeholder"),
                           ('측정한 로그를 토대로 원인을 찾았습니다.', "A6.calque"),
@@ -735,8 +737,8 @@ class KoreanPatternTest(unittest.TestCase):
             self.assertEqual(self.m(text)[pid]["value"], 1, text)
 
     def test_quote_go_is_not_checked(self):
-        # 처음에는 따옴표 뒤의 "고"를 FAIL로 셌다(A14.quote_go). 사용자 검토(2026-10-18)에서 직접 인용 뒤에도
-        # "고"를 쓴다고 해서 2026-10-18에 뺐다. 사람 글 224편 중 19편도 이 형태를 쓴다.
+        # "고" after a quote was originally counted as FAIL (A14.quote_go). User review (2026-10-18) said "고" is also used
+        # after a direct quote, so the check was removed on 2026-10-18. 19 of 224 human posts also use this form.
         thresholds = L.load_thresholds()
         for text in ('Herting et al.(2012)은 "각각 관련된다"고 말해요.', '“구조가 기능을 풀어 주지는 않는다”고 정리했어요.'):
             a = L.analyze(text)
@@ -745,7 +747,7 @@ class KoreanPatternTest(unittest.TestCase):
             self.assertEqual([r["id"] for r in ev["results"] if r["status"] in ("FAIL", "GATE")], [], text)
         self.assertNotIn("A14.quote_go", thresholds["metrics"])
         self.assertNotIn("A14.quote_go", thresholds["short"]["drop"])
-        # 자료의 말을 "쓰다"로 옮긴 문장은 따옴표 뒤 조사와 상관없이 FAIL로 남는다.
+        # A sentence that reports the source's words with "쓰다" stays FAIL regardless of the particle after the quote.
         for text in ('저자들은 "관련된다"고 써요.', '저자들은 "관련된다"라고 써요.'):
             ev = L.evaluate(L.analyze(text), thresholds, "casual")
             st = {r["id"]: r["status"] for r in ev["results"]}
@@ -757,30 +759,30 @@ class KoreanPatternTest(unittest.TestCase):
         m = self.m(two)
         self.assertEqual([h["match"] for h in m["A18.bare_author"]["hits"]], ["저자들은"])
         for text in (
-                # 연구 이름이 같은 문장이나 바로 앞 문장에 있다
+                # the study name is in the same sentence or the sentence right before
                 "Herting et al.(2012)은 DTI를 분석했어요. 저자들은 성호르몬이 관계를 설명한다고 봐요. "
                 "세 저자는 개인차도 쟀어요.\n\nSporns et al.(2005)은 첫 초안을 제안했어요.\n",
                 "Herting et al.(2012)의 저자들은 결론에서 관계를 말해요. Sporns et al.(2005)은 초안을 제안했어요.",
-                # 연구가 하나뿐인 글
+                # a post with only one study
                 "김 등(2025)은 로그를 모았습니다. 지연이 줄었습니다. 저자들은 배치 대기가 원인이라고 봅니다.",
-                # 이름이 붙은 연구팀
+                # a named research team
                 "Kim et al.(2020)이 먼저 썼습니다. 2014년에 Facebook의 AI 연구팀이 논문을 발표했습니다. Lee(2021)도 있습니다.",
-                # 바로 앞 문장이 저자 이름을 산문으로 썼다(Skill-Techblog 0.8.0 실제 실행에서 찾은 오탐)
+                # the sentence right before gives the author names in prose (false positive found in a real Skill-Techblog 0.8.0 run)
                 "Cornelia Bargmann과 Eve Marder는 2013년 Nature Methods에 관점 글을 발표했어요. "
                 "이 글에서는 두 저자가 든 사례를 정리해요. Jang 등(2012)도 다뤄요.\n\nMacosko 등(2009)도 있어요.\n"):
             self.assertEqual(self.m(text)["A18.bare_author"]["value"], 0, text)
-        # 헤딩을 지나면 바로 앞 문장으로 치지 않는다.
+        # A sentence before a heading does not count as the sentence right before.
         m = self.m("Herting et al.(2012)은 DTI를 분석했어요. Sporns et al.(2005)도 있어요.\n\n## 결론\n\n저자들은 관계를 설명해요.\n")
         self.assertEqual(m["A18.bare_author"]["value"], 1)
 
     def test_sseuda_senses(self):
-        # 사용자 검토: 한 노트가 "쓰다"를 '사용하다'와 '자료에 적다'로 함께 썼다.
+        # User review: one note used "쓰다" in both senses, '사용하다' and '자료에 적다'.
         text = ("Bargmann & Marder(2013)는 neuromodulator가 표적에 닿는 길을 세 가지로 써요.\n\n"
                 "이 방법을 C. elegans에 썼어요. 확률을 연결 세기로 써요.\n")
         hits = self.m(text)["A21.sseuda_senses"]["hits"]
         self.assertEqual(len(hits), 1)
-        self.assertIn("'사용하다' 2곳", hits[0]["match"])
-        self.assertIn("'자료의 말' 1곳", hits[0]["match"])
+        self.assertIn("'사용하다' 2개 문장", hits[0]["match"])
+        self.assertIn("'자료 인용' 1개 문장", hits[0]["match"])
         m = self.m('저자들은 "관련된다"라고 썼어요. 쓰기 비율이 높습니다.')
         self.assertEqual(m["A21.sseuda_senses"]["value"], 0)
         for text in ("이 방법을 C. elegans에 썼어요. 확률을 세기로 써요.",
@@ -791,8 +793,8 @@ class KoreanPatternTest(unittest.TestCase):
                          {"A21.sseuda_senses": "ko"})
 
     def test_general_expressions(self):
-        # "쓰다"만이 아니라 글쓰기에서 일반적으로 점검하는 표현(사용자 2차 검토). 사람 글 측정은
-        # dev/baseline/techblog/README.md의 "동사 격식과 일반 표현 항목" 절.
+        # Expressions commonly checked in writing, not only "쓰다" (second user review). The human-post measurement is in
+        # the "동사 격식과 일반 표현 항목" section of dev/baseline/techblog/README.md.
         cases = {
             "A14.doeeojida": (["개선되어졌습니다.", "Go로 쓰여진 코드가 있습니다.", "흔히 보여지는 오류입니다.",
                                "두 그룹으로 나뉘어집니다.", "문이 열려집니다."],
@@ -829,8 +831,8 @@ class KoreanPatternTest(unittest.TestCase):
         self.assertTrue(th["metrics"]["G11.spelling"]["policy"] and th["metrics"]["A14.doeeojida"]["policy"])
 
     def test_native_verbs_and_see_judgment(self):
-        # 정보 전달 글은 같은 뜻에 한자어 동사를 더 많이 쓴다(사용자 2차 검토). 사람 글에서 걸린 문장을 모두 읽고
-        # 고친 오탐은 dev/baseline/techblog/README.md의 "동사 항목의 기준치".
+        # Informational writing uses more Sino-Korean verbs for the same meaning (second user review). The false positives fixed
+        # after reading every flagged sentence in human posts are in "동사 항목의 기준치" in dev/baseline/techblog/README.md.
         cases = {
             "A5.native_verbs": (["Redis를 쓰고 있습니다.", "Orca가 쓰는 iteration-level scheduling은 끝난 요청을 뺍니다.",
                                  "KV cache에 쓸 수 있는 메모리는 20GB입니다.", "Shuffle Partition이 쓰입니다.",
@@ -844,7 +846,9 @@ class KoreanPatternTest(unittest.TestCase):
                                  "샘플 A1이 마지막 logical block에 새 KV cache를 쓰려 하면 새 블록을 잡습니다.",
                                  "디스크에 로그를 씁니다.", "핵심 목표로 두고 학습했습니다.", "별도 상태로 둔 이유가 있습니다.",
                                  "모든 벤치마크에서 고른 성능을 유지합니다.", "GitOps 리포지토리에 넣어서 관리합니다.",
-                                 "설정을 바꿨습니다.", "지연이 줄었습니다.", "Go로 쓰인 서버입니다.", "사람이 쓴 글입니다."]),
+                                 "설정을 바꿨습니다.", "지연이 줄었습니다.", "Go로 쓰인 서버입니다.", "사람이 쓴 글입니다.",
+                                 "AI가 쓴 한국어 글은 어색합니다.", "사람이 쓴 기술 블로그 글을 측정했습니다.",
+                                 "표현을 세어 사람이 쓴 글과 비교합니다."]),
             "A7.see_judgment": (["저자들은 병목이 될 것으로 봅니다.", "저자들은 지연이 배치 대기에서 생긴다고 봅니다.",
                                  "요청의 KV cache를 logical block의 목록으로 보고 채웁니다.",
                                  "가능하다고 보고 추가 실험을 진행했습니다.", "AI를 도구로 보는 것이 중요합니다."],
@@ -857,12 +861,12 @@ class KoreanPatternTest(unittest.TestCase):
                 self.assertEqual(self.m(text)[mid]["value"], 1, (mid, text))
             for text in neg:
                 self.assertEqual(self.m(text)[mid]["value"], 0, (mid, text))
-        # 어투만 바꾼 Casual 문장도 같은 수로 센다
+        # Casual sentences that differ only in tone get the same count
         default = "Redis를 씁니다. 처리량을 쟀습니다. 저자들은 병목이 될 것으로 봅니다."
         casual = "Redis를 써요. 처리량을 쟀어요. 저자들은 병목이 될 것으로 봐요."
         for mid in ("A5.native_verbs", "A7.see_judgment"):
             self.assertEqual(self.m(default)[mid]["value"], self.m(casual)[mid]["value"], mid)
-        # 사람 글 합산 비율의 Poisson 상한으로 판정하고, 짧은 글 모드에서는 판정하지 않는다
+        # Judged by the Poisson upper bound of the pooled human-post rate, and not judged in short mode
         th = L.load_thresholds()
         body = "\n\n".join(["배치 크기를 10으로 줄이자 p99 지연이 4.2초에서 0.8초로 줄었습니다. " * 4] * 20)
         many = body + "\n\n" + " ".join(f"Redis {i}개를 썼습니다." for i in range(8))
@@ -896,8 +900,8 @@ class KoreanPatternTest(unittest.TestCase):
 
 
 class ExampleRegressionTest(unittest.TestCase):
-    """예시 글은 README가 소개하는 skill 출력이고, Codex smoke의 retone 케이스와 이식성 시험의 입력이다.
-    지금 기준치 전체(A5.native_verbs, A7.see_judgment 포함)로 PASS여야 한다."""
+    """The example posts are the skill output the README presents, and the input to the Codex smoke retone case and the portability test.
+    They must PASS under all current thresholds (including A5.native_verbs and A7.see_judgment)."""
 
     def test_examples_pass_new_checks(self):
         thresholds = L.load_thresholds()
@@ -912,17 +916,17 @@ class ExampleRegressionTest(unittest.TestCase):
 
 
 class SkillTextTest(unittest.TestCase):
-    """초안을 쓰기 전에 읽는 문서와 lint가 출력하는 hint는 고칠 대상인 직역을 예문으로 보여 주지 않는다.
-    2026-11-02 전까지 G9.cliche_outro의 hint("자료가 남긴 열린 질문으로 끝낸다")가 Gate가 걸릴 때마다 출력됐다."""
+    """Documents read before drafting and hints printed by lint do not show the literal translations to be fixed as example sentences.
+    Until 2026-11-02, the G9.cliche_outro hint ("자료가 남긴 열린 질문으로 끝낸다") was printed every time that Gate was triggered."""
 
     def test_pre_draft_docs_and_hints_avoid_open_close(self):
         patterns = L.load_json(L.PATTERNS_PATH)
         rxs = [re.compile(r) for pid in ("A6.open_close", "A6.open_close_check")
                for r in patterns["patterns"][pid]["regex"]]
-        # 0.3.0에서 style-guide.md의 장르 절은 genre.md로, drafting.md의 fact sheet 항목은 fact-sheet.md로 옮겼다.
+        # In 0.3.0 the genre section of style-guide.md moved to genre.md, and the fact sheet items of drafting.md moved to fact-sheet.md.
         texts = {name: L.read_text(os.path.join(SCRIPTS, "..", "references", name))
                  for name in ("style-guide.md", "genre.md", "drafting.md", "fact-sheet.md")}
-        # 이 두 항목의 hint는 걸린 형태와 그대로 둘 쓰임(면담의 열린 질문 등)을 설명해야 해서 뺀다.
+        # These two items are excluded because their hints must explain the flagged form and the uses to keep (such as "열린 질문" in an interview).
         skip = {"A6.open_close", "A6.open_close_check"}
         texts.update({f"patterns_ko.json hint {pid}": p.get("hint", "")
                       for pid, p in patterns["patterns"].items() if pid not in skip})
@@ -938,9 +942,9 @@ class SkillTextTest(unittest.TestCase):
 
 
 class PlainTermsDocsTest(unittest.TestCase):
-    """모델은 skill 문서를 읽은 뒤 글을 쓴다. 2026-11-04 전까지 skill 문서가 "낱말"을 107번 사용했고, 그 문서를 읽고 쓴 글에
-    "낱말"이 1만 자당 5.89번 나왔다(사람 글 600편은 0번). 고치기 전 표현을 보여 주는 ai-patterns.md, korean-review.md,
-    rubric.md와 그 항목 자신의 hint만 뺀다."""
+    """The model writes after reading the skill documents. Until 2026-11-04 the skill documents used "낱말" 107 times, and posts written
+    after reading them had "낱말" 5.89 times per 10,000 characters (0 times in 600 human posts). Only ai-patterns.md, korean-review.md,
+    and rubric.md, which show the pre-fix expressions, and those items' own hints are excluded."""
 
     DOCS = ("style-guide.md", "genre.md", "drafting.md", "fact-sheet.md", "validation.md", "finalization.md",
             "reader-check.md", "revision.md", "runtime.md", "settings.md", "settings-protocol.md", "tone.md", "short.md")
@@ -980,7 +984,7 @@ class PlainTermsDocsTest(unittest.TestCase):
 
 class ToneTest(unittest.TestCase):
     def test_reference_entries_are_not_tone_checked(self):
-        # Skill-Techblog 0.6.0 실행에서 참고자료의 "공개 URL 없음."이 어투 혼용 Gate로 걸려 서지 항목을 고쳤다.
+        # In a Skill-Techblog 0.6.0 run, "공개 URL 없음." in the references was flagged by the mixed-tone Gate, so the bibliography entry was edited.
         text = ("공개 API는 고정 윈도우를 썼습니다. 지연은 1,850ms에서 420ms로 줄었습니다.\n\n"
                 "## 참고자료\n\n[1] 사내 엔지니어링 노트, Migrating the API rate limiter (2026). 공개 URL 없음.\n")
         a = L.analyze(text)
@@ -1023,7 +1027,7 @@ class ApproxQuantityTest(unittest.TestCase):
         self.assertEqual(hits, ["수십만"])
 
     def test_count_with_particle_man_is_not_approx(self):
-        # Skill-Techblog 0.6.0 실행에서 "요청 수만 줄였습니다"(개수 + 조사 "만")가 어림 수량어로 걸려 맞는 문장을 고쳤다.
+        # In a Skill-Techblog 0.6.0 run, "요청 수만 줄였습니다" (count + particle "만") was flagged as an approximate quantity word, so a correct sentence was edited.
         text = ("토큰 버킷은 한 번에 보낼 수 있는 요청 수만 줄였습니다. 사용자 수만 늘리면 됩니다. "
                 "하루 수만 건의 요청이 들어옵니다. 수만 개의 연결을 엽니다. 코드 수만 줄을 옮겼습니다.")
         a = L.analyze(text, facts_text="- 요청 600개")

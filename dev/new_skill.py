@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-"""새 skill 폴더를 만든다.
+"""Create a new skill folder.
 
-dev/skill-template/의 *.tmpl로 skill이 가지는 파일(SKILL.md, references/settings.md, genre.md, rubric.md,
-workflow.md, scripts/thresholds.json)을 만들고, dev/sync_core.py로 core 문서와 검사 스크립트를 복사한다.
-만든 파일의 "TODO:"를 모두 채우기 전에는 tests/test_core.py가 실패한다. 이미 있는 폴더는 건드리지 않는다.
+Generates the files a skill owns (SKILL.md, references/settings.md, genre.md, rubric.md, workflow.md,
+scripts/thresholds.json) from the *.tmpl files in dev/skill-template/, then copies the core documents and check
+scripts with dev/sync_core.py. tests/test_core.py fails until every "TODO:" in the generated files is filled in.
+An existing folder is left untouched.
 
-사용법
+Usage
   python dev/new_skill.py NAME
 
-NAME은 Agent Skills 이름 규칙(소문자, 숫자, 하이픈, 64자 이하, 하이픈으로 시작하거나 끝나지 않고 두 번
-잇지 않음)을 따른다. 종료 코드: 0 만듦, 2 사용법 또는 입력 오류
+NAME follows the Agent Skills naming rule: lowercase letters, digits, and hyphens, at most 64 characters, not
+starting or ending with a hyphen, and no two hyphens in a row. Exit codes: 0 created, 2 usage or input error
 """
 
 import importlib.util
@@ -20,7 +21,7 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
-# 템플릿 파일 이름 → skill 폴더 안의 경로
+# Template file name -> path inside the skill folder
 TARGETS = {
     "SKILL.md.tmpl": "SKILL.md",
     "settings.md.tmpl": os.path.join("references", "settings.md"),
@@ -39,9 +40,9 @@ def _sync_module(root):
 
 
 def create(name, root=ROOT):
-    """skills/NAME을 만들고 만든 파일의 경로 목록을 돌려준다."""
+    """Create skills/NAME and return the paths of the created files."""
     if len(name) > 64 or not NAME_RE.match(name):
-        raise ValueError(f"skill 이름 규칙에 맞지 않는다: {name}")
+        raise ValueError(f"스킬 이름 규칙에 맞지 않는다: {name}")
     sdir = os.path.join(root, "skills", name)
     if os.path.exists(sdir):
         raise ValueError(f"이미 있는 폴더다: {sdir}")
@@ -77,7 +78,7 @@ def main(argv=None):
         print(f"new_skill 오류: {e}", file=sys.stderr)
         return 2
     for path in made:
-        print(f"만듦: {os.path.relpath(path, ROOT)}")
+        print(f"생성: {os.path.relpath(path, ROOT)}")
     print("TODO:를 채운 뒤 python -m unittest discover -s tests로 확인한다.")
     return 0
 

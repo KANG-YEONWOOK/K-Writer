@@ -1,4 +1,4 @@
-"""dev/dogfood/judge.py의 terms 단계(J10): 점수 계산, 인용 확인, 두 실행의 겹침."""
+"""The terms step (J10) in dev/dogfood/judge.py: score calculation, quote checks, and the overlap between two runs."""
 import importlib.util
 import os
 from pathlib import Path
@@ -91,7 +91,7 @@ class TermsScoreTest(unittest.TestCase):
             self.assertNotIn("개발자", getattr(judge, name), name)
         self.assertIn("R", judge.KOREAN_TYPES)
         self.assertNotIn("M", judge.KOREAN_TYPES)
-        # 유형 C는 영어 원문이 없는 서술어 짝도 포함한다. J4는 rubric.md처럼 "자료가 밝힌 한계"로 끝나는지 본다.
+        # Type C also covers predicate pairs with no English source. J4, like rubric.md, checks whether a post ends with "자료가 밝힌 한계".
         self.assertIn("주어나 목적어와 함께 쓰지 않는 서술어", judge.KOREAN_PROMPT)
         self.assertIn("새로운 문제가 열렸다", judge.KOREAN_PROMPT)
         self.assertNotIn("열린 질문", judge.STYLE_PROMPT)

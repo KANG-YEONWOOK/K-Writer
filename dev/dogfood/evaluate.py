@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
-"""dogfooding 실행 결과를 결정적으로 점검한다(LLM judge는 judge.py).
+"""Check dogfooding run results deterministically (the LLM judge is judge.py).
 
-케이스 폴더마다
-- run.jsonl(stream-json)에서 도구 호출 순서, 권한 거부, 비용, turn 수를 읽는다.
-- 스킬이 lint_ko.py와 tone_check.py를 실제로 실행했는지, Default 초안을 Casual보다 먼저 썼는지 본다.
-- article.md에 lint_ko.py를 다시 돌리고, Casual이면 초안과 tone_check.py를 다시 돌린다.
-- 후처리(6단계): 초안 복사본(article.unrevised.md)과 후처리를 마친 합니다체 글(Default는 article.md, Casual은
-  article.draft.md)을 revise_ko.compare로 비교하고, 반복 후보 수, revise_ko.py 실행 순서, start 이후의 토큰 비율,
-  context compaction 횟수를 기록한다.
-- 결과를 eval.json에 쓰고 요약 표를 출력한다.
+For each case folder:
+- Read tool call order, permission denials, cost, and turn count from run.jsonl (stream-json).
+- Check whether the skill actually ran lint_ko.py and tone_check.py, and whether it wrote the Default draft before the
+  Casual article.
+- Rerun lint_ko.py on article.md. For Casual, also rerun it on the draft and rerun tone_check.py.
+- Post-processing (step 6): compare the draft copy (article.unrevised.md) with the post-processed "합니다체" article
+  (article.md for Default, article.draft.md for Casual) using revise_ko.compare, and record the repeat candidate count,
+  revise_ko.py run order, token share after start, and context compaction count.
+- Write the results to eval.json and print a summary table.
 
-사용법
+Usage
   python dev/dogfood/evaluate.py --iter iter-1 [--work DIR]
 """
 
@@ -30,24 +31,24 @@ DEFAULT_WORK = os.path.join(os.environ.get("TEMP", "/tmp"), "techblog-work", "do
 KEY_METRICS = ("A1.np", "A2.comma_per_sentence", "A2.connective_comma_ratio", "A3.salience", "A4.para_end",
                "A5.style_words_per_1k", "A8.sent_len_mean", "A8.sent_len_cv", "A8.long_ratio", "A8.ending_run4",
                "A9.bold_per_1k", "A9.list_ratio", "A10.triad_per_1k", "A13.demonstrative_start_per_1k",
-               # 한국어 점검 항목
+               # Korean review items
                "G6.emdash", "G6.punct_policy", "G10.num_particle", "A6.window_range", "A14.quoted_english_token",
                "A5.archaic_words", "A6.calque_check", "A14.quoted_english_check", "A18.negation_scope",
                "A19.term_mix", "A20.species_first", "A20.abbr_first", "A14.report_write", "A14.report_write_check",
                "A18.bare_author", "A21.sseuda_senses",
-               # 용어 설명, 일반 표현, 동사 항목
+               # term explanation, common expression, and verb items
                "A20.term_first", "A20.term_in_list", "A20.untabled", "A20.table_combined_row", "A14.doeeojida",
                "G11.spelling", "A14.causative", "A5.pleonasm", "A14.adverb_pair", "A21.jeokda_as", "A5.native_verbs",
                "A7.see_judgment",
-               # 서술어 항목
+               # predicate items
                "A6.open_close", "A6.open_close_check",
-               # 같은 대상을 부르는 말과 빗댄 말
+               # names for the same thing, and metaphorical words
                "A6.version_pan", "A5.plain_terms", "A6.metaphor_check")
 
 
 def parse_transcript(path, events=None):
-    """도구 호출 목록, init, result를 돌려준다. events에 list를 주면 순서대로 ("ts", timestamp),
-    ("tool", 도구 번호), ("usage", 메시지 id, usage), ("compact",) 항목을 채운다."""
+    """Return init, the tool call list, and result. If events is a list, fill it in order with ("ts", timestamp),
+    ("tool", tool index), ("usage", message id, usage), and ("compact",) entries."""
     tools, init, result = [], {}, {}
     if not os.path.exists(path):
         return init, tools, result
@@ -89,7 +90,7 @@ def parse_transcript(path, events=None):
 
 
 def final_default(case_dir, tone):
-    """후처리를 마친 합니다체 글. Casual 케이스는 Default 초안(article.draft.md)이다."""
+    """The post-processed "합니다체" article. For a Casual case this is the Default draft (article.draft.md)."""
     if tone == "casual" and os.path.isfile(os.path.join(case_dir, "article.draft.md")):
         return os.path.join(case_dir, "article.draft.md")
     return os.path.join(case_dir, "article.md")
@@ -103,10 +104,10 @@ def _ts(v):
 
 
 def _usage_share(events, start_tool, end_tool=None):
-    """start 명령부터 마지막 check 명령까지(후처리 구간)의 입력 토큰 비율과 경과 시간 비율.
-    Casual 케이스는 그 뒤에 어투 변환이 이어지므로 end_tool에서 구간을 끝낸다.
-    stream-json의 assistant 이벤트는 메시지 시작 시점의 사용량만 담아서 출력 토큰은 메시지별로 셀 수 없다.
-    입력 토큰(cache 포함)은 메시지마다 한 번만 센다."""
+    """Input token share and elapsed time share from the start command to the last check command (the post-processing
+    span). A Casual case continues with tone conversion after that, so the span ends at end_tool.
+    assistant events in stream-json hold only the usage at message start, so output tokens cannot be counted per message.
+    Input tokens (including cache) are counted once per message."""
     seen, total, after = set(), 0, 0
     passed, ended, first, last, start, end = False, False, None, None, None, None
     for ev in events:
@@ -138,7 +139,7 @@ def _usage_share(events, start_tool, end_tool=None):
 
 
 def revise_summary(case_dir, tone, tools, events):
-    """6단계 후처리를 점검한다. 초안 복사본이 없으면 None."""
+    """Check step 6 post-processing. Return None if there is no draft copy."""
     snap = os.path.join(case_dir, "article.unrevised.md")
     if not os.path.isfile(snap):
         return None
@@ -159,14 +160,14 @@ def revise_summary(case_dir, tone, tools, events):
         return os.path.basename(str(t["input"].get("file_path", "")))
 
     i_start, i_rep, i_check = cmd_index("start"), cmd_index("repeats"), cmd_index("check")
-    # subagent 설계: 반복 후보는 start가 만든 <이름>.repeats.md를 Read로 연다
+    # Subagent design: repeat candidates are read with Read from the <name>.repeats.md that start created
     rep_reads = [i for i, t in enumerate(tools) if t["name"] == "Read"
                  and str(t["input"].get("file_path", "")).endswith(".repeats.md")]
     if rep_reads and (i_rep is None or rep_reads[0] < i_rep):
         i_rep = rep_reads[0]
     agent_calls = [i for i, t in enumerate(tools) if t["name"] in ("Agent", "Task")
                    and i_start is not None and i > i_start]
-    # 6단계의 두 번째 subagent(한국어 문장 점검). prompt에 korean-review.md가 있는 호출을 센다.
+    # The second step 6 subagent (Korean sentence review). Counts calls whose prompt contains korean-review.md.
     korean_calls = [i for i in agent_calls if "korean-review.md" in json.dumps(tools[i]["input"], ensure_ascii=False)]
     korean_reads = [i for i, t in enumerate(tools) if t["name"] == "Read"
                     and str(t["input"].get("file_path", "")).replace("\\", "/").endswith("references/korean-review.md")]
@@ -177,7 +178,7 @@ def revise_summary(case_dir, tone, tools, events):
                       if i_start is not None and i > i_start and t["name"] in ("Edit", "Write") and path_of(t) == target)
     read_before_repeats = None
     if i_start is not None and i_rep is not None:
-        # 5단계의 마지막 수정 뒤부터 repeats 전까지 후처리 대상을 읽었는가
+        # Was the post-processing target read between the last step 5 edit and repeats?
         last_edit = max([i for i, t in enumerate(tools[:i_start]) if t["name"] in ("Edit", "Write") and path_of(t) == target]
                         or [-1])
         read_before_repeats = any(t["name"] == "Read" and path_of(t) == target for t in tools[last_edit + 1:i_rep])
