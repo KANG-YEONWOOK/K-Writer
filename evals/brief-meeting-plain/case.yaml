@@ -1,0 +1,5 @@
+schema_version: "1.1"
+name: brief-meeting-plain
+description: 회의록을 해라체 항목 요약으로 줄인다. 결정한 것, 담당자와 기한, 정하지 못한 것이 자료와 같아야 한다.
+context:
+  scaffold_script: setup.sh

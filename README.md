@@ -1,6 +1,6 @@
 # K-Writer
 
-K-Writer는 AI가 사람처럼 자연스러운 한국어 글을 쓰게 하는 Claude Code, Codex 플러그인입니다. 지금은 자료를 한국어 기술 블로그 글로 정리하는 techblog 스킬을 제공합니다.
+K-Writer는 AI가 사람처럼 자연스러운 한국어 글을 쓰게 하는 Claude Code, Codex 플러그인입니다. 스킬은 세 가지입니다. write는 자료나 주제를 받아 사용자가 정한 목적, 분량, 어투에 맞는 글을 씁니다. techblog는 자료를 한국어 기술 블로그 글로 정리하고, brief는 자료를 요약합니다.
 
 AI가 쓴 한국어 글은 문법이 맞아도 어색합니다. 사람이 쓴 글과 비교하면 다음과 같은 문제가 있습니다.
 
@@ -21,7 +21,7 @@ K-Writer는 세 단계를 거쳐 이런 문제를 줄입니다.
 2. 초안을 작성하면 검사 스크립트가 AI 글에 자주 나오는 표현을 세어 기준치와 비교하고, 자료에 없는 수치를 찾습니다. 기준치는 사람이 쓴 글에서 측정한 값으로 정했습니다.
 3. 초안을 작성하지 않은 subagent가 글을 한 문장씩 다시 읽습니다. 스크립트로 찾을 수 없는 직역과 어색한 문장을 수정하고, 설명이 빠진 용어에는 설명을 추가합니다.
 
-사람이 쓴 글에도 있는 표현을 모두 없애지는 않습니다. 표현의 빈도가 기준치 안으로 들어오면 수정을 멈춥니다. 자료를 정리하는 글의 수치와 주장은 사용자가 제공한 자료에서만 가져옵니다.
+사람이 쓴 글에도 있는 표현을 모두 없애지는 않습니다. 표현의 빈도가 기준치 안으로 들어오면 수정을 멈춥니다. 글의 수치와 주장은 사용자가 제공한 자료와 사용자가 알려 준 내용에서만 가져오고, write가 자료 없이 주제만 받았을 때만 웹에서 출처를 확인한 일반 지식을 함께 사용합니다.
 
 ## 설치
 
@@ -63,8 +63,8 @@ codex plugin add k-writer@k-writer
 
 ```bash
 git clone https://github.com/KANG-YEONWOOK/K-Writer.git
-mkdir -p ~/.claude/skills && cp -r K-Writer/skills/techblog ~/.claude/skills/   # Claude Code
-mkdir -p ~/.agents/skills && cp -r K-Writer/skills/techblog ~/.agents/skills/   # Codex
+mkdir -p ~/.claude/skills && cp -r K-Writer/skills/* ~/.claude/skills/   # Claude Code
+mkdir -p ~/.agents/skills && cp -r K-Writer/skills/* ~/.agents/skills/   # Codex
 ```
 
 ### 필요한 환경
@@ -73,13 +73,15 @@ Python 3.8 이상이 있으면 스킬이 검사 스크립트를 실행합니다.
 
 ## 스킬
 
-글의 종류마다 스킬을 하나씩 제공합니다. 모든 스킬은 같은 한국어 문장 규칙, 어투 규칙, 검사 스크립트를 사용합니다. 독자, 어투 선택지, 글의 구성, 기준치는 스킬마다 따로 정합니다.
+모든 스킬은 같은 한국어 문장 규칙, 어투 규칙, 검사 스크립트를 사용합니다. write는 글의 종류를 미리 정해 두지 않은 기본 스킬입니다. 자료나 주제, 목적, 분량, 어투를 모두 사용자에게 받고, 요청에 없는 값은 글을 쓰기 전에 묻습니다. techblog와 brief는 글의 목적과 구성을 미리 정해 둔 스킬이라 나머지 값만 묻습니다.
 
-| 스킬 | 하는 일 | 호출 | 문서 |
-|---|---|---|---|
-| techblog | 논문 PDF, 기술 문서, 웹 페이지, 붙여넣은 텍스트의 핵심 내용을 한국어 기술 블로그 글로 정리합니다. | Claude Code `/k-writer:techblog`, Codex `$k-writer:techblog` | [사용법과 작성 과정](skills/techblog/README.md) |
+| 스킬 | 하는 일 | 사용자가 정하는 값 | 호출 | 문서 |
+|---|---|---|---|---|
+| write | 자료(파일, URL, 붙여넣은 텍스트)나 주제로 목적에 맞는 글을 씁니다. 공지, 보고, 제안, 소개 글처럼 기술 블로그 글이나 요약이 아닌 글을 쓸 때 사용합니다. | 자료나 주제, 목적, 분량, 어투(합니다체, 해요체, "~다"로 끝나는 해라체, 직접 입력) | Claude Code `/k-writer:write`, Codex `$k-writer:write` | [사용법과 작성 과정](skills/write/README.md) |
+| techblog | 논문 PDF, 기술 문서, 웹 페이지, 붙여넣은 텍스트의 핵심 내용을 한국어 기술 블로그 글로 정리합니다. | 자료, 독자, 분량, 어투(합니다체, 해요체) | Claude Code `/k-writer:techblog`, Codex `$k-writer:techblog` | [사용법과 작성 과정](skills/techblog/README.md) |
+| brief | 문서, 웹 페이지, 붙여넣은 텍스트, 대화 내용을 요약합니다. | 자료, 분량(한 줄, 한 문단, 자세히), 어투(합니다체, 해요체, 해라체, 직접 입력) | Claude Code `/k-writer:brief`, Codex `$k-writer:brief` | [사용법과 요약 과정](skills/brief/README.md) |
 
-예를 들어 Claude Code에서 `/k-writer:techblog paper.pdf`를 실행하면 스킬이 논문의 핵심 내용을 정리한 글을 작성합니다.
+예를 들어 Claude Code에서 `/k-writer:brief report.pdf`를 실행하면 brief가 분량과 어투를 물은 뒤 보고서를 요약합니다. `/k-writer:write`만 실행하면 write가 어떤 자료나 주제로 글을 쓸지부터 묻습니다.
 
 ## 검사할 표현을 정한 근거
 
@@ -94,7 +96,7 @@ Python 3.8 이상이 있으면 스킬이 검사 스크립트를 실행합니다.
 
 ## 한계
 
-검사 스크립트는 형태소 분석기 없이 정규식으로 표현을 세므로 잘못 검출하는 경우가 있습니다. 그래서 기준치도 사람이 쓴 글에 같은 스크립트를 실행해 얻은 값으로 정했습니다.
+검사 스크립트는 형태소 분석기 없이 정규식으로 표현을 세므로 잘못 검출하는 경우가 있습니다. 그래서 기준치도 사람이 쓴 글에 같은 스크립트를 실행해 얻은 값으로 정했습니다. 지금까지 측정한 사람 글은 기술 블로그 글뿐입니다. 그래서 write와 brief는 부정 대구나 번역투처럼 특정 표현의 빈도를 세는 항목에 기술 블로그 글의 기준치를 가져와 사용하고, 문장 길이나 목록 비중처럼 글의 종류에 따라 달라지는 항목은 판정하지 않습니다.
 
 문장 점검은 subagent가 글을 한 문장씩 읽어 문제를 찾는 방식이라 실행할 때마다 찾아내는 문장이 다릅니다. 스킬로 작성한 글에 자료와 다른 내용이 없다는 보장도 없으므로, 글을 공개하기 전에 수치와 고유명사를 자료 원문과 대조해야 합니다.
 
@@ -105,6 +107,7 @@ Python 3.8 이상이 있으면 스킬이 검사 스크립트를 실행합니다.
 ```bash
 python -m unittest discover tests        # 단위 테스트
 python dev/sync_core.py --check           # 스킬 폴더의 core 복사본이 원본과 같은지 확인
+python dev/borrow_thresholds.py --check   # write와 brief가 가져온 기준치가 techblog의 값과 같은지 확인
 claude plugin validate .                  # 플러그인 manifest 검사
 claude plugin eval . --allow-tools Write Edit --scaffold   # evals/ 케이스로 스킬이 있을 때와 없을 때를 비교
 ```

@@ -2,18 +2,21 @@
 """K-Writer lint: counts the automatically measured items (G, A) defined by a skill's rubric in a Korean article.
 
 Usage
-  python lint_ko.py ARTICLE.md [--tone default|casual|auto] [--facts FACTS.md]
-                    [--thresholds PATH] [--json] [--all] [--max-hits N]
-  python lint_ko.py KO.md --short [--source EN.md] [--terms TERMS.json] [--tone ...]
+  python lint_ko.py ARTICLE.md [--tone default|casual|plain|free|auto] [--facts FACTS.md]
+                    [--short] [--thresholds PATH] [--json] [--all] [--max-hits N]
 
 The source of this file is core/scripts/lint_ko.py in the repo. dev/sync_core.py copies it to skills/<name>/scripts/
 for each skill. Thresholds are the merge of rules.json (core's rule definitions) and thresholds.json (values that skill
 calibrated against its standard articles), both in the same folder (load_thresholds). The name in the output header is
 the name of the skill folder that contains the script.
 
---short is short-article mode. Following the short profile in thresholds.json, it runs only the sentence-level style
-checks. With --source it also checks that structure, code, URLs, numbers, mentions, and placeholders match the source
-(F items; a violation is a Gate failure).
+--tone names the tone the article must keep: default ("합니다체"), casual ("해요체"), plain ("해라체"), or free (a tone the
+user described in their own words; the tone items G4 and T are not judged). auto picks the most frequent of the three
+fixed tones.
+
+--short applies the short profile (the "short" key of rules.json, or of the skill's thresholds.json when it has one)
+for texts under 1,500 characters: distribution items that need many sentences are dropped and the listed per-1,000
+rates are judged by count.
 
 Exit codes: 0 pass, 1 threshold not met, 2 usage or input error
 Uses only the standard library (Python 3.8 or later).
@@ -308,12 +311,12 @@ def parse_blocks(text):
 
 PH_CODE, PH_URL, PH_REF, PH_QUOTE = "⟦C⟧", "⟦U⟧", "⟦R⟧", "⟦Q⟧"
 PH_RE = re.compile(r"⟦[CURQ]⟧")
-INLINE_CODE_RE = re.compile(r"(`+)(.+?)\1")
+INLINE_CODE_RE = re.compile(r"(`+)(?!`)(.+?)(?<!`)\1(?!`)")
 IMAGE_RE = re.compile(r"!\[([^\]]*)\]\((?:[^()]|\([^()]*\))*\)")
 LINK_RE = re.compile(r"\[([^\]]+)\]\((?:[^()]|\([^()]*\))*\)")
 REFLINK_RE = re.compile(r"\[([^\]]+)\]\[[^\]]*\]")
 AUTOLINK_RE = re.compile(r"<(?:https?|ftp)://[^>\s]+>")
-URL_RE = re.compile(r"(?:https?|ftp)://[^\s<>\"')\]]+")
+URL_RE = re.compile(r"https?://[^\s)>\]`\"'<]+")
 FOOTNOTE_RE = re.compile(r"\[\^[^\]]+\]")
 CITE_RE = re.compile(r"\[\d+(?:\s*[,–\-]\s*\d+)*\]")
 HTML_TAG_RE = re.compile(r"</?[a-zA-Z][^<>]*>")
@@ -1915,33 +1918,44 @@ def analyze(text, patterns_spec=None, facts_text=None):
 
 # ---------------------------------------------------------------- tone verdict
 
+TONE_CLASSES = {"default": ("HAPNIDA", "Q_KKAYO"), "casual": ("HAEYO", "Q_KKAYO"), "plain": ("HAERA",)}
+TONES = tuple(TONE_CLASSES) + ("free",)
+
+
 def detect_tone(analysis):
     c = analysis["endings"]["class"]
-    return "casual" if c.get("HAEYO", 0) > c.get("HAPNIDA", 0) else "default"
+    hapnida, haeyo, haera = c.get("HAPNIDA", 0), c.get("HAEYO", 0), c.get("HAERA", 0)
+    if haera > hapnida and haera > haeyo:
+        return "plain"
+    return "casual" if haeyo > hapnida else "default"
 
 
 def tone_metrics(analysis, tone, imperative_ok=False, inga_ok=False):
     """G4 tone mixing and Casual allowed-variant ratios. Bibliography entries in a references section ("공개 URL 없음") are
     not sentences, so they are skipped.
-    With imperative_ok (short mode), the request forms "~해 주세요" and "~하세요" in a Default article also count as on-tone.
-    With inga_ok (short mode), the question "~인가요?" in a Default article also counts as on-tone (a question to the reader
-    in short mode)."""
+    The tone "free" is a tone the user described in their own words, so no ending is off-tone or banned.
+    With imperative_ok (a skill's allow_imperative), the request forms "~해 주세요" and "~하세요" in a Default article also
+    count as on-tone.
+    With inga_ok (a skill's allow_inga_question), the question "~인가요?" in a Default article also counts as on-tone
+    (a question to the reader)."""
     off = []
     banned = []
     for s in analysis["_sentences"]:
+        if tone == "free":
+            break
         if s.cls in ("NOUN", "OTHER") or getattr(s, "in_refs", False):
             continue
         if s.word.endswith(BANNED_ENDINGS) and tone == "casual":
             banned.append(_hit(s, s.word))
             continue
-        ok = {"default": ("HAPNIDA", "Q_KKAYO"), "casual": ("HAEYO", "Q_KKAYO")}[tone]
+        ok = TONE_CLASSES[tone]
         if s.cls == "NOMINAL" and s.kind != "paragraph":
             continue
         if imperative_ok and tone == "default" and s.word.rstrip(".!").endswith("세요") \
                 and not s.text.rstrip().endswith("?"):
-            continue                                    # Request sentences in Slack posts (short mode)
+            continue                                    # Requests to the reader ("제출해 주세요")
         if inga_ok and tone == "default" and s.text.rstrip().endswith("?") and s.word.rstrip("?").endswith("인가요"):
-            continue                                    # Question "~인가요?" in short mode
+            continue                                    # Question to the reader "~인가요?"
         if s.cls not in ok:
             off.append(_hit(s, f"{s.cls}:{s.word}"))
     n = sum(1 for s in analysis["_sentences"] if s.cls not in ("NOUN", "OTHER")) or 1
@@ -2024,7 +2038,7 @@ def evaluate(analysis, thresholds, tone, max_hits=5, patterns_spec=None):
         if "by_tone" in spec:
             spec = dict(spec, **spec["by_tone"].get(tone, {}))
         if thresholds.get("poisson_floor"):
-            spec = dict(spec, _floor=thresholds["poisson_floor"])     # short articles: one occurrence is allowed
+            spec = dict(spec, _floor=thresholds["poisson_floor"])     # short profile: one occurrence is allowed
         m = metrics[mid]
         value = len(m["hits"]) if spec.get("count") else m["value"]
         status, lim = judge(value, spec, chars)
@@ -2094,7 +2108,7 @@ def render_text(path, tone, analysis, ev, show_all=False, standard=DEFAULT_STAND
             m = f" «{h['match']}»" if h.get("match") else ""
             lines.append(f"    L{h['line']}{m}: {h['text']}")
     groups = (
-        ([r for r in checks if r.get("group") not in ("ko", "term", "rhythm")], False,
+        ([r for r in checks if r.get("group") not in ("ko", "term", "rhythm", "fact")], False,
          "단독 읽기 점검 후보 (판정에 반영되지 않음): 이 문장과 바로 앞 문장만 읽고 무엇에 대한 내용인지, "
          "누구의 말인지, 수치가 무엇을 측정한 값인지 알 수 있으면 그대로 둔다."),
         ([r for r in checks if r.get("group") == "rhythm"], True,
@@ -2108,6 +2122,9 @@ def render_text(path, tone, analysis, ev, show_all=False, standard=DEFAULT_STAND
          "용어 설명 점검 후보 (판정에 반영되지 않음): 검출된 용어가 처음 나온 이 문장이나 바로 다음 문장에 그 용어가 "
          "무엇인지 설명하는 내용이 있으면 그대로 둔다. 이름을 번역한 표현이나 약어의 풀네임만 있으면 references/style-guide.md의 "
          "\"처음 나오는 용어와 중심 대상 설명\"에 따라 수정한다."),
+        ([r for r in checks if r.get("group") == "fact"], True,
+         "자료 대조 후보 (판정에 반영되지 않음): 검출된 문장이 말하는 경험이나 사실이 자료와 fact sheet에 있으면 그대로 두고, "
+         "없으면 삭제하거나 자료에 있는 사실로 다시 쓴다."),
     )
     for group, show_match, header in groups:
         if not group:
@@ -2135,19 +2152,21 @@ def render_text(path, tone, analysis, ev, show_all=False, standard=DEFAULT_STAND
     return "\n".join(lines)
 
 
-# ---------------------------------------------------------------- short-article mode
+# ---------------------------------------------------------------- skill allowances and the short profile
 
-def short_profile(thresholds, patterns_spec):
-    """Returns copies of (thresholds, patterns) with the short profile from thresholds.json applied.
-    A drop entry that ends in "." excludes every metric starting with that prefix."""
-    prof = thresholds.get("short") or {}
-    drops = prof.get("drop") or []
+def apply_profile(thresholds, patterns_spec, short=False):
+    """Returns copies of (thresholds, patterns) with the skill's allowances applied, plus the short profile when short
+    is set.
 
-    def dropped(mid):
-        return any(mid.startswith(d) if d.endswith(".") else mid == d for d in drops)
+    Allowances are top-level keys of the merged thresholds: allow_patterns ({pattern ID: [regex, ...]} removes those
+    regexes from the pattern), allow_imperative, and allow_inga_question. The short profile (the "short" key) can add
+    more of the same, drops metrics (an entry that ends in "." excludes every metric starting with that prefix), and
+    turns the per-1,000 rates listed under "count" into counts."""
+    prof = (thresholds.get("short") or {}) if short else {}
     th = dict(thresholds)
-    th["metrics"] = {mid: spec for mid, spec in thresholds["metrics"].items() if not dropped(mid)}
-    # Rates per 1,000 characters are not judged on short articles (min_chars), so the listed items are judged by count
+    drops = prof.get("drop") or []
+    th["metrics"] = {mid: spec for mid, spec in thresholds["metrics"].items() if not _dropped(mid, drops)}
+    # Rates per 1,000 characters are not judged on short texts (min_chars), so the listed items are judged by count
     for mid, (pass_max, warn_max) in (prof.get("count") or {}).items():
         if mid in th["metrics"]:
             spec = th["metrics"][mid]
@@ -2157,114 +2176,23 @@ def short_profile(thresholds, patterns_spec):
                                   **({"hint": spec["hint"]} if spec.get("hint") else {})}
     if "max_warn" in prof:
         th["max_warn"] = prof["max_warn"]
-    th["allow_imperative"] = bool(prof.get("allow_imperative"))
-    th["allow_inga_question"] = bool(prof.get("allow_inga_question"))
+    for key in ("allow_imperative", "allow_inga_question"):
+        th[key] = bool(thresholds.get(key) or prof.get(key))
     th["poisson_floor"] = prof.get("poisson_floor", 0)
     spec = json.loads(json.dumps(patterns_spec))
-    for pid, allowed in (prof.get("allow_patterns") or {}).items():
-        if pid in spec["patterns"]:
-            spec["patterns"][pid]["regex"] = [r for r in spec["patterns"][pid]["regex"] if r not in allowed]
+    for allowed_by in (thresholds.get("allow_patterns") or {}, prof.get("allow_patterns") or {}):
+        for pid, allowed in allowed_by.items():
+            if pid in spec["patterns"]:
+                spec["patterns"][pid]["regex"] = [r for r in spec["patterns"][pid]["regex"] if r not in allowed]
     return th, spec
 
 
-FENCED_BLOCK_RE = re.compile(r"^ {0,3}(`{3,}|~{3,})[^\n]*\n(.*?)^ {0,3}\1[ \t]*$", re.M | re.S)
-INLINE_CODE_RE = re.compile(r"(`+)(?!`)(.+?)(?<!`)\1(?!`)")
-URL_RE = re.compile(r"https?://[^\s)>\]`\"'<]+")
-SLACK_TOKEN_RE = re.compile(r"<[@#!][^>\s]+>|\{[A-Za-z_]+(?::[^}\s]+)?\}")
-NUMBER_RE = re.compile(r"(?<![\w.])\d+(?:[.,]\d+)*")
-LIST_LINE_RE = re.compile(r"^[ \t]*(?:[-*+]|\d{1,3}[.)])[ \t]+\S")
-HEADING_LINE_RE = re.compile(r"^ {0,3}#{1,6}[ \t]+\S")
-
-
-def _outside_fences(text):
-    """The body with code blocks removed and the list of code block contents."""
-    blocks = [m.group(2) for m in FENCED_BLOCK_RE.finditer(text)]
-    return FENCED_BLOCK_RE.sub("\n", text), blocks
-
-
-def _structure(text):
-    body, blocks = _outside_fences(text)
-    spans = [m.group(2) for m in INLINE_CODE_RE.finditer(body)]
-    no_code = INLINE_CODE_RE.sub(" ", body)
-    urls = URL_RE.findall(no_code)
-    tokens = SLACK_TOKEN_RE.findall(no_code)
-    plain = SLACK_TOKEN_RE.sub(" ", URL_RE.sub(" ", no_code))
-    lines = body.split("\n")
-    return {"blocks": blocks, "spans": spans, "urls": urls, "tokens": tokens,
-            "numbers": NUMBER_RE.findall(plain),
-            "list_items": sum(1 for line in lines if LIST_LINE_RE.match(line)),
-            "headings": sum(1 for line in lines if HEADING_LINE_RE.match(line))}
-
-
-def _missing(src_items, out_items):
-    """Items in the source that are missing (or too few) in the output."""
-    left = list(out_items)
-    out = []
-    for item in src_items:
-        if item in left:
-            left.remove(item)
-        else:
-            out.append(item)
-    return out
-
-
-def _term_targets(terms):
-    """Term table: {"English": "Korean"} or a list of [{"en": ..., "ko": ...}]."""
-    if isinstance(terms, dict):
-        return [(str(k), str(v)) for k, v in terms.items()]
-    return [(str(t.get("en")), str(t.get("ko"))) for t in terms or [] if isinstance(t, dict)]
-
-
-def fidelity_metrics(source_text, text, terms=None):
-    """Source comparison for short mode (F items). The value is the number of mismatches."""
-    src, out = _structure(normalize_text(source_text)), _structure(text)
-
-    def hits(items):
-        return [{"line": 0, "text": str(i)[:160]} for i in items]
-    m = {}
-    altered = _missing(src["blocks"], out["blocks"])
-    m["F1.code_blocks"] = {"value": len(altered), "hits": hits(b.strip().split("\n")[0] for b in altered)}
-    spans = _missing(src["spans"], out["spans"])
-    m["F2.inline_code"] = {"value": len(spans), "hits": hits(spans)}
-    urls = _missing(src["urls"], out["urls"])
-    m["F3.urls"] = {"value": len(urls), "hits": hits(urls)}
-    tokens = _missing(src["tokens"], out["tokens"])
-    m["F4.slack_tokens"] = {"value": len(tokens), "hits": hits(tokens)}
-    numbers = _missing(sorted(set(src["numbers"])), sorted(set(out["numbers"])))
-    m["F5.numbers"] = {"value": len(numbers), "hits": hits(numbers)}
-    diff = abs(src["list_items"] - out["list_items"])
-    m["F6.list_items"] = {"value": diff, "hits": hits([f"원문 {src['list_items']}개, 결과 {out['list_items']}개"])
-                          if diff else []}
-    diff = abs(src["headings"] - out["headings"])
-    m["F7.headings"] = {"value": diff, "hits": hits([f"원문 {src['headings']}개, 결과 {out['headings']}개"])
-                        if diff else []}
-    wrong = []
-    if terms:
-        # Code blocks and inline code stay as in the source, so terms are not searched there. Forms with uppercase letters
-        # (the button name "Keep") are matched as written; all-lowercase forms ("blocked") are matched case-insensitively.
-        prose = INLINE_CODE_RE.sub(" ", FENCED_BLOCK_RE.sub(" ", normalize_text(source_text)))
-        for en, ko in _term_targets(terms):
-            if not (en and ko):
-                continue
-            flags = 0 if en != en.lower() else re.I
-            if re.search(r"(?<![A-Za-z])" + re.escape(en) + r"(?![A-Za-z])", prose, flags) and ko not in text:
-                wrong.append(f"{en} → {ko}")
-    m["F8.terms"] = {"value": len(wrong), "hits": hits(wrong)}
-    return m
-
-
 def run(path, tone="auto", facts=None, thresholds_path=None, as_json=False, show_all=False, max_hits=5,
-        short=False, source=None, terms=None):
+        short=False):
     text = read_text(path)
     facts_text = read_text(facts) if facts else None
-    thresholds = load_thresholds(thresholds_path)
-    patterns_spec = load_json(PATTERNS_PATH)
-    if short:
-        thresholds, patterns_spec = short_profile(thresholds, patterns_spec)
+    thresholds, patterns_spec = apply_profile(load_thresholds(thresholds_path), load_json(PATTERNS_PATH), short)
     analysis = analyze(text, patterns_spec=patterns_spec, facts_text=facts_text)
-    if short and source:
-        analysis["metrics"].update(fidelity_metrics(read_text(source), text,
-                                                    load_json(terms) if terms else None))
     if tone == "auto":
         tone = detect_tone(analysis)
     ev = evaluate(analysis, thresholds, tone, max_hits=-1 if as_json else max_hits, patterns_spec=patterns_spec)
@@ -2279,29 +2207,24 @@ def main(argv=None):
     setup_stdio()
     ap = argparse.ArgumentParser(description=f"{SKILL_NAME} Korean style lint")
     ap.add_argument("article")
-    ap.add_argument("--tone", choices=("default", "casual", "auto"), default="auto")
+    ap.add_argument("--tone", choices=TONES + ("auto",), default="auto")
     ap.add_argument("--facts", help="fact sheet path (A15 figure comparison)")
     ap.add_argument("--thresholds", help="thresholds JSON path (default: scripts/thresholds.json)")
     ap.add_argument("--json", action="store_true", help="output as JSON")
     ap.add_argument("--all", action="store_true", help="also output PASS items")
     ap.add_argument("--max-hits", type=int, default=5)
-    ap.add_argument("--short", action="store_true", help="short-article mode (short profile in thresholds.json)")
-    ap.add_argument("--source", help="short mode: English source path (F item comparison)")
-    ap.add_argument("--terms", help="short mode: term table JSON path ({\"English\": \"Korean\"})")
+    ap.add_argument("--short", action="store_true", help="apply the short profile (texts under 1,500 characters)")
     try:
         args = ap.parse_args(argv)
     except SystemExit as e:
         return 2 if e.code else 0
-    if (args.source or args.terms) and not args.short:
-        print("--source와 --terms는 --short와 함께 사용합니다", file=sys.stderr)
-        return 2
-    for p in [args.article] + [x for x in (args.facts, args.source, args.terms) if x]:
+    for p in [args.article] + [x for x in (args.facts,) if x]:
         if not os.path.isfile(p):
             print(f"파일이 없습니다: {p}", file=sys.stderr)
             return 2
     try:
         out, verdict = run(args.article, args.tone, args.facts, args.thresholds, args.json, args.all, args.max_hits,
-                           short=args.short, source=args.source, terms=args.terms)
+                           short=args.short)
     except (OSError, ValueError, KeyError) as e:
         print(f"lint 실행 오류: {e}", file=sys.stderr)
         return 2

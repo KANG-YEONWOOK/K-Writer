@@ -5,7 +5,7 @@ SKILL.md에서 참조하는 문서다. 단계 이름은 core 문서가 사용하
 1. 자료 읽기: TODO: 자료를 끝까지 읽는 방법은 [runtime.md](runtime.md)를 따른다.
 2. fact sheet: 자료가 있는 글이면 [fact-sheet.md](fact-sheet.md)대로 `<이름>.facts.md`를 작성한다. TODO: 이 스킬에서 추가하거나 정할 항목
 3. 초안 쓰기: [style-guide.md](style-guide.md)와 [genre.md](genre.md)를 읽고 Default(합니다체)로 쓴다. TODO
-4. 초안 점검: `scripts/lint_ko.py`를 실행해 Gate와 FAIL을 수정한다. 수정 방법은 [ai-patterns.md](ai-patterns.md)에 있다. TODO
+4. 초안 점검: `scripts/lint_ko.py`를 실행해 Gate와 FAIL을 수정한다. 본문이 공백 제외 1,500자 미만인 글을 쓰는 스킬이면 `--short`(짧은 글 기준)를 붙인다. 수정 방법은 [ai-patterns.md](ai-patterns.md)에 있다. TODO
 5. 한국어 문장 점검: [korean-review.md](korean-review.md)대로 문장마다 읽는다. prompt나 이 문서에 기준 글을 적는다. TODO
-6. 어투 적용: Casual이면 [tone.md](tone.md)대로 종결부만 바꾸고 `scripts/tone_check.py`로 확인한다.
+6. 어투 적용: 어투가 Default가 아니면 [tone.md](tone.md)대로 종결부만 바꾸고 `scripts/tone_check.py`로 확인한다(Plain은 `--tone plain`, 직접 입력한 어투는 `--tone free`).
 7. 결과 보고: TODO: 저장 경로, 설정값과 출처, 검사 결과

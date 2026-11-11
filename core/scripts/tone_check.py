@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-"""K-Writer tone check: verifies that a Casual article differs from its Default draft only in sentence endings.
+"""K-Writer tone check: verifies that a tone-converted article differs from its Default draft only in sentence endings.
 
 The source of this file is core/scripts/tone_check.py in the repo. dev/sync_core.py copies it to skills/<name>/scripts/ for each skill.
 
 Usage
-  python tone_check.py DEFAULT.md CASUAL.md [--json]
-  python tone_check.py --cleanup FILE [FILE ...]   # deletes only .facts.md, .draft.md, .unrevised.md, .repeats.md, .reader.md, .pre-fix.md, .audit.md work files
+  python tone_check.py DEFAULT.md CONVERTED.md [--tone casual|plain|free] [--json]
+  python tone_check.py --cleanup FILE [FILE ...]   # deletes only .facts.md, .draft.md, .unrevised.md, .repeats.md, .reader.md, .pre-fix.md, .audit.md, .answer.md work files
+
+--tone names the tone of CONVERTED.md: casual ("해요체", the default), plain ("해라체"), or free (a tone the user described
+in their own words; the ending class of the converted sentences is not checked).
 
 Check order
   1. The order of block types (heading, paragraph, list, code, table, quote) is the same.
@@ -14,7 +17,8 @@ Check order
   4. In each sentence, the numbers, Latin tokens, quotes, parenthesized content, and the count of negative expressions
      are the same, and the words match from the start and differ only within the last 2 words. WARN if the initial
      consonant of the first differing word does not carry over.
-  5. Default sentences are "합니다체", Casual sentences are "해요체", and there are no banned endings (~더라고요, ~네요, ~잖아요, ~는데요).
+  5. Default sentences are "합니다체" and converted sentences are in the target tone. A Casual article has none of the
+     banned endings ("~더라고요", "~네요", "~잖아요", "~답니다").
 
 Exit codes: 0 pass, 1 mismatch, 2 usage or input error
 """
@@ -41,6 +45,10 @@ CAUSE_RE = re.compile(r"(때문|므로|어서|아서|해서|니까|덕분|이유
 NEG_RE = re.compile(r"(않|없|못|아니|(?<![가-힣])안\s)")
 LATIN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_.\-+/#]*")
 CHOSEONG = 588  # syllables per initial consonant (21 * 28)
+# Target tone -> (ending classes a converted sentence may have, name used in messages). free has no fixed classes.
+TARGETS = {"casual": (("HAEYO", "Q_KKAYO", "NOUN", "OTHER"), "해요체"),
+           "plain": (("HAERA", "NOUN", "OTHER"), "해라체"),
+           "free": (None, "직접 정한 어투")}
 
 
 def _norm_ws(s):
@@ -100,8 +108,20 @@ def _issue(code, level, d_line, c_line, si, d, c, note=""):
             "default": d[:160], "casual": c[:160], "note": note}
 
 
-def compare_sentence(d, c, d_line, c_line, si):
+def _default_ok(d, dword, dcls, allow):
+    """True when a Default sentence is on-tone. With a skill's allow_imperative, the request "~해 주세요" counts as
+    on-tone, and with allow_inga_question the question "~인가요?" does (the same exceptions as lint G4.off_tone)."""
+    if dcls in ("HAPNIDA", "Q_KKAYO", "NOUN", "OTHER"):
+        return True
+    question = d.rstrip().endswith("?")
+    if allow.get("allow_imperative") and not question and dword.rstrip(".!").endswith("세요"):
+        return True
+    return bool(allow.get("allow_inga_question") and question and dword.rstrip("?").endswith("인가요"))
+
+
+def compare_sentence(d, c, d_line, c_line, si, tone="casual", allow=None):
     issues = []
+    classes, tone_name = TARGETS[tone]
     dm, cm = L.mask_quotes(d), L.mask_quotes(c)
     if _protected(d) != _protected(c):
         issues.append(_issue("TOKEN", "FAIL", d_line, c_line, si, d, c, "수치, 영문, 괄호, 인용 토큰이 다르다"))
@@ -124,18 +144,19 @@ def compare_sentence(d, c, d_line, c_line, si):
     dword, cword = L.last_word(d), L.last_word(c)
     dcls = L.classify_ending(dword, d.rstrip().endswith("?"))
     ccls = L.classify_ending(cword, c.rstrip().endswith("?"))
-    if dcls not in ("HAPNIDA", "Q_KKAYO", "NOUN", "OTHER"):
+    if not _default_ok(d, dword, dcls, allow or {}):
         issues.append(_issue("D_TONE", "FAIL", d_line, c_line, si, d, c, f"Default 문장이 합니다체가 아니다({dcls})"))
-    if cword.endswith(L.BANNED_ENDINGS):
+    if tone == "casual" and cword.endswith(L.BANNED_ENDINGS):
         issues.append(_issue("BANNED", "FAIL", d_line, c_line, si, d, c, f"금지 어미 {cword}"))
-    elif ccls not in ("HAEYO", "Q_KKAYO", "NOUN", "OTHER"):
-        issues.append(_issue("C_TONE", "FAIL", d_line, c_line, si, d, c, f"Casual 문장이 해요체가 아니다({ccls})"))
-    if cword.endswith("거든요") and not CAUSE_RE.search(d):
+    elif classes is not None and ccls not in classes:
+        issues.append(_issue("C_TONE", "FAIL", d_line, c_line, si, d, c, f"변환한 문장이 {tone_name}가 아니다({ccls})"))
+    if tone == "casual" and cword.endswith("거든요") and not CAUSE_RE.search(d):
         issues.append(_issue("GEUDEUN", "WARN", d_line, c_line, si, d, c, "Default 문장에 원인 표현이 없는데 ~거든요를 사용했다"))
     return issues
 
 
-def check(default_text, casual_text):
+def check(default_text, casual_text, tone="casual", allow=None):
+    """allow is the skill's merged thresholds (allow_imperative, allow_inga_question). None means no allowance."""
     du, cu = _units(default_text), _units(casual_text)
     issues = []
     pairs = 0
@@ -162,11 +183,12 @@ def check(default_text, casual_text):
             continue
         for si, (d, c) in enumerate(zip(dsents, csents), 1):
             pairs += 1
-            issues.extend(compare_sentence(d, c, dl, cl, si))
+            issues.extend(compare_sentence(d, c, dl, cl, si, tone, allow))
     return {"pairs": pairs, "issues": issues}
 
 
-WORK_SUFFIXES = (".facts.md", ".draft.md", ".unrevised.md", ".repeats.md", ".reader.md", ".pre-fix.md", ".audit.md")
+WORK_SUFFIXES = (".facts.md", ".draft.md", ".unrevised.md", ".repeats.md", ".reader.md", ".pre-fix.md", ".audit.md",
+                 ".answer.md")
 
 
 def cleanup(paths):
@@ -188,6 +210,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=f"{SKILL_NAME} tone invariance check")
     ap.add_argument("files", nargs="+")
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--tone", choices=tuple(TARGETS), default="casual", help="Tone of the converted article")
     ap.add_argument("--cleanup", action="store_true", help="Delete the given work files (" + ", ".join(WORK_SUFFIXES) + ")")
     try:
         args = ap.parse_args(argv)
@@ -196,13 +219,13 @@ def main(argv=None):
     if args.cleanup:
         return cleanup(args.files)
     if len(args.files) != 2:
-        print("사용법: tone_check.py DEFAULT.md CASUAL.md", file=sys.stderr)
+        print("사용법: tone_check.py DEFAULT.md CONVERTED.md [--tone casual|plain|free]", file=sys.stderr)
         return 2
     for p in args.files:
         if not os.path.isfile(p):
             print(f"파일이 없습니다: {p}", file=sys.stderr)
             return 2
-    res = check(L.read_text(args.files[0]), L.read_text(args.files[1]))
+    res = check(L.read_text(args.files[0]), L.read_text(args.files[1]), args.tone, L.load_thresholds())
     fails = [i for i in res["issues"] if i["level"] == "FAIL"]
     warns = [i for i in res["issues"] if i["level"] == "WARN"]
     verdict = "PASS" if not fails else "FAIL"

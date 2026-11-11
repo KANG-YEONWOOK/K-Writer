@@ -1,0 +1,105 @@
+{
+  "skill": {
+    "standard": "사람이 같은 목적으로 쓴 한국어 글"
+  },
+  "note": "write에는 기준 글 표본으로 보정한 값이 없다. 특정 표현의 빈도를 세는 항목(borrowed.metrics)은 글의 종류와 관계가 적어서 techblog의 기준 글(사람이 쓴 한국어 기술 블로그 글)로 보정한 기준치를 가져와 사용한다(dev/borrow_thresholds.py). 문장 길이, 문단, 목록, 쉼표 수, 질문 비율처럼 글의 종류에 따라 달라지는 분포 지표는 판정하지 않는다(INFO). 화자가 사용자나 그 조직일 수 있어서 직접 겪은 일처럼 말하는 표현(G2)은 Gate가 아니라 자료 대조 후보로 보여 준다. 안내 글과 메일에서 독자에게 하는 말(\"궁금한 점이 있으면\", \"원하시면\", \"~해 주세요\", \"~인가요?\")은 허용한다. 근거는 references/rubric.md에 있다.",
+  "borrowed": {
+    "from": "techblog",
+    "metrics": [
+      "A1.np",
+      "A1.np_same_para",
+      "A2.connective_comma_ratio",
+      "A3.salience",
+      "A4.gyeolguk",
+      "A4.para_end",
+      "A4.summary_opener",
+      "A5.style_words_per_1k",
+      "A6.calque",
+      "A7.hedge_boimnida",
+      "A7.hedge_stack",
+      "A7.see_as",
+      "A12.progressive_per_1k",
+      "A13.demonstrative_start_per_1k",
+      "A14.translationese_per_1k"
+    ]
+  },
+  "allow_imperative": true,
+  "allow_inga_question": true,
+  "allow_patterns": {
+    "G3.chatbot": [
+      "궁금한\\s*(점|부분|사항)(이|은)?\\s*(있|생기|남)",
+      "원하시면",
+      "(더|추가로)\\s*(필요하시면|궁금하시면)"
+    ]
+  },
+  "metrics": {
+    "G2.experience": {
+      "kind": "check",
+      "group": "fact",
+      "hint": "fact sheet에 있는 사용자나 그 조직의 경험이면 그대로 둔다. 자료에 없는 경험이면 삭제하거나 자료의 사실로 다시 쓴다."
+    },
+    "G2.exp_ending": {
+      "kind": "check",
+      "group": "fact",
+      "hint": "fact sheet에 있는 사용자나 그 조직의 경험이면 그대로 둔다. 자료에 없는 경험이면 사실을 서술하는 어미로 다시 쓴다."
+    },
+    "A1.np": {
+      "rate_per_1k": 0.229
+    },
+    "A1.np_same_para": {
+      "pass_max": 0,
+      "warn_max": 2
+    },
+    "A2.connective_comma_ratio": {
+      "pass_max": 0.385,
+      "warn_max": 0.618
+    },
+    "A3.salience": {
+      "pass_max": 2,
+      "warn_max": 3
+    },
+    "A4.gyeolguk": {
+      "pass_max": 2,
+      "warn_max": 6
+    },
+    "A4.para_end": {
+      "pass_max": 3,
+      "warn_max": 6
+    },
+    "A4.summary_opener": {
+      "pass_max": 1,
+      "warn_max": 3
+    },
+    "A5.style_words_per_1k": {
+      "pass_max": 0.352,
+      "warn_max": 2.264
+    },
+    "A6.calque": {
+      "pass_max": 0,
+      "warn_max": 3
+    },
+    "A7.hedge_boimnida": {
+      "pass_max": 0,
+      "warn_max": 2
+    },
+    "A7.hedge_stack": {
+      "pass_max": 1,
+      "warn_max": 4
+    },
+    "A7.see_as": {
+      "rate_per_1k": 0.021
+    },
+    "A12.progressive_per_1k": {
+      "pass_max": 0.94,
+      "warn_max": 1.702
+    },
+    "A13.demonstrative_start_per_1k": {
+      "pass_max": 0.897,
+      "warn_max": 1.989
+    },
+    "A14.translationese_per_1k": {
+      "pass_max": 0.647,
+      "warn_max": 1.255
+    }
+  }
+}

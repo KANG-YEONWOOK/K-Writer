@@ -28,11 +28,11 @@
 ## 스크립트 실행
 
 - 현재 환경의 셸 실행 도구를 사용한다. Windows에서는 `python`, macOS와 Linux에서는 `python3`를 실행한다. 아래 `<스킬 절대 경로>`는 로드한 `SKILL.md`가 있는 디렉터리로 바꾼다. 현재 작업 폴더나 환경 변수를 근거로 이 경로를 추측하지 않는다.
-- 경로는 큰따옴표로 감싼다. 검사 명령은 한 번에 하나씩 실행한다. Claude Code의 Bash 사전 허용은 frontmatter의 검사 스크립트에 한정된다. Claude Code에서는 참고 문서를 Read로 열고 파일 목록은 Glob으로 확인한다. `cat`, `ls`, `Get-ChildItem` 같은 명령을 Bash나 PowerShell로 실행하거나 검사 명령에 이어 붙이지 않는다. 종료 코드를 보려고 `; echo "exit=$?"`를 붙이지 않는다. Bash 도구는 0이 아닌 종료 코드를 결과에 함께 보여 준다. 다른 명령을 붙인 검사 명령은 사전 허용과 맞지 않아 권한이 거부된다(Skill-Techblog 0.8.0 테스트 실행에서 `revise_ko.py check`가 이 이유로 두 번 거부됐다). Codex의 파일 읽기와 PDF 처리는 runtime.md를 따른다.
-  - 문체 검사: `python3 "<스킬 절대 경로>/scripts/lint_ko.py" "<글>" --tone default --facts "<이름>.facts.md"`
+- 경로는 큰따옴표로 감싼다. 검사 명령은 한 번에 하나씩 실행한다. Claude Code의 Bash 사전 허용은 frontmatter의 검사 스크립트에 한정된다. Claude Code에서는 참고 문서를 Read로 열고 파일 목록은 Glob으로 확인한다. `cat`, `ls`, `Get-ChildItem` 같은 명령을 Bash나 PowerShell로 실행하거나 검사 명령에 이어 붙이지 않는다. 종료 코드를 보려고 `; echo "exit=$?"`를 붙이지 않는다. Bash 도구는 0이 아닌 종료 코드를 결과에 함께 보여 준다. 다른 명령을 붙인 검사 명령은 사전 허용과 맞지 않아 권한이 거부된다(Skill-Techblog 0.8.0 테스트 실행에서 `revise_ko.py check`가 이 이유로 두 번 거부됐다). Codex의 파일 읽기와 PDF 처리는 아래 "PDF와 URL" 섹션을 따른다.
+  - 문체 검사: `python3 "<스킬 절대 경로>/scripts/lint_ko.py" "<글>" --tone default --facts "<이름>.facts.md"`. 어투를 바꾼 글은 그 글의 어투로 검사한다. Casual은 `--tone casual`, Plain은 `--tone plain`, 사용자가 직접 정한 어투는 `--tone free`다. 스킬의 작업 문서가 짧은 글 기준을 적용하라고 정한 글에는 `--short`를 붙인다. 문체 검사에 `--short`를 붙인 글은 아래 후처리 명령의 `check`와 `audit`에도 `--short`를 붙인다. 붙이지 않으면 두 스크립트가 같은 글을 다른 기준으로 판정한다.
   - 후처리: `python3 "<스킬 절대 경로>/scripts/revise_ko.py" start "<후처리 대상>"`, 같은 스크립트의 `repeats "<후처리 대상>"`, `check "<후처리 대상>"`, `mark "<후처리 대상>"`, `audit "<후처리 대상>"`(초안 복사본이나 기존 글과 비교할 때 `--base "<파일>"`, 결과를 파일로 남길 때 `--out "<이름>.audit.md"`)
-  - 어투 검사: `python3 "<스킬 절대 경로>/scripts/tone_check.py" "<Default 글>" "<Casual 글>"`
-  - 작업 파일 삭제: `python3 "<스킬 절대 경로>/scripts/tone_check.py" --cleanup "<이름>.facts.md" "<이름>.draft.md" "<이름>.unrevised.md" "<이름>.repeats.md" "<이름>.reader.md" "<이름>.audit.md" "<이름>.pre-fix.md"`
+  - 어투 검사: `python3 "<스킬 절대 경로>/scripts/tone_check.py" "<Default 글>" "<어투를 바꾼 글>"`. 어투를 바꾼 글이 Plain이면 `--tone plain`, 사용자가 직접 정한 어투면 `--tone free`를 붙인다.
+  - 작업 파일 삭제: `python3 "<스킬 절대 경로>/scripts/tone_check.py" --cleanup "<이름>.facts.md" "<이름>.draft.md" "<이름>.unrevised.md" "<이름>.repeats.md" "<이름>.reader.md" "<이름>.audit.md" "<이름>.pre-fix.md"`. 대화로 답하는 스킬이 답변을 저장한 `<이름>.answer.md`도 이 명령으로 삭제한다. 이번 실행에서 만든 파일만 적는다.
 - Python이나 셸을 사용할 수 없으면 `references/rubric.md`로 직접 점검하고 자동 검사를 실행하지 못했다고 보고한다. 스크립트가 실행된 뒤 오류가 발생하면 경로와 오류를 확인한다. 실행 오류를 Python이 없는 것으로 취급하거나 검사를 통과했다고 보고하지 않는다.
 
 ## PDF와 URL
@@ -53,6 +53,6 @@
 ## 후처리 context
 
 - 독립 점검(독자 점검(reader-check.md), 후처리(revision.md), 한국어 문장 점검(korean-review.md), 수정 후 단독 읽기와 정합성 검토)을 맡는 subagent는 모두 초안 작성 대화와 앞 subagent의 대화를 상속하지 않게 실행한다. 어떤 점검을 어떤 순서로 맡길지는 스킬의 작업 문서(SKILL.md의 작업 순서가 단계마다 읽게 하는 문서)가 정한다. `fork_context`나 `fork_turns` 같은 설정이 있으면 상속을 끈다. 별도 모델은 지정하지 않는다.
-- subagent가 끝날 때까지 기다렸다가 보고를 받은 뒤 다음 순서로 넘어간다. Claude Code의 Agent에는 `run_in_background`를 사용하지 않는다. Skill-Techblog 0.6.0 테스트 실행에서 한국어 문장 점검 subagent를 background로 띄우자 그 subagent의 검사 명령은 권한이 거부됐다. 상위 agent의 턴도 그 시점에 끝났고 subagent가 끝난 뒤 이어진 턴에서는 스킬의 검사 스크립트 허용이 적용되지 않아 `revise_ko.py check`와 최종 lint를 실행하지 못했다.
+- subagent가 끝날 때까지 기다렸다가 보고를 받은 뒤 다음 순서로 넘어간다. Claude Code의 Agent에는 `run_in_background`를 사용하지 않는다. Agent가 비동기로만 실행되는 환경에서는 완료 알림을 받은 뒤에 다음 순서를 진행하고 그 사이에 다른 단계를 먼저 하지 않는다. Skill-Techblog 0.6.0 테스트 실행에서 한국어 문장 점검 subagent를 background로 띄우자 그 subagent의 검사 명령은 권한이 거부됐다. 상위 agent의 턴도 그 시점에 끝났고 subagent가 끝난 뒤 이어진 턴에서는 스킬의 검사 스크립트 허용이 적용되지 않아 `revise_ko.py check`와 최종 lint를 실행하지 못했다.
 - subagent에는 스킬의 작업 문서가 정한 prompt와 실제 파일 경로만 넘긴다. 독자 점검 subagent에는 독자 줄과 용어 이름만 넘기고 fact sheet와 자료의 경로는 넘기지 않는다. 그 subagent가 자료를 읽으면 빠진 설명을 자료의 내용으로 채워 읽는다. 붙여넣은 자료는 fact sheet의 별도 `원문` 섹션에 그대로 보관하고 그 섹션을 자료 위치로 지정한다. subagent도 원문을 다시 확인할 수 있어야 한다.
-- 독립 실행 도구가 없거나 사용자가 subagent를 사용하지 말라고 하면 현재 agent가 reader-check.md, revision.md, korean-review.md의 점검과 수정 후 검토를 차례로 직접 한다. 이 경우 독립 검토를 했다고 보고하지 않는다. 후처리를 위해 별도 CLI 설치나 인증을 시도하지 않는다.
+- 독립 실행 도구가 없거나 사용자가 subagent를 사용하지 말라고 하면 현재 agent가 스킬의 작업 문서가 정한 독립 점검(reader-check.md, revision.md, korean-review.md의 점검과 수정 후 검토 중 그 스킬이 사용하는 것)을 차례로 직접 한다. 이 경우 독립 검토를 했다고 보고하지 않는다. 후처리를 위해 별도 CLI 설치나 인증을 시도하지 않는다.

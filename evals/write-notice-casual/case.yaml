@@ -1,0 +1,5 @@
+schema_version: "1.1"
+name: write-notice-casual
+description: 항목만 적은 메모로 해요체 안내 글을 쓴다. 첫 문단에 독자가 할 일과 기한이 있어야 하고 일정, 장소, 신청 방법이 메모와 같아야 한다.
+context:
+  scaffold_script: setup.sh

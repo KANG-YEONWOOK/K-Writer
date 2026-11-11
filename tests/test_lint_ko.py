@@ -866,7 +866,8 @@ class KoreanPatternTest(unittest.TestCase):
         casual = "Redis를 써요. 처리량을 쟀어요. 저자들은 병목이 될 것으로 봐요."
         for mid in ("A5.native_verbs", "A7.see_judgment"):
             self.assertEqual(self.m(default)[mid]["value"], self.m(casual)[mid]["value"], mid)
-        # Judged by the Poisson upper bound of the pooled human-post rate, and not judged in short mode
+        # Judged by the Poisson upper bound of the pooled human-post rate. The short profile keeps both items and
+        # allows one occurrence (poisson_floor).
         th = L.load_thresholds()
         body = "\n\n".join(["배치 크기를 10으로 줄이자 p99 지연이 4.2초에서 0.8초로 줄었습니다. " * 4] * 20)
         many = body + "\n\n" + " ".join(f"Redis {i}개를 썼습니다." for i in range(8))
@@ -877,7 +878,7 @@ class KoreanPatternTest(unittest.TestCase):
         self.assertEqual(st["A5.native_verbs"]["status"], "PASS")
         for mid in ("A5.native_verbs", "A7.see_judgment"):
             self.assertTrue(th["metrics"][mid]["fixed"], mid)
-            self.assertIn(mid, th["short"]["drop"])
+            self.assertNotIn(mid, th["short"]["drop"])
 
     def test_korean_checks_render_in_own_group(self):
         text = "모든 영역이 한 값에 머물지 않았습니다.\n\n기존 설정과 비교하면 최대 5배입니다.\n"
@@ -947,7 +948,9 @@ class PlainTermsDocsTest(unittest.TestCase):
     and rubric.md, which show the pre-fix expressions, and those items' own hints are excluded."""
 
     DOCS = ("style-guide.md", "genre.md", "drafting.md", "fact-sheet.md", "validation.md", "finalization.md",
-            "reader-check.md", "revision.md", "runtime.md", "settings.md", "settings-protocol.md", "tone.md", "short.md")
+            "reader-check.md", "revision.md", "runtime.md", "settings.md", "settings-protocol.md", "tone.md")
+    SKILLS = sorted(d for d in os.listdir(os.path.join(SCRIPTS, "..", ".."))
+                    if os.path.isfile(os.path.join(SCRIPTS, "..", "..", d, "SKILL.md")))
     OWN = {"A6.version_pan", "A5.plain_terms", "A5.plain_terms_check", "A6.metaphor_check"}
 
     def setUp(self):
@@ -962,10 +965,20 @@ class PlainTermsDocsTest(unittest.TestCase):
                 self.assertIsNone(m, (name, pid, m.group(0) if m else "", line[:120]))
 
     def test_docs_read_while_writing_use_plain_terms(self):
-        for name in self.DOCS:
-            with self.subTest(doc=name):
-                self.assert_plain(name, L.read_text(os.path.join(SCRIPTS, "..", "references", name)))
-        self.assert_plain("SKILL.md", L.read_text(os.path.join(SCRIPTS, "..", "SKILL.md")))
+        self.assertTrue({"techblog", "write", "brief"} <= set(self.SKILLS))
+        checked = 0
+        for skill in self.SKILLS:
+            base = os.path.join(SCRIPTS, "..", "..", skill)
+            for name in self.DOCS:
+                path = os.path.join(base, "references", name)
+                if not os.path.isfile(path):
+                    continue                            # a work document this skill does not have (finalization.md)
+                checked += 1
+                with self.subTest(skill=skill, doc=name):
+                    self.assert_plain(f"{skill}/{name}", L.read_text(path))
+            with self.subTest(skill=skill, doc="SKILL.md"):
+                self.assert_plain(f"{skill}/SKILL.md", L.read_text(os.path.join(base, "SKILL.md")))
+        self.assertGreaterEqual(checked, 3 * 10)
 
     def test_hints_use_plain_terms(self):
         for pid, p in self.spec.items():

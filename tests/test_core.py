@@ -73,7 +73,8 @@ class CoreCopyTest(unittest.TestCase):
 
 class SlotTest(unittest.TestCase):
     def test_every_skill_has_slots(self):
-        self.assertIn(ROOT / "skills" / "techblog", SKILLS)
+        for name in ("techblog", "write", "brief"):
+            self.assertIn(ROOT / "skills" / name, SKILLS)
         for skill in SKILLS:
             for rel in SLOTS:
                 with self.subTest(skill=skill.name, slot=rel):

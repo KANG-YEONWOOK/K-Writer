@@ -1,6 +1,42 @@
 {
   "schema": 1,
   "max_warn": 3,
+  "short": {
+    "note": "짧은 글 기준이다(lint_ko.py --short). 본문이 공백 제외 1,500자 미만인 글에 적용한다. 1,000자당 비율 항목은 짧은 글에서 판정하지 않으므로 count에 적은 항목만 개수로 판정한다. poisson 항목은 한 번까지 허용한다. 질문 비율(T.kkayo_ratio, A11), 자료를 주어로 쓴 문장 비율(A16), 문장 첫 어절 반복(A17), 문장 길이와 문단 분포(A8), 굵은 글씨와 목록 비중(A9)은 문장 수가 적으면 문장 하나로 값이 크게 달라지므로 판정하지 않는다. 스킬의 thresholds.json에 short가 있으면 그 값을 사용한다.",
+    "drop": [
+      "T.kkayo_ratio",
+      "A11.",
+      "A16.",
+      "A17.",
+      "A8.sent_len_mean",
+      "A8.sent_len_cv",
+      "A8.long_ratio",
+      "A8.single_para_ratio",
+      "A8.sentences_per_para",
+      "A8.ending_top_share",
+      "A9."
+    ],
+    "count": {
+      "A14.translationese_per_1k": [
+        0,
+        1
+      ],
+      "A13.demonstrative_start_per_1k": [
+        0,
+        1
+      ],
+      "A12.progressive_per_1k": [
+        1,
+        2
+      ],
+      "A5.style_words_per_1k": [
+        0,
+        1
+      ]
+    },
+    "poisson_floor": 1,
+    "max_warn": 2
+  },
   "metrics": {
     "G2.exp_ending": {
       "kind": "gate",
@@ -33,7 +69,7 @@
     "G4.off_tone": {
       "kind": "gate",
       "title": "어투 혼용",
-      "hint": "Default는 합니다체, Casual은 해요체로 맞춘다. Casual에서는 종결부만 수정한다.",
+      "hint": "Default는 합니다체, Casual은 해요체, Plain은 해라체로 맞춘다. 어투를 변환한 글에서는 종결부만 수정한다.",
       "policy": true
     },
     "G6.emdash": {
@@ -613,46 +649,6 @@
       "compact": true,
       "title": "세 번 이상 나오는 약어가 처음 나올 때 괄호가 없는 문장",
       "hint": "처음 나올 때 풀네임을 쓰고 풀네임만으로 무엇인지 드러나지 않으면 쉼표 뒤에 설명을 붙인다. 앞에서 범주와 함께 소개했으면(\"촉각 뉴런 PLM\") 그대로 둔다."
-    },
-    "F1.code_blocks": {
-      "kind": "gate",
-      "title": "원문과 다른 코드 블록",
-      "hint": "코드 블록은 번역하지 않고 원문 그대로 둔다."
-    },
-    "F2.inline_code": {
-      "kind": "gate",
-      "title": "빠지거나 바뀐 인라인 코드",
-      "hint": "`…` 안의 명령, 경로, 이름은 원문 그대로 둔다."
-    },
-    "F3.urls": {
-      "kind": "gate",
-      "title": "빠지거나 바뀐 URL",
-      "hint": "URL은 원문 그대로 둔다."
-    },
-    "F4.slack_tokens": {
-      "kind": "gate",
-      "title": "빠지거나 바뀐 멘션과 placeholder(<@U…>, {link})",
-      "hint": "멘션과 {…} placeholder는 원문 그대로 둔다."
-    },
-    "F5.numbers": {
-      "kind": "gate",
-      "title": "빠진 숫자",
-      "hint": "원문의 숫자는 아라비아 숫자 그대로 쓴다."
-    },
-    "F6.list_items": {
-      "kind": "gate",
-      "title": "원문과 다른 목록 항목 수",
-      "hint": "목록 항목을 합치거나 나누거나 삭제하지 않는다."
-    },
-    "F7.headings": {
-      "kind": "gate",
-      "title": "원문과 다른 헤딩 수",
-      "hint": "헤딩을 추가하거나 삭제하지 않는다."
-    },
-    "F8.terms": {
-      "kind": "gate",
-      "title": "용어표대로 번역하지 않은 용어",
-      "hint": "용어표의 한국어 표기를 그대로 쓴다."
     }
   },
   "bands": {

@@ -7,9 +7,9 @@ The name in the output header is the name of the skill folder that contains the 
 Usage
   python revise_ko.py start ARTICLE [--force]
   python revise_ko.py repeats ARTICLE [--all] [--json]
-  python revise_ko.py check ARTICLE [--facts FACTS.md] [--json]
+  python revise_ko.py check ARTICLE [--facts FACTS.md] [--short] [--json]
   python revise_ko.py mark ARTICLE
-  python revise_ko.py audit ARTICLE [--base FILE] [--facts FACTS.md] [--out FILE] [--json]
+  python revise_ko.py audit ARTICLE [--base FILE] [--facts FACTS.md] [--short] [--out FILE] [--json]
 
 ARTICLE is the "합니다체" article to post-process: the output file (<name>.md) for a Default article, the Default draft
 (<name>.draft.md) for a Casual article. The paths of the draft copy (<name>.unrevised.md), the pre-fix copy
@@ -23,6 +23,8 @@ ARTICLE is the "합니다체" article to post-process: the output file (<name>.m
 - check: compares the draft copy with ARTICLE. Prints the number of changed sentences, numbers found only in the draft
   and new numbers, changes to headings, code, and tables, items whose lint status got worse, and new sentences with 3
   or more connective endings.
+  With --short, check and audit judge with the short profile, the same as lint_ko.py --short. Use it whenever the
+  draft was linted with --short, or the two scripts disagree on short texts.
 - mark: copies ARTICLE to the pre-fix copy (overwriting it if present) before fixing what the post-edit review flagged.
 - audit: compares the base copy (--base, otherwise the pre-fix copy, otherwise the draft copy) with ARTICLE by sentence,
   heading, and table row. For each changed or newly written unit, prints the questions the post-edit reviewer asks
@@ -366,13 +368,16 @@ def _connectives(masked):
     return n
 
 
-def _lint(text, facts_text):
-    analysis = L.analyze(text, facts_text=facts_text)
-    ev = L.evaluate(analysis, L.load_thresholds(), "default", max_hits=3)
+def _lint(text, facts_text, short=False):
+    # The same allowances and profile as lint_ko.py run(): a skill may allow some gate patterns (allow_patterns in
+    # thresholds.json), and a short text is judged with the short profile.
+    thresholds, patterns_spec = L.apply_profile(L.load_thresholds(), L.load_json(L.PATTERNS_PATH), short)
+    analysis = L.analyze(text, patterns_spec=patterns_spec, facts_text=facts_text)
+    ev = L.evaluate(analysis, thresholds, "default", max_hits=3, patterns_spec=patterns_spec)
     return analysis, ev
 
 
-def compare(before, after, facts_text=None):
+def compare(before, after, facts_text=None, short=False):
     pre = [r["text"] for r in sentence_records(before, include_refs=True)]
     post_recs = sentence_records(after, include_refs=True)
     post = [r["text"] for r in post_recs]
@@ -401,8 +406,8 @@ def compare(before, after, facts_text=None):
         "chars": [L.analyze(before)["stats"]["chars"], L.analyze(after)["stats"]["chars"]],
     }
 
-    _, ev_b = _lint(before, facts_text)
-    an_a, ev_a = _lint(after, facts_text)
+    _, ev_b = _lint(before, facts_text, short)
+    an_a, ev_a = _lint(after, facts_text, short)
     st_b = {r["id"]: r["status"] for r in ev_b["results"]}
     worse_ai, worse_dist, bad_now = [], [], []
     for r in ev_a["results"]:
@@ -964,7 +969,7 @@ def name_overlaps(units, idx):
     return found
 
 
-def audit(before, after, facts_text=None):
+def audit(before, after, facts_text=None, short=False):
     pre, post = audit_units(before), audit_units(after)
     sm = difflib.SequenceMatcher(None, [u["text"] for u in pre], [u["text"] for u in post], autojunk=False)
     opcodes = [op for op in sm.get_opcodes() if op[0] != "equal"]
@@ -1023,7 +1028,7 @@ def audit(before, after, facts_text=None):
         for h in m.get("hits", []):
             if (h.get("line"), h.get("text", "")) in changed_clean:
                 lint_hits.append({"id": mid, "line": h["line"], "match": h.get("match", "")})
-    cmp = compare(before, after, facts_text)
+    cmp = compare(before, after, facts_text, short)
     return {"units": [len(pre), len(post)], "changed": len(changed), "groups": groups, "lint_hits": lint_hits,
             "lint_before": cmp["lint_before"], "lint_after": cmp["lint_after"], "gate_fail": cmp["gate_fail"],
             "worse_ai": cmp["worse_ai"], "worse_dist": cmp["worse_dist"], "must_fix": cmp["must_fix"]}
@@ -1186,7 +1191,7 @@ def cmd_audit(args):
         return 2
     fp = args.facts or facts_path(args.article)
     facts_text = L.read_text(fp) if os.path.isfile(fp) else None
-    res = audit(L.read_text(base), L.read_text(args.article), facts_text)
+    res = audit(L.read_text(base), L.read_text(args.article), facts_text, args.short)
     if args.json:
         slim = dict(res)
         for k in ("worse_ai", "worse_dist", "gate_fail"):
@@ -1220,7 +1225,7 @@ def cmd_check(args):
         return 2
     fp = args.facts or facts_path(args.article)
     facts_text = L.read_text(fp) if os.path.isfile(fp) else None
-    res = compare(L.read_text(snap), L.read_text(args.article), facts_text)
+    res = compare(L.read_text(snap), L.read_text(args.article), facts_text, args.short)
     if args.json:
         slim = dict(res)
         for k in ("worse_ai", "worse_dist", "gate_fail"):
@@ -1246,6 +1251,7 @@ def main(argv=None):
     p = sub.add_parser("check", help="Compare against the draft copy")
     p.add_argument("article")
     p.add_argument("--facts")
+    p.add_argument("--short", action="store_true", help="Judge with the short profile, like lint_ko.py --short")
     p.add_argument("--json", action="store_true")
     p = sub.add_parser("mark", help="Create the pre-fix copy")
     p.add_argument("article")
@@ -1253,6 +1259,7 @@ def main(argv=None):
     p.add_argument("article")
     p.add_argument("--base")
     p.add_argument("--facts")
+    p.add_argument("--short", action="store_true", help="Judge with the short profile, like lint_ko.py --short")
     p.add_argument("--out")
     p.add_argument("--json", action="store_true")
     try:

@@ -1,0 +1,5 @@
+schema_version: "1.1"
+name: write-report-plain
+description: 영어로 적은 장애 대응 메모로 해라체 장애 보고 글을 쓴다. 영어 동사를 단어 그대로 옮긴 표현이 없어야 하고 시각, 수치, 담당자, 정하지 않은 일이 메모와 같아야 한다.
+context:
+  scaffold_script: setup.sh

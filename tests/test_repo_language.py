@@ -19,7 +19,8 @@ HANGUL = re.compile("[가-힣]")
 LATIN = re.compile("[A-Za-z]")
 QUOTED = re.compile(r"\"[^\"\n]*\"|'[^'\n]*'|“[^”\n]*”|‘[^’\n]*’|«[^»\n]*»")
 CODE_DIRS = ("core", "dev", "tests")
-FRONT_DOCS = ("README.md", "ARCHITECTURE.md", "skills/techblog/README.md", "examples/README.md")
+FRONT_DOCS = ("README.md", "ARCHITECTURE.md", "skills/techblog/README.md", "skills/write/README.md",
+              "skills/brief/README.md", "examples/README.md")
 
 
 def mostly_korean(line):

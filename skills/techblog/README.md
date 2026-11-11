@@ -1,6 +1,6 @@
 # techblog
 
-techblog는 논문 PDF, 기술 문서, 웹 페이지, 붙여넣은 텍스트의 핵심 내용을 한국어 기술 블로그 글로 정리하는 K-Writer 스킬입니다. 설치 방법과 K-Writer 전체 소개는 [저장소 README](https://github.com/KANG-YEONWOOK/K-Writer#readme)에 있습니다.
+techblog는 논문 PDF, 기술 문서, 웹 페이지, 붙여넣은 텍스트의 핵심 내용을 한국어 기술 블로그 글로 정리하는 K-Writer 스킬입니다. 자료를 짧게 요약할 때는 brief 스킬을, 기술 블로그가 아닌 글을 쓸 때는 write 스킬을 사용합니다. 설치 방법과 K-Writer 전체 소개는 [저장소 README](https://github.com/KANG-YEONWOOK/K-Writer#readme)에 있습니다.
 
 ## 사용법
 
@@ -34,12 +34,9 @@ $techblog casual --retone paged-attention.md
 | `--retone` | 이미 작성한 글의 어투만 바꿉니다. 문장 순서, 수치, 고유명사는 바꾸지 않습니다. |
 | `--keep-work` | fact sheet와 후처리 전 초안 같은 작업 파일을 삭제하지 않습니다. |
 | `--defaults` | 설정값을 묻지 않고 기본값을 사용합니다. |
-| `short` | short 모드로 실행합니다. |
 | 추가 지시 | "독자는 백엔드 개발자"처럼 문장으로 덧붙입니다. 여기에 적은 값은 다시 묻지 않습니다. |
 
 어투는 Default(합니다체)와 Casual(해요체) 중에서 선택합니다. Casual 글은 "~더라고요", "~네요" 같은 어미를 사용하지 않고 정중한 해요체로만 문장을 끝냅니다. Casual로 요청하면 먼저 Default 글을 완성한 뒤 문장 끝만 바꿔 Casual 글을 만듭니다. 그래서 두 글은 문장 끝만 다르고 내용은 같습니다. 이때 Default 글은 작업 파일이므로 `--keep-work`를 붙이지 않으면 Casual 글을 만든 뒤 삭제합니다.
-
-short 모드는 도구가 템플릿으로 만든 짧은 영어 글을 구조, 순서, 분량을 유지한 채 한국어로 옮깁니다. Slack에 올리는 질문, 검토 요청, 보고, 진행 알림이 여기에 해당합니다. fact sheet 작성과 subagent 점검을 생략해 몇 분 안에 끝내는 것이 목표입니다. 규칙은 [`short.md`](references/short.md)에 있습니다.
 
 [`examples/`](https://github.com/KANG-YEONWOOK/K-Writer/tree/main/examples) 폴더에는 LLM이 여러 요청에 동시에 답할 때 메모리를 관리하는 방법을 제안한 PagedAttention 논문(SOSP 2023, CC BY 4.0)을 techblog로 정리한 Default 글과 Casual 글이 있습니다.
 
