@@ -11,3 +11,6 @@ __pycache__/
 
 # Serena MCP project settings
 .serena/
+
+# macOS Finder metadata
+.DS_Store
