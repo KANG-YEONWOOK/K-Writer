@@ -4,13 +4,13 @@ description: 전달받은 자료(파일, PDF, URL, 붙여넣은 텍스트)나 �
 license: MIT
 allowed-tools: Read Write Edit Glob Grep WebFetch WebSearch Agent Bash(python "${CLAUDE_SKILL_DIR}/scripts/*) Bash(python ${CLAUDE_SKILL_DIR}/scripts/*) Bash(python3 "${CLAUDE_SKILL_DIR}/scripts/*) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/*)
 metadata:
-  version: "0.5.0"
+  version: "0.5.1"
   repository: https://github.com/KANG-YEONWOOK/K-Writer
 ---
 
 # write
 
-이 스킬은 사용자가 전달한 자료나 주제로 사용자가 정한 목적, 분량, 어투에 맞는 한국어 글을 쓴다. K-Writer의 기본 스킬이다. techblog와 brief는 글의 목적, 어투 선택지, 구성을 미리 정해 둔 스킬이고 write는 이 값을 사용자에게 받는다. 기준 글은 사람이 같은 목적으로 쓴 한국어 글이다. 독자가 문장의 의미를 다시 따져 보지 않고 한 번에 이해할 수 있게 쓴다. 독자가 모를 용어는 처음 나올 때 무엇인지 설명한다. 모든 문장은 따로 읽어도 무엇에 대한 내용인지 알 수 있어야 한다. 서술어는 사람이 쓴 한국어 글에서 그 주어, 목적어와 함께 사용하는 표현을 쓴다. 글의 사실은 자료와 사용자가 알려 준 내용에서만 가져온다.
+이 스킬은 사용자가 전달한 자료나 주제로 사용자가 정한 목적, 분량, 어투에 맞는 한국어 글을 쓴다. K-Writer의 기본 스킬이다. techblog와 brief는 글의 목적, 어투 선택지, 구성을 미리 정해 둔 스킬이고 write는 이 값을 사용자에게 받는다. 기준 글은 사람이 같은 목적으로 쓴 한국어 글이다. 독자가 문장의 의미를 다시 따져 보지 않고 한 번에 이해할 수 있게 쓴다. 독자가 모를 용어는 처음 나올 때 무엇인지 설명한다. 모든 문장은 따로 읽어도 무엇에 대한 내용인지 알 수 있어야 한다. 바꾼 일과 정한 값은 무엇을 무엇으로 바꿨는지, 누가 어떤 값으로 정했는지까지 써서 독자가 되묻지 않게 한다. 서술어는 사람이 쓴 한국어 글에서 그 주어, 목적어와 함께 사용하는 표현을 쓴다. 글의 사실은 자료와 사용자가 알려 준 내용에서만 가져온다.
 
 Claude Code와 Codex에서 사용한다. 먼저 [실행 환경 안내](references/runtime.md)를 읽고 현재 환경의 입력, 도구, 스킬 경로를 확인한다.
 

@@ -1,0 +1,5 @@
+schema_version: "1.1"
+name: brief-release-record
+description: K-Writer 0.5.0 개발 기록을 합니다체로 자세히 요약한다. 2026-11-11 사용자 검토에서 지적된 문장("구성과 분량 범위는 측정값이 아니라 정한 값입니다")처럼 내용을 밝히지 않고 범주만 쓴 문장이 없어야 한다.
+context:
+  scaffold_script: setup.sh

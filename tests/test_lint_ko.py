@@ -557,6 +557,128 @@ class KoreanPatternTest(unittest.TestCase):
                      "모든 셀을 다시 실행하지 않았다면 출력은 이전 결과일 수 있습니다."):
             self.assertEqual(self.m(text)["A18.negation_scope"]["value"], 0, text)
 
+    # 2026-11-11 user review: a brief summary said "측정값이 아니라 정한 값입니다" and "수정한 내용 세 가지는" without saying
+    # what was set or changed. 1,206 KCI abstracts (2018~2021) had the change forms 3 times and the count form once.
+    CHANGE_HITS = ("그래서 기본 독자와 독립 점검 방식을 수정했습니다.", "2차 테스트 뒤에 수정한 내용은 다시 확인하지 않았습니다.",
+                   "배포 절차가 바뀌었습니다.", "바뀐 부분은 아직 테스트하지 않았습니다.")
+    CHANGE_KEEP = ("기본 독자를 분야를 모르는 사람에서 자료의 독자와 같은 수준의 사람으로 바꿨습니다.",
+                   "독립 점검 방식을 subagent가 요약만 읽고 보고하도록 수정했습니다.",
+                   "배치 크기를 100에서 10으로 변경했습니다.", "수정한 내용은 다음과 같습니다.",
+                   "수정한 부분은 배치 크기와 재시도 간격입니다(둘 다 설정 파일에 있습니다).",
+                   "수정한 부분은 배치 크기와 재시도 간격입니다.", "설정 파일의 내용이 다음과 같이 변경됩니다.",
+                   "이 방식은 지연을 줄입니다.", "설정을 확인했습니다.")
+    COUNT_HITS = ("2차 테스트 뒤에 수정한 내용 세 가지는 다시 확인하지 않았습니다.", "문제 두 가지를 해결했습니다.")
+    COUNT_KEEP = ("바꾼 설정은 배치 크기와 재시도 간격 두 가지입니다.", "원인 두 가지는 다음과 같습니다.",
+                  "제어하는 방법은 API를 사용하는 방법과 파일을 수정하는 방법 2가지가 있습니다.",
+                  "문제 두 가지(배치 대기, 재시도)를 해결했습니다.", "서비스 12개에서 측정했습니다.",
+                  "문제 두 가지를 해결했습니다. 첫째, 배치 대기를 줄였습니다.")
+
+    def test_category_change(self):
+        for text in self.CHANGE_HITS:
+            self.assertEqual(self.m(text)["A18.category_change"]["value"], 1, text)
+        for text in self.CHANGE_KEEP:
+            self.assertEqual(self.m(text)["A18.category_change"]["value"], 0, text)
+
+    def test_count_only(self):
+        for text in self.COUNT_HITS:
+            self.assertEqual(self.m(text)["A18.count_only"]["value"], 1, text)
+        for text in self.COUNT_KEEP[:5]:
+            self.assertEqual(self.m(text)["A18.count_only"]["value"], 0, text)
+
+    def test_a_lead_in_before_a_list_is_not_a_candidate(self):
+        # write 0.5.0 run: "시범 운영에서는 리뷰 방식을 두 가지 바꿉니다." introduced a numbered list of the two changes.
+        text = ("시범 운영에서는 리뷰 방식을 바꿉니다.\n\n1. 리뷰어 2명을 자동으로 지정합니다.\n"
+                "2. 500줄을 넘는 PR은 나눠서 올립니다.\n")
+        self.assertEqual(self.m(text)["A18.category_change"]["value"], 0)
+        self.assertEqual(self.m("시범 운영에서는 리뷰 방식을 바꿉니다.\n\n다음 달에 결과를 봅니다.\n")
+                         ["A18.category_change"]["value"], 1)
+        text = "문제 두 가지를 해결했습니다.\n\n- 배치 대기를 줄였습니다.\n- 재시도를 없앴습니다.\n"
+        self.assertEqual(self.m(text)["A18.count_only"]["value"], 0)
+        # "추가한 것" nominalizes the clause; it does not stand for the added items
+        self.assertEqual(self.m("독립 점검에서 질문마다 설명을 추가한 것도 원인이었습니다.")["A18.category_change"]["value"], 0)
+
+    def test_content_candidates_are_check_items(self):
+        a = L.analyze("\n\n".join(self.CHANGE_HITS[:2] + self.COUNT_HITS[1:]))
+        ev = L.evaluate(a, L.load_thresholds(), "default")
+        st = {r["id"]: r for r in ev["results"]}
+        self.assertEqual(st["A18.category_change"]["status"], "CHECK")
+        self.assertEqual(st["A18.count_only"]["status"], "CHECK")
+        self.assertNotIn("A1.np_check", st)                         # only the short profile shows this candidate
+        out = L.render_text("x.md", "default", a, ev)
+        self.assertIn("무엇을 무엇으로 바꾸거나 정했는지", out)
+        self.assertEqual(ev["summary"]["fail"] + ev["summary"]["gate_fail"], 0)
+
+    # The sentence the user pointed out on 2026-11-11 and the forms brief wrote for the same source line in later runs.
+    # Human texts: 0 in 1,206 KCI abstracts and 0 in 368 tech blog posts, so the narrow form is a policy item.
+    KIND_HITS = ("write와 brief의 구성과 분량 범위는 측정값이 아니라 정한 값입니다.",
+                 "write와 brief의 구성과 분량 범위는 측정해서 정한 값이 아닙니다.",
+                 "write와 brief가 정한 글의 구성과 분량 범위는 측정해서 얻은 값이 아닙니다.",
+                 "만료 시간과 대상 범위는 측정값이 아니다.",
+                 "write와 brief의 구성과 분량 범위는 측정하지 않고 정했고, 가져온 기준치 15개는 기술 블로그 글에서 측정한 값입니다.",
+                 "write와 brief가 따르는 글의 구성과 분량 범위는 측정해서 정한 것이 아닙니다.")
+    # The wider form: one of 186 tech blog posts from 2025 on had it ("운영 경험으로 정한 값입니다").
+    KIND_CHECK_HITS = ("경보 임계값은 임시로 정한 값입니다.", "이 값은 추정치입니다.",
+                       "경보 임계값도 결제 서비스에서 가져온 값입니다.")
+    KIND_KEEP = ("승인 요청의 타임아웃 5초는 개발팀이 부하 테스트 없이 임시로 정한 값입니다.",
+                 "자동완성 캐시의 만료 시간 10분은 측정해서 정한 값이 아니고 10월 2일 운영팀 회의에서 정한 값입니다.",
+                 "`max_retries`의 기본값은 측정값이 아닙니다.", "이 기준치는 기술 블로그 글에서 측정한 값입니다.",
+                 "이 값은 사용자가 설정한 값입니다.", "응답 시간은 측정하지 않았습니다.", "개발팀이 정한 값을 사용합니다.")
+
+    def test_value_kind(self):
+        for text in self.KIND_HITS:
+            m = self.m(text)
+            self.assertEqual((m["A18.value_kind"]["value"], m["A18.value_kind_check"]["value"]), (1, 0), text)
+        for text in self.KIND_CHECK_HITS:
+            m = self.m(text)
+            self.assertEqual((m["A18.value_kind"]["value"], m["A18.value_kind_check"]["value"]), (0, 1), text)
+        for text in self.KIND_KEEP:
+            m = self.m(text)
+            self.assertEqual((m["A18.value_kind"]["value"], m["A18.value_kind_check"]["value"]), (0, 0), text)
+        # a version number is not the value the sentence is about
+        self.assertEqual(self.m("K-Writer 0.5.0의 분량 범위는 측정값이 아닙니다.")["A18.value_kind"]["value"], 1)
+
+    def test_value_kind_is_a_policy_item(self):
+        th = L.load_thresholds()
+        self.assertTrue(th["metrics"]["A18.value_kind"]["policy"])
+        for short in (False, True):
+            a = L.analyze(self.KIND_HITS[0] + " " + self.KIND_CHECK_HITS[0])
+            th_short, _ = L.apply_profile(L.load_thresholds(), L.load_json(L.PATTERNS_PATH), short)
+            ev = L.evaluate(a, th_short, "default")
+            st = {r["id"]: r for r in ev["results"]}
+            self.assertEqual(st["A18.value_kind"]["status"], "FAIL")
+            self.assertEqual(st["A18.value_kind_check"]["status"], "CHECK")
+        ev = L.evaluate(L.analyze(self.KIND_KEEP[0]), L.load_thresholds(), "default")
+        self.assertEqual({r["id"]: r for r in ev["results"]}["A18.value_kind"]["status"], "PASS")
+
+    def test_recorded_summaries_with_the_pointed_sentence(self):
+        # Summaries of one development record: the user's session with 0.5.0, and two plugin eval runs of 2026-11-11
+        # made while the form was only a check candidate. Each kept one sentence of the form.
+        results = os.path.join(ROOT, "evals", "brief-release-record", "results")
+        for name in ("baseline-k-writer-0.5.0.user-session.md", "eval-1.detail.md", "eval-2.check-only.detail.md"):
+            with open(os.path.join(results, name), encoding="utf-8") as f:
+                hits = L.analyze(f.read())["metrics"]["A18.value_kind"]["hits"]
+            self.assertEqual(len(hits), 1, name)
+            self.assertIn("구성과 분량 범위", hits[0]["text"])
+
+    def test_fact_rows(self):
+        # plugin eval run of 2026-11-11: the fact sheet kept the source line as it was and the summary repeated it.
+        facts = ("# fact sheet\n\n| 사실 | 값과 조건 | 원문 표현 | 자료 위치 |\n|---|---|---|---|\n"
+                 "| write와 brief의 구성과 분량 범위는 측정값이 아니다 | - | 구성과 분량 범위는 측정값이 아니다 | 한계 5 |\n"
+                 "| 2차 실행 뒤에 수정한 내용 세 가지는 다시 실행해 확인하지 않았다 | - | - | 한계 2 |\n"
+                 "| 단위 테스트 210개가 통과했다 | 210개 | 210 tests | 확인한 것 |\n"
+                 "| 기본 독자를 분야를 모르는 사람에서 자료의 독자와 같은 수준의 사람으로 바꿨다 | - | 방식을 수정했다 | 바꾼 것 |\n")
+        a = L.analyze("단위 테스트 210개가 통과했습니다.", facts_text=facts)
+        hits = a["metrics"]["A18.fact_rows"]["hits"]
+        self.assertEqual([h["text"][:14] for h in hits], ["fact sheet 5줄:", "fact sheet 6줄:"])   # one hit per row
+        self.assertTrue(all(h["line"] == 0 for h in hits))
+        ev = L.evaluate(a, L.load_thresholds(), "default")
+        self.assertEqual({r["id"]: r for r in ev["results"]}["A18.fact_rows"]["status"], "CHECK")
+        self.assertIn("fact sheet 5줄", L.render_text("x.md", "default", a, ev))
+        # only the "사실" or "의미" column is read, and the item is absent without a fact sheet
+        self.assertNotIn("A18.fact_rows", L.analyze("단위 테스트 210개가 통과했습니다.")["metrics"])
+        term_table = "| 원어 | 글에 쓸 표기 | 처음 나올 때 설명 |\n|---|---|---|\n| scope | 범위 | 방식을 수정했다 |\n"
+        self.assertEqual(L.analyze("테스트가 통과했습니다.", facts_text=term_table)["metrics"]["A18.fact_rows"]["value"], 0)
+
     def test_term_mix(self):
         # Post 7 in user review: the title used retina, and the body used "망막" after the first appearance, "retina(망막)".
         m = self.m("# retina와 회로\n\nretina(망막)는 빛을 받습니다. 망막의 회로는 작습니다.\n")
@@ -993,6 +1115,26 @@ class PlainTermsDocsTest(unittest.TestCase):
         for word in ("| version | 버전 |", "| test | 테스트 |", "| word | 단어 |", "| meaning | 의미 |", "| pair | 쌍 |"):
             self.assertIn(word, text)
         self.assertIn('fact sheet', text)
+
+
+class DraftingDocsSentenceFormTest(unittest.TestCase):
+    """The model repeats sentence forms it reads before drafting. In the 2026-11-11 user review, the brief summary sentence
+    "측정값이 아니라 정한 값입니다" copied "측정값이 아니라 정한 값이다" from brief's genre.md. The documents read before the
+    draft keep negative parallelism out of their own sentences. Quoted examples are masked by the lint."""
+
+    DOCS = ("SKILL.md", "references/style-guide.md", "references/genre.md", "references/drafting.md",
+            "references/fact-sheet.md", "references/settings.md", "references/settings-protocol.md",
+            "references/runtime.md")
+
+    def test_docs_read_before_drafting_have_no_negative_parallelism(self):
+        skills_dir = os.path.join(SCRIPTS, "..", "..")
+        for skill in sorted(d for d in os.listdir(skills_dir) if os.path.isfile(os.path.join(skills_dir, d, "SKILL.md"))):
+            for name in self.DOCS:
+                metrics = L.analyze(L.read_text(os.path.join(skills_dir, skill, name)))["metrics"]
+                with self.subTest(skill=skill, doc=name):
+                    self.assertEqual([h["text"][:80] for h in metrics["A1.np"]["hits"]], [])
+                    # nor the form that says "not a measured value" without the value (policy item since 0.5.1)
+                    self.assertEqual([h["text"][:80] for h in metrics["A18.value_kind"]["hits"]], [])
 
 
 class ToneTest(unittest.TestCase):

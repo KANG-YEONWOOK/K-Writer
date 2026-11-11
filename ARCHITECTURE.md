@@ -23,6 +23,7 @@ K-Writer는 한국어 글쓰기 스킬 여러 개를 제공하는 플러그인�
 | `core/` | 모든 스킬이 함께 사용하는 문서(`references/`)와 검사 스크립트(`scripts/`)의 원본. `dev/sync_core.py`가 스킬 폴더마다 같은 이름으로 복사하므로 스킬 폴더의 복사본은 직접 수정하지 않는다 |
 | `dev/sync_core.py`, `dev/new_skill.py`, `dev/borrow_thresholds.py` | core를 스킬 폴더에 복사하는 스크립트, 새 스킬 폴더를 만드는 스크립트, 기준 글 표본이 없는 스킬에 다른 스킬의 기준치를 복사하는 스크립트 |
 | `dev/baseline/techblog/` | techblog의 기준 글(사람이 쓴 기술 블로그 글)을 측정하는 `measure.py`, 측정값으로 기준치를 계산하는 `calibrate.py`, 계산 결과 보고서 `calibration.md` |
+| `dev/baseline/brief/` | 사람이 쓴 요약의 표본(KCI 논문 초록 1,206편)을 수집하고 측정하는 `measure.py`. brief의 한 문단 분량 범위를 이 표본의 문장 길이와 대조하고, 점검 후보 항목이 이 표본에 얼마나 나오는지 측정한다. 기준치 보정에는 사용하지 않는다 |
 | `dev/dogfood/` | `claude -p`로 스킬을 실행하고 스킬이 작성한 글을 judge 모델(글을 읽고 판정 항목처럼 정해진 기준으로 점수를 매기는 모델)로 평가하는 스크립트 |
 | `evals/` | 스킬에 맡길 요청과 채점 기준을 묶은 평가 케이스. `claude plugin eval`로 실행한다 |
 | `dev/codex/` | Codex에서 설치와 글 작성을 검증하는 스크립트 |
@@ -85,10 +86,10 @@ core의 어투는 Default(합니다체), Casual(해요체), Plain(해라체) 세
 
 `lint_ko.py`는 core의 `rules.json`과 스킬의 `thresholds.json`을 합친 값으로 판정한다(`load_thresholds`).
 
-- `rules.json`: 검사 항목 110개의 정의, Gate와 policy, 고정 기준(fixed), 짧은 글 기준(`short`). 모든 스킬에 공통이다. 항목을 추가하거나 수정할 때는 이 파일을 수정한다.
+- `rules.json`: 검사 항목 115개의 정의, Gate와 policy, 고정 기준(fixed), 짧은 글 기준(`short`). 모든 스킬에 공통이다. 항목을 추가하거나 수정할 때는 이 파일을 수정한다.
 - `thresholds.json`: 그 스킬의 기준 글로 보정한 값(gate도 fixed도 아닌 항목의 PASS, WARN 경계와 사람 글 분포). metric 필드를 덮어쓰거나 `drop`으로 항목을 제외할 수 있다. 보정값이 없는 분포 지표는 INFO로 값만 보고한다.
-- 가져온 기준치: write와 brief는 아직 기준 글 표본이 없다. 표본이 없으면 부정 대구나 번역투 같은 AI 문체 항목도 판정하지 못하므로, 두 스킬은 특정 표현의 빈도를 세는 항목 15개의 기준치를 techblog에서 가져온다. `thresholds.json`의 `borrowed`에 가져올 스킬과 항목을 적고 `python dev/borrow_thresholds.py`로 복사한다. techblog의 기준치를 다시 보정하면 이 명령을 다시 실행하고, `--check`와 `tests/test_tones_and_profiles.py`가 복사한 값이 원본과 같은지 확인한다. 문장 길이, 문단, 목록 비중처럼 글의 종류에 따라 달라지는 항목은 가져오지 않는다.
-- 짧은 글 기준: `lint_ko.py --short`와 `revise_ko.py`의 `check --short`, `audit --short`는 `short`의 값을 적용한다. 문장 수가 적으면 문장 하나로 값이 크게 달라지는 분포 항목을 제외하고, `count`에 적은 1,000자당 비율 항목을 개수로 판정하며, poisson 항목은 한 번까지 허용한다. brief는 요약에, write는 본문이 공백 제외 1,500자 미만인 글에 이 기준을 사용한다. 스킬의 `thresholds.json`에 `short`가 있으면 그 값이 core의 값을 대신한다.
+- 가져온 기준치: write와 brief는 기준치를 보정할 기준 글 표본이 아직 없다. brief는 논문 초록 1,206편을 측정했지만 초록이 학술 문체라서 대조에만 사용한다([dev/baseline/brief/README.md](dev/baseline/brief/README.md)). 보정한 값이 없으면 부정 대구나 번역투 같은 AI 문체 항목도 판정하지 못하므로, 두 스킬은 특정 표현의 빈도를 세는 항목 15개의 기준치를 techblog에서 가져온다. `thresholds.json`의 `borrowed`에 가져올 스킬과 항목을 적고 `python dev/borrow_thresholds.py`로 복사한다. techblog의 기준치를 다시 보정하면 이 명령을 다시 실행하고, `--check`와 `tests/test_tones_and_profiles.py`가 복사한 값이 원본과 같은지 확인한다. 문장 길이, 문단, 목록 비중처럼 글의 종류에 따라 달라지는 항목은 가져오지 않는다.
+- 짧은 글 기준: `lint_ko.py --short`와 `revise_ko.py`의 `check --short`, `audit --short`는 `short`의 값을 적용한다. 문장 수가 적으면 문장 하나로 값이 크게 달라지는 분포 항목을 제외하고, `count`에 적은 1,000자당 비율 항목을 개수로 판정하며, poisson 항목은 한 번까지 허용한다. 한 번까지 허용하는 부정 대구 문장은 점검 후보(`A1.np_check`)로도 출력한다(`short`의 `check`). brief는 요약에, write는 본문이 공백 제외 1,500자 미만인 글에 이 기준을 사용한다. 스킬의 `thresholds.json`에 `short`가 있으면 그 값이 core의 값을 대신한다.
 - 스킬별 허용: 스킬의 `thresholds.json`은 `allow_patterns`(패턴 ID마다 검사하지 않을 정규식), `allow_imperative`(Default 글의 요청문 "~해 주세요"), `allow_inga_question`(Default 글의 질문 "~인가요?")으로 그 장르에서 자연스러운 표현을 허용한다. 항목의 `kind`를 `check`로 바꾸면 Gate 대신 점검 후보로 출력하고, `group`을 `fact`로 정하면 "자료 대조 후보"로 묶어 출력한다. write가 이 값들을 사용하고 근거는 write의 rubric.md에 있다.
 - 보정은 `dev/baseline/<skill>/`의 표본으로 한다([dev/baseline/README.md](dev/baseline/README.md)). techblog의 `calibrate.py`는 합친 값으로 계산하고 보정값(`split_thresholds`)만 저장한다.
 

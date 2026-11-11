@@ -5,6 +5,7 @@
 | 스킬 | 기준 글 | 폴더 | 보정하는 파일 |
 |---|---|---|---|
 | techblog | 토스, 카카오, 당근, 네이버 D2, 우아한형제들, NAVER CLOVA 기술 블로그 글 600편(2026-11-02 측정) | [techblog/](techblog/README.md) | `skills/techblog/scripts/thresholds.json` |
+| brief | KCI 논문의 한국어 초록 1,206편(2026-11-11 측정). brief의 한 문단 분량 범위를 초록의 문장 길이와 대조하고 점검 후보 항목이 초록에 얼마나 나오는지 측정하는 데만 사용한다 | [brief/](brief/README.md) | 없음(기준치는 보정하지 않았다) |
 
 ## 기준치 파일 구성
 

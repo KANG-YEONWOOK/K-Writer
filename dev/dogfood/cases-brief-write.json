@@ -1,0 +1,35 @@
+{
+ "notes": [
+  "run_skill.py의 brief, write 케이스. files는 저장소 루트 기준 경로이고 실행 폴더에 같은 파일 이름으로 복사한다.",
+  "b1, b2의 자료는 2026-11-11 사용자 검토에서 지적된 문장이 나온 개발 기록이다(evals/brief-release-record).",
+  "budget은 --max-budget-usd, timeout은 초다. 지정하지 않으면 run_skill.py의 기본값을 사용한다."
+ ],
+ "cases": [
+  {"name": "b1-release-detail", "files": ["evals/brief-release-record/source.md"],
+   "prompt": "/k-writer:brief source.md 자세히 합니다체 --keep-work -o summary.md"},
+  {"name": "b2-release-para", "files": ["evals/brief-release-record/source.md"],
+   "prompt": "/k-writer:brief source.md 한 문단으로 합니다체 --keep-work -o summary.md"},
+  {"name": "b3-note-para", "files": ["dev/dogfood/sources/rate-limiter-note.md"],
+   "prompt": "/k-writer:brief rate-limiter-note.md 한 문단으로 합니다체 --keep-work -o summary.md"},
+  {"name": "b4-meeting-list-plain", "files": ["evals/brief-meeting-plain/source.md"],
+   "prompt": "/k-writer:brief source.md 항목으로 한 문단 분량 해라체 --keep-work -o summary.md"},
+  {"name": "b5-codex-para-casual", "files": ["dev/codex/REPORT.md"],
+   "prompt": "/k-writer:brief REPORT.md 한 문단으로 해요체 --keep-work -o summary.md"},
+  {"name": "b7-pep-detail-plain", "files": ["dev/dogfood/sources/pep-0659.rst"],
+   "prompt": "/k-writer:brief pep-0659.rst 자세히 해라체 --keep-work -o summary.md"},
+  {"name": "b10-devlog-para", "files": ["evals/brief-devlog/source.md"],
+   "prompt": "/k-writer:brief source.md(검색 서비스 2.4 개발 기록) 한 문단으로 합니다체. 이 기록을 읽지 않은 같은 회사 개발자가 읽을 요약이야. --keep-work -o summary.md"},
+  {"name": "b11-devlog-detail", "files": ["evals/brief-devlog/source.md"],
+   "prompt": "/k-writer:brief source.md(검색 서비스 2.4 개발 기록) 자세히 합니다체 --keep-work -o summary.md"},
+  {"name": "w1-notice-casual", "files": ["evals/write-notice-casual/source.md"], "budget": 14, "timeout": 3000,
+   "prompt": "/k-writer:write source.md(스터디 모집 메모)로 사내 게시판에 올릴 스터디 모집 안내 글을 써줘. 독자는 스터디에 처음 참가하는 사내 직원이야. 분량은 공백 제외 500자 안팎, 어투는 해요체. -o notice.md --keep-work"},
+  {"name": "w2-report-plain", "files": ["evals/write-report-plain/source.md"], "budget": 14, "timeout": 3000,
+   "prompt": "/k-writer:write source.md(장애 대응 메모)를 팀 위키에 남길 장애 보고 글로 정리해줘. 우리 팀이 겪은 장애야. 독자는 대응에 참여하지 않은 같은 회사 개발자야. 분량은 자료에 맞추고 어투는 해라체(~다). -o report.md --keep-work"},
+  {"name": "w3-release-explain", "files": ["evals/brief-release-record/source.md"], "budget": 14, "timeout": 3000,
+   "prompt": "/k-writer:write source.md는 K-Writer 플러그인의 0.5.0 개발 기록이야. 이 자료로 K-Writer를 이미 사용하는 사람에게 0.5.0에서 무엇이 달라졌는지 설명하는 글을 써줘. 목적은 설명, 분량은 공백 제외 1,000자 안팎, 어투는 합니다체. -o release-note.md --keep-work"},
+  {"name": "w4-proposal-default", "files": ["dev/dogfood/sources/proposal-memo.md"], "budget": 14, "timeout": 3000,
+   "prompt": "/k-writer:write proposal-memo.md(메모)로 팀장에게 보낼 제안 글을 써줘. 목적은 설득, 분량은 짧게(500자 안팎), 어투는 합니다체. -o proposal.md --keep-work"},
+  {"name": "w5-pep-explain-long", "files": ["dev/dogfood/sources/pep-0659.rst"], "budget": 22, "timeout": 4200,
+   "prompt": "/k-writer:write pep-0659.rst(PEP 659 문서)로 Python을 사용하지만 인터프리터 내부는 모르는 개발자에게 이 PEP의 내용을 설명하는 글을 써줘. 목적은 설명, 분량은 보통(1,500자 안팎)보다 길어도 되니 자료에 맞추고, 어투는 합니다체. -o pep-659.md --keep-work"}
+ ]
+}

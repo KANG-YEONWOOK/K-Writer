@@ -1273,6 +1273,165 @@ def bare_author_hits(blocks, sentences, max_hits=10):
     return hits[:max_hits]
 
 
+# A18.category_change: the sentence says that something was changed but not from what to what. Two forms:
+# a category noun with a change verb ("방식을 수정했습니다"), and a change verb modifying a category noun ("수정한 내용은").
+# A18.count_only: a count stands in for the items ("문제 세 가지를 해결했습니다").
+# In 1,206 KCI abstracts (661,491 characters, 2018~2021) the two change forms appeared 3 times and the count form once;
+# in three final summaries that brief 0.5.0 wrote from one development record (2,302 characters) they appeared 3 times
+# and once (dev/baseline/brief/README.md).
+CATEGORY_NOUN = r"(?:방식|방법|내용|부분|사항|구조|기준|규칙|절차|문구|로직|동작|형식|범위|구성|설정|정책|조건|흐름|체계)"
+CHANGE_VERB = (r"(?:(?:수정|변경|개선|조정|보완|보강|개편|재구성|재설계|교체)"
+               r"(?:했|하였|한다|합니다|해요|해서|하고|하며|한\s뒤|됐|되었|된다|됩니다|돼요)"
+               r"|바꿨|바꾸었|바꿉니다|바꾼다|바꿔요|바꾸고|바꾼\s뒤|바뀌었|바뀝니다|바뀐다|바뀌어요|고쳤)")
+CATEGORY_CHANGE_RE = re.compile(CATEGORY_NOUN + r"(?:을|를|이|가|은|는|도)\s+(?:[^\s.,]+\s+){0,2}?" + CHANGE_VERB)
+CHANGED_CATEGORY_RE = re.compile(r"(?:수정한|변경한|바꾼|바뀐|개선한|보완한|고친|추가한|달라진)\s(?:내용|부분|사항|점|곳|항목)"
+                                 r"(?:은|는|을|를|이|가|도|과|와|에)?(?=[\s.,]|$)")
+# The sentence says from what to what, or how: "A에서 B로", "B로 바꿨습니다", "~하도록 수정했습니다"
+CHANGE_DETAIL_RE = re.compile(r"에서\s[^.]{0,40}?(?:으로|로)\s"
+                              r"|(?:으로|로)\s(?:[^\s.,]+\s+){0,2}?(?:수정|변경|바꾸|바꿨|바꿉|바꾼|바뀌|바뀐|교체|조정|고쳤)"
+                              r"|(?:도록|하게|되게|않게|있게|없게)\s")
+COUNT_ONLY_RE = re.compile(r"(?:내용|사항|부분|문제|항목|변경|수정|개선|원인|이유|방법|기능|규칙|조건|단계|종류|요소|점|곳)\s?"
+                           r"(?:[두세네]|다섯|여섯|[2-9])\s?(?:가지|개|건|군데)(?:는|은|를|을|가|이|도|에|로)(?=[\s.,]|$)")
+# The items follow in the same sentence or right after it: "다음 세 가지입니다", a colon, a parenthesis, a comma list
+ITEMS_FOLLOW_RE = re.compile(r"다음|아래|[:(,]|첫째|첫\s번째|먼저|각각")
+ITEMS_BEFORE_RE = re.compile(r"[가-힣A-Za-z0-9)](?:와|과)\s|\s및\s")
+# The details follow right after the sentence: "내용이 다음과 같이 변경된다"
+LEAD_IN_RE = re.compile(r"다음|아래|:\s*$")
+# The sentence names the changed items as its predicate: "수정한 부분은 배치 크기와 재시도 간격입니다"
+NAMES_ITEMS_RE = re.compile(r"(?:입니다|이다|이에요|예요|였습니다|이었습니다|였다|이었다|였어요|이었어요)[.]?\s*$")
+
+
+# A18.value_kind: the sentence says that a value is not a measured one and gives no value ("구성과 분량 범위는
+# 측정값이 아닙니다"). The reader cannot tell which values the sentence is about. The form the user pointed out on
+# 2026-11-11; 0 times in 1,206 KCI abstracts and in 368 tech blog posts (dev/baseline/brief/README.md), so it is a
+# policy item. A18.value_kind_check is the wider form ("임시로 정한 값입니다", "추정치입니다"), which one human post had.
+# A sentence that has a number or inline code before the classifying phrase is taken to state the value
+# ("타임아웃 5초는 임시로 정한 값입니다").
+_KIND_END = r"(?:이다|입니다|이에요|예요|이며|이고|이라|이었|였|일\s뿐|임을|이기)"
+_KIND_NOT = r"(?:이|은|는|도)?\s?(?:아니|아닙|아녜|아닌)"
+VALUE_KIND_RE = re.compile(
+    r"(?:측정값|측정치|실측값|측정한\s(?:값|수치|결과)|측정(?:해서|하여|해)\s(?:정한|얻은|구한)\s(?:값|수치|것))" + _KIND_NOT
+    + r"|측정(?:하지\s않고|\s?없이)\s(?:[^\s.,]+\s){0,2}?정(?:했|하였|한다|합니다|해요)"
+    + r"|측정(?:해서|하여|해)\s정하지\s않")
+VALUE_KIND_CHECK_RE = re.compile(
+    r"측정(?:하지|되지)\s않은\s(?:값|수치)" + _KIND_END
+    + r"|(?<![가-힣])(?:정한|정해\s둔|가져온|빌려\s온|가정한|추정한|어림한)\s(?:값|수치)" + _KIND_END
+    + r"|(?:추정값|추정치|임시\s값|임의의\s값|가정값)" + _KIND_END)
+VERSION_RE = re.compile(r"\d+\.\d+\.\d+")
+
+
+def value_kind_hits(sentences, blocks=(), wide=False):
+    """Sentences that classify a value without giving the value. wide=False: "측정값이 아니다" forms (A18.value_kind).
+    wide=True: "정한 값이다", "추정치다" forms in sentences the narrow form did not match (A18.value_kind_check)."""
+    lead_ins = _introduces_block(sentences, blocks)
+    hits = []
+    for s in sentences:
+        if s.in_refs or id(s) in lead_ins:
+            continue
+        t = s.masked
+        m = VALUE_KIND_RE.search(t)
+        if wide:
+            m = None if m else VALUE_KIND_CHECK_RE.search(t)
+        if not m or LEAD_IN_RE.search(t):
+            continue
+        # The value is named before the classifying phrase ("타임아웃 5초는 ... 정한 값입니다"). A number after it belongs
+        # to another clause ("... 측정하지 않고 정했고, 가져온 기준치 15개는 ...").
+        head = VERSION_RE.sub("", t[:m.start()])
+        if "⟦C⟧" not in head and not re.search(r"\d", head):
+            hits.append(_hit(s, m.group(0)))
+    return hits
+
+
+FACT_COLUMNS = ("사실", "의미")
+
+
+def fact_cells(facts_text):
+    """Cells of the "사실" or "의미" column of the fact sheet's tables: (fact sheet line number, cell text). The draft is
+    written from these cells, so a cell that only repeats a line of the source carries its gaps into the text."""
+    cells = []
+    lines = facts_text.split("\n")
+    i = 0
+    while i < len(lines):
+        if "|" not in lines[i]:
+            i += 1
+            continue
+        header = [c.strip() for c in lines[i].strip().strip("|").split("|")]
+        col = next((j for j, c in enumerate(header) if c in FACT_COLUMNS), None)
+        j = i + 1
+        while j < len(lines) and "|" in lines[j]:
+            if col is not None and not TABLE_DELIM_RE.match(lines[j]):
+                row = [c.strip() for c in lines[j].strip().strip("|").split("|")]
+                if col < len(row) and len(row[col]) > 1:
+                    cells.append((j + 1, row[col]))
+            j += 1
+        i = j
+    return cells
+
+
+def fact_row_hits(facts_text, patterns_spec=None):
+    """Fact table rows that say something was changed, counted, or classified without the content (A18.fact_rows).
+    In the runs of 2026-11-11 the fact sheet kept the source line "구성과 분량 범위는 측정값이 아니다" as it was, and the
+    summary repeated it. Line number 0 in a hit means the fact sheet."""
+    cells = fact_cells(facts_text)
+    if not cells:
+        return []
+    # One paragraph per cell, so paragraph k starts at line 2k + 1 of the joined text.
+    sentences = analyze("\n\n".join(c for _, c in cells), patterns_spec)["_sentences"]
+    found = (category_change_hits(sentences) + count_only_hits(sentences) + value_kind_hits(sentences)
+             + value_kind_hits(sentences, wide=True))
+    hits, seen = [], set()
+    for h in sorted(found, key=lambda h: h["line"]):
+        k = (h["line"] - 1) // 2
+        if k in seen or not 0 <= k < len(cells):
+            continue
+        seen.add(k)
+        n, cell = cells[k]
+        hits.append({"line": 0, "text": f"fact sheet {n}줄: {cell}"[:160], "match": h.get("match")})
+    return hits
+
+
+def _introduces_block(sentences, blocks):
+    """Sentences that are the last one of a paragraph right before a list, table, or code block. Such a sentence is a
+    lead-in ("두 가지를 바꿉니다." followed by a numbered list), and the block gives the content."""
+    last = {}
+    for s in sentences:
+        last[s.block] = s
+    return {id(s) for b, s in last.items()
+            if s.kind == "paragraph" and b + 1 < len(blocks) and blocks[b + 1].type in ("list_item", "table", "code")}
+
+
+def category_change_hits(sentences, blocks=()):
+    """Sentences that say something was changed without saying from what to what (A18.category_change)."""
+    lead_ins = _introduces_block(sentences, blocks)
+    hits = []
+    for s in sentences:
+        if s.in_refs or id(s) in lead_ins:
+            continue
+        t = s.masked
+        m = CATEGORY_CHANGE_RE.search(t)
+        if m and not CHANGE_DETAIL_RE.search(t) and not LEAD_IN_RE.search(t):
+            hits.append(_hit(s, m.group(0)))
+            continue
+        m = CHANGED_CATEGORY_RE.search(t)
+        if m and not ITEMS_FOLLOW_RE.search(t) and not (m.group(0)[-1] in "은는" and NAMES_ITEMS_RE.search(t)):
+            hits.append(_hit(s, m.group(0)))
+    return hits
+
+
+def count_only_hits(sentences, blocks=()):
+    """Sentences that give a count of items and do not name the items (A18.count_only)."""
+    lead_ins = _introduces_block(sentences, blocks)
+    hits = []
+    for s in sentences:
+        if s.in_refs or id(s) in lead_ins:
+            continue
+        m = COUNT_ONLY_RE.search(s.masked)
+        # "A와 B 두 가지가 있습니다" names the items before the count
+        if m and not ITEMS_FOLLOW_RE.search(s.masked) and not ITEMS_BEFORE_RE.search(s.masked[:m.start()]):
+            hits.append(_hit(s, m.group(0)))
+    return hits
+
+
 SSEUDA_RE = re.compile(r"(?<![가-힣])(?:씁니다|써요|썼|쓴다|쓰고|쓰는|쓴\s|쓸\s|쓰면|쓰지|써서|써야|써도|쓰게|쓰려|쓰며)")
 SSEUDA_USE_RE = re.compile(r"(?:을|를)\s+(?:\S+\s+){0,2}(?:씁니다|써요|썼|쓴다|쓰고|쓰는|쓴\s|쓸\s|쓰면|쓰지|써서|써야|써도|쓰게|쓰려|쓰며)"
                            r"|(?<![가-힣])쓸\s+수\s|(?<![가-힣])쓰는\s+(?:방법|방식|곳|값|도구)")
@@ -1647,6 +1806,8 @@ def analyze(text, patterns_spec=None, facts_text=None):
                 np_sents.add((a.line, a.text))
     np_hits = [{"line": l, "text": t} for (l, t) in sorted(np_sents)]
     put("A1.np", len(np_hits), np_hits, cross=len(cross))
+    # The short profile allows one occurrence without a verdict, so it shows the sentence as a check candidate instead.
+    put("A1.np_check", len(np_hits), np_hits)
     first_para = para_sents[0] if para_sents else []
     np_first = [_hit(s) for s in first_para if (s.line, s.text) in np_sents]
     put("A1.np_first_para", len(np_first), np_first)
@@ -1715,6 +1876,17 @@ def analyze(text, patterns_spec=None, facts_text=None):
     # A18 subjects that do not name their source
     authors = bare_author_hits(blocks, sentences)
     put("A18.bare_author", len(authors), authors)
+    changes = category_change_hits(sentences, blocks)
+    put("A18.category_change", len(changes), changes)
+    counts_only = count_only_hits(sentences, blocks)
+    put("A18.count_only", len(counts_only), counts_only)
+    value_kinds = value_kind_hits(sentences, blocks)
+    put("A18.value_kind", len(value_kinds), value_kinds)
+    value_kinds_wide = value_kind_hits(sentences, blocks, wide=True)
+    put("A18.value_kind_check", len(value_kinds_wide), value_kinds_wide)
+    if facts_text:
+        fact_rows = fact_row_hits(facts_text, patterns_spec)
+        put("A18.fact_rows", len(fact_rows), fact_rows)
 
     # A21 "쓰다" used in two senses within one article
     quote_rxs = patterns["A14.report_write"]["regex"] + patterns["A14.report_write_check"]["regex"]
@@ -2110,7 +2282,8 @@ def render_text(path, tone, analysis, ev, show_all=False, standard=DEFAULT_STAND
     groups = (
         ([r for r in checks if r.get("group") not in ("ko", "term", "rhythm", "fact")], False,
          "단독 읽기 점검 후보 (판정에 반영되지 않음): 이 문장과 바로 앞 문장만 읽고 무엇에 대한 내용인지, "
-         "누구의 말인지, 수치가 무엇을 측정한 값인지 알 수 있으면 그대로 둔다."),
+         "누구의 말인지, 수치가 무엇을 측정한 값인지, 무엇을 무엇으로 바꾸거나 정했는지, 어느 값을 말하는지 알 수 있으면 "
+         "그대로 둔다."),
         ([r for r in checks if r.get("group") == "rhythm"], True,
          "서술어 반복 점검 후보 (판정에 반영되지 않음): 인접한 두 문장을 함께 읽는다. 반복 때문에 읽는 흐름이 "
          "끊기고 의미와 조건을 더 명확하게 쓸 수 있을 때만 항목을 합치거나 근거와 결과를 연결한다. 자연스러운 반복과 "
@@ -2160,8 +2333,8 @@ def apply_profile(thresholds, patterns_spec, short=False):
 
     Allowances are top-level keys of the merged thresholds: allow_patterns ({pattern ID: [regex, ...]} removes those
     regexes from the pattern), allow_imperative, and allow_inga_question. The short profile (the "short" key) can add
-    more of the same, drops metrics (an entry that ends in "." excludes every metric starting with that prefix), and
-    turns the per-1,000 rates listed under "count" into counts."""
+    more of the same, drops metrics (an entry that ends in "." excludes every metric starting with that prefix),
+    turns the per-1,000 rates listed under "count" into counts, and adds the check candidates listed under "check"."""
     prof = (thresholds.get("short") or {}) if short else {}
     th = dict(thresholds)
     drops = prof.get("drop") or []
@@ -2174,6 +2347,9 @@ def apply_profile(thresholds, patterns_spec, short=False):
             th["metrics"][mid] = {"kind": "upper", "pass_max": pass_max, "warn_max": warn_max, "count": True,
                                   "title": f"{title} (짧은 글: 개수)",
                                   **({"hint": spec["hint"]} if spec.get("hint") else {})}
+    # Items the short profile shows as check candidates. The verdict item with the same name keeps its threshold.
+    for mid, spec in (prof.get("check") or {}).items():
+        th["metrics"][mid] = dict(spec, kind="check")
     if "max_warn" in prof:
         th["max_warn"] = prof["max_warn"]
     for key in ("allow_imperative", "allow_inga_question"):

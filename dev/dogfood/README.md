@@ -1,6 +1,6 @@
 # dogfooding
 
-이 폴더의 도구는 설치된 techblog 스킬을 headless Claude Code(`claude -p`)로 실행하고, 스킬이 쓴 글을 평가한다. 스킬이 글을 쓰는 데에는 이 폴더의 도구가 필요 없다.
+이 폴더의 도구는 설치된 techblog 스킬을 headless Claude Code(`claude -p`)로 실행하고, 스킬이 쓴 글을 평가한다. 스킬이 글을 쓰는 데에는 이 폴더의 도구가 필요 없다. brief와 write는 아래 "brief와 write 실행" 섹션의 `run_skill.py`와 `askback.py`로 실행하고 평가한다.
 
 ## 실행 조건
 
@@ -31,6 +31,24 @@ python dev/dogfood/judge.py --iter iter-090 --skip style fidelity pairwise clari
 `run.py`는 프롬프트에 `--defaults`를 붙이고 `claude -p`에 `--disallowedTools AskUserQuestion`을 전달한다. headless 실행에는 설정 질문에 답할 사람이 없어서 독자와 분량은 기본값을, 어투는 케이스에 적은 값을 사용한다. `"settings": "ask"` 케이스만 `--defaults`와 어투 인자를 제외하고 실행해서, 질문할 수 없을 때 기본값으로 글을 쓰고 보고에 값과 출처를 적는지 확인한다.
 
 judge가 사람 글 대조군을 읽는 캐시 폴더의 기본값은 `%TEMP%\techblog-work\baseline\cache`다. `measure.py collect --cache`로 다른 폴더에 수집했으면 `--human-cache`로 그 폴더를 지정한다.
+
+## brief와 write 실행
+
+`run.py`는 `~/.claude/skills/techblog`에 설치한 techblog만 실행한다. `run_skill.py`는 `--plugin`으로 받은 플러그인 폴더를 `claude -p`의 `--plugin-dir`에 넘겨 어느 스킬이든 실행하므로, 현재 작업 중인 저장소와 이전 commit의 복사본을 같은 케이스로 비교할 수 있다. 실행 조건(모델, CLAUDE.md와 memory 끄기, AskUserQuestion 제외)은 `run.py`와 같다.
+
+```bash
+git archive 99ff1d4 | tar -x -C <작업 폴더>/k-writer-0.5.0        # 비교할 이전 버전의 복사본
+python dev/dogfood/run_skill.py --plugin <작업 폴더>/k-writer-0.5.0 --out <작업 폴더>/before --jobs 5
+python dev/dogfood/run_skill.py --out <작업 폴더>/after --jobs 5     # 현재 작업 중인 저장소
+python dev/dogfood/run_skill.py --summary <작업 폴더>/after          # 케이스별 시간, 비용, subagent 수, 권한 거부 수
+python dev/dogfood/askback.py --out <작업 폴더>/judge --label after <요약이나 글 파일> ...
+python dev/dogfood/askback.py --report <작업 폴더>/judge/before.json <작업 폴더>/judge/after.json --show
+```
+
+- 케이스는 `cases-brief-write.json`에 있다. brief 8건과 write 5건이고, 자료는 `evals/`의 케이스 자료, `dev/dogfood/sources/`의 파일, `dev/codex/REPORT.md`다. `sources/pep-0659.rst`는 PEP 659 원문이다(public domain 또는 CC0). `b1`, `b2`, `w3`의 자료는 2026-11-11 사용자 검토에서 지적된 문장이 나온 개발 기록(`evals/brief-release-record/source.md`)이다. 2026-11-11의 실행은 이 파일을 정리하기 전의 복사본으로 했고, 그때는 케이스 이름과 prompt의 파일 이름 일부가 달랐다(예: `b1-status-detail`과 `release-0.5.0.md`). 자료의 내용은 같다.
+- `askback.py`는 글만 읽는 judge에게 문장마다 그 문장이 전하는 일을 자기 말로 다시 적게 한 뒤 clear, ask_back(글쓴이에게 되물어야 하는 문장), two_readings, awkward 중 하나를 선택하게 한다. `judge.py`의 clarity judge(J9)는 문장이 무엇에 대한 내용인지만 묻기 때문에 "write와 brief의 구성과 분량 범위는 측정값이 아니라 정한 값입니다"처럼 주어가 있는 문장을 찾지 못한다. 이 문장을 opus judge는 두 번 실행해 두 번 모두 ask_back으로 판정했고 sonnet judge는 두 번 중 한 번만 ask_back으로 판정했다. 그래서 기본 모델을 opus로 정했다.
+- 같은 judge로 사람 글도 판정해 대조군으로 사용한다. 논문 초록 40편(290문장)에서 두 번 모두 ask_back인 문장은 8.6%, awkward가 한 번 이상인 문장은 29.3%였다. 초록에는 "방안을 제안하였다"처럼 내용을 밝히지 않은 문장과 띄어쓰기 오류가 많아서, 이 값은 judge가 사람 글에서도 이만큼 지적한다는 참고값이고 판정 기준으로는 사용하지 않는다.
+- judge는 긴 글에서 사용자가 지적한 문장과 같은 유형의 문장을 놓치기도 한다. 0.5.0으로 쓴 1,153자 요약의 "…구성과 분량 범위는 측정해서 정한 값이 아니고…"와 1,167자 글에 있던 같은 내용의 문장은 두 번 모두 clear로 판정됐다. 최종 판단은 사람이 읽어서 한다.
 
 ## 케이스 (`cases.json`)
 

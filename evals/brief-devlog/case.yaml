@@ -1,0 +1,5 @@
+schema_version: "1.1"
+name: brief-devlog
+description: 줄여 적은 한국어 개발 기록을 합니다체 한 문단으로 요약한다. 바꾼 일과 정한 값의 내용이 요약에 있어야 하고 "수정한 내용", "정한 값"처럼 내용 없이 범주만 쓴 문장이 없어야 한다.
+context:
+  scaffold_script: setup.sh

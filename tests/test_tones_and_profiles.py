@@ -172,6 +172,23 @@ class ShortProfileTest(Base):
         _, rows, _ = self.lint(twice, "default", skill="brief", short=True)
         self.assertIn(rows["A5.native_verbs"]["status"], ("WARN", "FAIL"))
 
+    def test_one_negative_parallelism_is_a_check_candidate_in_a_short_text(self):
+        # 2026-11-11 user review: "측정값이 아니라 정한 값입니다" passed every check of a brief summary. The short profile
+        # allows one occurrence, so the sentence never reached the list the writer reads.
+        once = DEFAULT + "\n이 설정은 지연을 줄이는 설정이 아니라 처리량을 늘리는 설정입니다.\n"
+        _, rows, verdict = self.lint(once, "default", skill="brief", short=True)
+        self.assertEqual(rows["A1.np"]["status"], "PASS")
+        self.assertEqual(rows["A1.np_check"]["status"], "CHECK")
+        self.assertEqual(verdict, "PASS")
+        # the sentence itself is now a policy FAIL: it says "not a measured value" and gives no value
+        pointed = DEFAULT + "\n이 분량 범위는 측정값이 아니라 정한 값입니다.\n"
+        _, rows, verdict = self.lint(pointed, "default", skill="brief", short=True)
+        self.assertEqual((rows["A18.value_kind"]["status"], verdict), ("FAIL", "FAIL"))
+        _, rows, _ = self.lint(DEFAULT, "default", skill="brief", short=True)
+        self.assertEqual(rows["A1.np_check"]["status"], "PASS")
+        _, rows, _ = self.lint(once, "default", skill="brief")
+        self.assertNotIn("A1.np_check", rows)                        # the long profile judges the count instead
+
     def test_uncalibrated_skills_report_distribution_items_as_info(self):
         long_text = "\n\n".join([DEFAULT.strip()] * 20)                     # over 1,500 characters
         for skill in ("write", "brief"):

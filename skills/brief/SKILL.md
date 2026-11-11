@@ -4,13 +4,13 @@ description: 전달받은 자료(파일, PDF, URL, 붙여넣은 텍스트)나 �
 license: MIT
 allowed-tools: Read Write Edit Glob Grep WebFetch WebSearch Agent Bash(python "${CLAUDE_SKILL_DIR}/scripts/*) Bash(python ${CLAUDE_SKILL_DIR}/scripts/*) Bash(python3 "${CLAUDE_SKILL_DIR}/scripts/*) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/*)
 metadata:
-  version: "0.5.0"
+  version: "0.5.1"
   repository: https://github.com/KANG-YEONWOOK/K-Writer
 ---
 
 # brief
 
-이 스킬은 사용자가 요약을 요청한 자료나 내용을 읽고 한국어 요약을 쓴다. 기본 독자는 자료를 읽지 않았고 자료가 대상으로 삼은 독자와 같은 수준의 지식이 있는 사람이다. 독자는 요약만 읽어도 자료가 무엇을 말하는지 알 수 있어야 한다. 기준 글은 사람이 자료를 읽고 쓴 한국어 요약이다. 요약의 첫 문장에는 자료의 결론을 쓴다. 요약에 쓰는 사실은 자료에서만 가져오고 요약하는 사람의 평가, 해석, 전망은 덧붙이지 않는다. 분량은 요약의 조건이라서 정한 분량을 넘기지 않는다. 분량 안에 다 넣을 수 없으면 사실의 수를 줄이고, 남긴 문장의 주어, 목적어, 수치의 조건은 그대로 쓴다. 독자가 문장의 의미를 다시 따져 보지 않고 한 번에 이해할 수 있게 한 문장에는 사실을 하나나 둘만 쓴다. 서술어는 사람이 쓴 한국어 글에서 그 주어, 목적어와 함께 사용하는 표현을 쓴다.
+이 스킬은 사용자가 요약을 요청한 자료나 내용을 읽고 한국어 요약을 쓴다. 기본 독자는 자료를 읽지 않았고 자료가 대상으로 삼은 독자와 같은 수준의 지식이 있는 사람이다. 독자는 요약만 읽어도 자료가 무엇을 말하는지 알 수 있어야 한다. 기준 글은 사람이 자료를 읽고 쓴 한국어 요약이다. 요약의 첫 문장에는 자료의 결론을 쓴다. 요약에 쓰는 사실은 자료에서만 가져오고 요약하는 사람의 평가, 해석, 전망은 덧붙이지 않는다. 분량은 요약의 조건이라서 정한 분량을 넘기지 않는다. 분량 안에 다 넣을 수 없으면 사실의 수를 줄이고, 남긴 문장의 주어, 목적어, 수치의 조건은 그대로 쓴다. 바꾼 일과 정한 값은 무엇을 무엇으로 바꿨는지, 누가 어떤 값으로 정했는지까지 써서 독자가 되묻지 않게 한다. 독자가 문장의 의미를 다시 따져 보지 않고 한 번에 이해할 수 있게 한 문장에는 사실을 하나나 둘만 쓴다. 서술어는 사람이 쓴 한국어 글에서 그 주어, 목적어와 함께 사용하는 표현을 쓴다.
 
 Claude Code와 Codex에서 사용한다. 먼저 [실행 환경 안내](references/runtime.md)를 읽고 현재 환경의 입력, 도구, 스킬 경로를 확인한다.
 
@@ -32,4 +32,4 @@ Codex에서는 `$brief`와 함께 보낸 사용자 요청을 입력으로 받는
 아래 문서는 각 단계의 실행 지침이다. 단계를 시작하기 전에 지정한 문서를 끝까지 읽는다. 작업 문서가 일부 섹션만 읽으라고 정한 문서는 그 섹션만 읽는다. 모든 `references/`와 `scripts/`는 이 `SKILL.md`가 있는 디렉터리 기준이다. 검사 명령과 실행 오류 처리도 [runtime.md](references/runtime.md)를 따른다.
 
 1. [drafting.md](references/drafting.md)를 읽고 1~3단계를 수행한다. 자료 읽기, fact sheet 작성, 합니다체 요약 초안 작성 순서다. 어떤 어투로 요청받아도 먼저 합니다체로 쓴다. [genre.md](references/genre.md)는 2단계에서, [style-guide.md](references/style-guide.md)는 3단계에서 읽고 AI 패턴 문서는 초안 작성 전에 읽지 않는다.
-2. [validation.md](references/validation.md)를 읽고 4~7단계를 수행한다. 요약 점검(문체 검사, fact sheet 대조, 분량, [rubric.md](references/rubric.md)의 판정 항목), 독립 읽기 점검(요약만 읽는 subagent의 보고를 받아 직접 수정), 어투 적용, 출력과 보고 순서다. [ai-patterns.md](references/ai-patterns.md)와 [korean-review.md](references/korean-review.md)는 검출되거나 지적된 항목이 있을 때 그 항목의 섹션만 읽고, [tone.md](references/tone.md)는 어투를 적용할 때 읽는다.
+2. [validation.md](references/validation.md)를 읽고 4~7단계를 수행한다. 요약 점검(문체 검사, fact sheet 대조, 독자가 되물을 질문 점검, 분량, [rubric.md](references/rubric.md)의 판정 항목), 독립 읽기 점검(요약만 읽는 subagent의 보고를 받아 직접 수정), 어투 적용, 출력과 보고 순서다. [ai-patterns.md](references/ai-patterns.md)와 [korean-review.md](references/korean-review.md)는 검출되거나 지적된 항목이 있을 때 그 항목의 섹션만 읽고, [tone.md](references/tone.md)는 어투를 적용할 때 읽는다.
