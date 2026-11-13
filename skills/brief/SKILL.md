@@ -4,7 +4,7 @@ description: 전달받은 자료(파일, PDF, URL, 붙여넣은 텍스트)나 �
 license: MIT
 allowed-tools: Read Write Edit Glob Grep WebFetch WebSearch Agent Bash(python "${CLAUDE_SKILL_DIR}/scripts/*) Bash(python ${CLAUDE_SKILL_DIR}/scripts/*) Bash(python3 "${CLAUDE_SKILL_DIR}/scripts/*) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/*)
 metadata:
-  version: "0.5.1"
+  version: "0.5.2"
   repository: https://github.com/KANG-YEONWOOK/K-Writer
 ---
 
