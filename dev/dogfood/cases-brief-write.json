@@ -2,7 +2,8 @@
  "notes": [
   "run_skill.py의 brief, write 케이스. files는 저장소 루트 기준 경로이고 실행 폴더에 같은 파일 이름으로 복사한다.",
   "b1, b2의 자료는 2026-11-11 사용자 검토에서 지적된 문장이 나온 개발 기록이다(evals/brief-release-record).",
-  "budget은 --max-budget-usd, timeout은 초다. 지정하지 않으면 run_skill.py의 기본값을 사용한다."
+  "budget은 --max-budget-usd, timeout은 초다. 지정하지 않으면 run_skill.py의 기본값을 사용한다.",
+  "w6은 0.6.0에서 추가한 발표 자료 케이스다. 슬라이드의 제목과 부제가 명사나 명사형으로 끝나는지 확인한다."
  ],
  "cases": [
   {"name": "b1-release-detail", "files": ["evals/brief-release-record/source.md"],
@@ -30,6 +31,8 @@
   {"name": "w4-proposal-default", "files": ["dev/dogfood/sources/proposal-memo.md"], "budget": 14, "timeout": 3000,
    "prompt": "/k-writer:write proposal-memo.md(메모)로 팀장에게 보낼 제안 글을 써줘. 목적은 설득, 분량은 짧게(500자 안팎), 어투는 합니다체. -o proposal.md --keep-work"},
   {"name": "w5-pep-explain-long", "files": ["dev/dogfood/sources/pep-0659.rst"], "budget": 22, "timeout": 4200,
-   "prompt": "/k-writer:write pep-0659.rst(PEP 659 문서)로 Python을 사용하지만 인터프리터 내부는 모르는 개발자에게 이 PEP의 내용을 설명하는 글을 써줘. 목적은 설명, 분량은 보통(1,500자 안팎)보다 길어도 되니 자료에 맞추고, 어투는 합니다체. -o pep-659.md --keep-work"}
+   "prompt": "/k-writer:write pep-0659.rst(PEP 659 문서)로 Python을 사용하지만 인터프리터 내부는 모르는 개발자에게 이 PEP의 내용을 설명하는 글을 써줘. 목적은 설명, 분량은 보통(1,500자 안팎)보다 길어도 되니 자료에 맞추고, 어투는 합니다체. -o pep-659.md --keep-work"},
+  {"name": "w6-deck-proposal", "files": ["dev/dogfood/sources/proposal-memo.md"], "budget": 14, "timeout": 3000,
+   "prompt": "/k-writer:write proposal-memo.md(메모)로 팀 회의에서 발표할 발표 자료의 문구를 써줘. 슬라이드는 6장이고 독자는 제안을 결정할 팀장과 팀원이야. -o deck.md --keep-work"}
  ]
 }

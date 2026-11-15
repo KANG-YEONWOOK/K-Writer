@@ -1069,8 +1069,9 @@ class PlainTermsDocsTest(unittest.TestCase):
     after reading them had "낱말" 5.89 times per 10,000 characters (0 times in 600 human posts). Only ai-patterns.md, korean-review.md,
     and rubric.md, which show the pre-fix expressions, and those items' own hints are excluded."""
 
-    DOCS = ("style-guide.md", "genre.md", "drafting.md", "fact-sheet.md", "validation.md", "finalization.md",
-            "reader-check.md", "revision.md", "runtime.md", "settings.md", "settings-protocol.md", "tone.md")
+    DOCS = ("style-guide.md", "style-sources.md", "genre.md", "drafting.md", "fact-sheet.md", "validation.md",
+            "checking.md", "independent-review.md", "revision.md", "runtime.md", "settings.md", "settings-protocol.md",
+            "tone.md")
     SKILLS = sorted(d for d in os.listdir(os.path.join(SCRIPTS, "..", ".."))
                     if os.path.isfile(os.path.join(SCRIPTS, "..", "..", d, "SKILL.md")))
     OWN = {"A6.version_pan", "A5.plain_terms", "A5.plain_terms_check", "A6.metaphor_check"}
@@ -1094,7 +1095,7 @@ class PlainTermsDocsTest(unittest.TestCase):
             for name in self.DOCS:
                 path = os.path.join(base, "references", name)
                 if not os.path.isfile(path):
-                    continue                            # a work document this skill does not have (finalization.md)
+                    continue                            # a work document this skill does not have
                 checked += 1
                 with self.subTest(skill=skill, doc=name):
                     self.assert_plain(f"{skill}/{name}", L.read_text(path))
@@ -1189,6 +1190,79 @@ class ApproxQuantityTest(unittest.TestCase):
         hits = [h["match"] for h in a["metrics"]["A15.unknown_numbers"]["hits"]]
         self.assertEqual(hits, ["수만", "수만", "수만"])
         self.assertEqual([h["text"][:2] for h in a["metrics"]["A15.unknown_numbers"]["hits"]], ["하루", "수만", "코드"])
+
+
+class HeadingFormTest(unittest.TestCase):
+    """A22.heading_sentence: the title and headings end in a noun or a nominal form, not in a sentence ending."""
+
+    def test_sentence_forms(self):
+        # The first two are the deck title and subtitle the user reported (2026-11-15).
+        for text, form in (("필요한 곳을 모두 검사합니다", "polite"),
+                           ("각 OS의 네이티브 기능을 사용해 검사해야하는 곳들은 전부 확인합니다", "polite"),
+                           ("지금 바로 신청하세요!", "polite"),
+                           ("우리는 이렇게 준비했어요", "polite"),
+                           ("왜 필요할까요?", "polite_q"),
+                           ("어떻게 줄였습니까", "polite_q"),
+                           ("느린 리뷰는 개인 문제가 아니라 구조 문제다", "plain"),
+                           ("방안 1: PR을 작게 만든다", "plain"),
+                           ("함께 일하는 방법을 바꾸다", "plain"),
+                           ("한 해를 돌아보다", "plain")):
+            with self.subTest(text=text):
+                self.assertEqual(L.heading_form(text), form)
+
+    def test_noun_and_nominal_forms(self):
+        for text, form in (("빈틈없는 검사", "noun"),
+                           ("OS 네이티브 기능을 활용한 누락없는 검사", "noun"),
+                           ("블록 크기를 정할 때", "noun"),
+                           ("한국어 서비스에 적용한다면", "noun"),
+                           ("마치며", "noun"),
+                           ("프로젝트 개요", "noun"),
+                           ("서비스마다", "noun"),
+                           ("성능보다 안정성", "noun"),
+                           ("API 설계 원칙 (v2)", "noun"),
+                           ("Kubernetes", "noun"),
+                           ("AWS 람다", "noun"),
+                           ("설치하기", "nominal"),
+                           ("결과 요약함", "nominal")):
+            with self.subTest(text=text):
+                self.assertEqual(L.heading_form(text), form)
+
+    def test_questions_in_plain_form_are_allowed(self):
+        for text in ("어떤 설정이 지연을 줄였을까", "테스트는 왜 느린가?", "무엇을 배웠는지", "다음 단계는?"):
+            with self.subTest(text=text):
+                self.assertEqual(L.heading_form(text), "question")
+
+    def test_quoted_words_and_word_lists_are_not_sentences(self):
+        for text in ("“저는 그렇게 생각합니다”", '한 글에서 두 의미로 쓴 "쓰다"', "줄다, 늘다, 만들다, 생기다, 발생하다"):
+            with self.subTest(text=text):
+                self.assertEqual(L.heading_form(text), "noun")
+
+    def test_metric_counts_title_subtitle_and_headings(self):
+        deck = ("# 엔드포인트 보안 점검 도구 소개\n\n"
+                "## 필요한 곳을 모두 검사합니다\n\n### 각 OS의 네이티브 기능으로 검사할 곳을 전부 확인합니다\n\n"
+                "- 검사 항목 120개\n\n"
+                "## 빈틈없는 검사\n\n### OS 네이티브 기능을 활용한 누락 없는 검사\n\n- 검사 항목 120개\n\n"
+                "## 참고 자료입니다\n\n- 내부 문서\n")
+        m = L.analyze(deck)["metrics"]["A22.heading_sentence"]
+        self.assertEqual([h["line"] for h in m["hits"]], [3, 5, 15])
+        self.assertEqual(m["hits"][0]["match"], "합니다체나 해요체 문장")
+
+    def test_fails_in_every_skill_and_in_the_short_profile(self):
+        text = "# 배포 절차를 자동화했습니다\n\n배포 절차는 스크립트 하나로 실행합니다.\n"
+        for skill in ("techblog", "write", "brief"):
+            for short in (False, True):
+                with self.subTest(skill=skill, short=short):
+                    scripts = os.path.join(ROOT, "skills", skill, "scripts")
+                    th, spec = L.apply_profile(L.load_thresholds(os.path.join(scripts, "thresholds.json")),
+                                               L.load_json(L.PATTERNS_PATH), short)
+                    ev = L.evaluate(L.analyze(text, patterns_spec=spec), th, "default", patterns_spec=spec)
+                    r = next(r for r in ev["results"] if r["id"] == "A22.heading_sentence")
+                    self.assertEqual(r["status"], "FAIL")
+                    self.assertIn("명사", r["hint"])
+
+    def test_good_text_passes(self):
+        a = L.analyze(GOOD_DEFAULT)
+        self.assertEqual(a["metrics"]["A22.heading_sentence"]["value"], 0)
 
 
 class CliTest(unittest.TestCase):

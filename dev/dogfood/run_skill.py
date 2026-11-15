@@ -56,13 +56,14 @@ def run_case(case, plugin, out_dir, model, effort, budget, timeout):
 
 def summarize(out_dir):
     """Print one row per case: minutes, cost, subagents, script runs, permission denials, last lint verdict."""
-    print("| 케이스 | 분 | 비용 | subagent | lint | revise | tone_check | 권한 거부 | 마지막 문체 검사 |")
-    print("|---|---|---|---|---|---|---|---|---|")
+    print("| 케이스 | 분 | 비용 | subagent | check | lint | revise | tone_check | 권한 거부 | 마지막 문체 검사 |")
+    print("|---|---|---|---|---|---|---|---|---|---|")
     for name in sorted(os.listdir(out_dir)):
         path = os.path.join(out_dir, name, "run.jsonl")
         if not os.path.isfile(path):
             continue
-        result, counts, verdict = None, {"agent": 0, "lint_ko.py": 0, "revise_ko.py": 0, "tone_check.py": 0}, ""
+        result, verdict = None, ""
+        counts = {"agent": 0, "check_ko.py": 0, "lint_ko.py": 0, "revise_ko.py": 0, "tone_check.py": 0}
         for line in open(path, encoding="utf-8"):
             try:
                 o = json.loads(line)
@@ -70,7 +71,9 @@ def summarize(out_dir):
                 continue
             if o.get("type") == "result":
                 result = o
-            m = re.findall(r"판정: (PASS|FAIL) \(Gate 위반 (\d+), FAIL (\d+), WARN (\d+)\)", line) if "lint |" in line else None
+            # The verdict line of lint_ko.py and of check_ko.py ("글 전체 판정: ...") in a tool result
+            m = (re.findall(r"판정: (PASS|FAIL) \(Gate 위반 (\d+), FAIL (\d+), WARN (\d+)\)", line)
+                 if "lint |" in line or "check |" in line else None)
             if m:
                 verdict = "{} G{} F{} W{}".format(*m[-1])
             if o.get("type") != "assistant" or o.get("parent_tool_use_id"):
@@ -81,13 +84,13 @@ def summarize(out_dir):
                 if c.get("name") in ("Agent", "Task"):
                     counts["agent"] += 1
                 command = (c.get("input") or {}).get("command", "") if c.get("name") == "Bash" else ""
-                for script in ("lint_ko.py", "revise_ko.py", "tone_check.py"):
+                for script in ("check_ko.py", "lint_ko.py", "revise_ko.py", "tone_check.py"):
                     counts[script] += script in command
         if not result:
-            print(f"| {name} | 결과 없음 | | | | | | | |")
+            print(f"| {name} | 결과 없음 | | | | | | | | |")
             continue
         print(f"| {name} | {result['duration_ms'] / 60000:.1f} | ${result['total_cost_usd']:.2f} | {counts['agent']} | "
-              f"{counts['lint_ko.py']} | {counts['revise_ko.py']} | {counts['tone_check.py']} | "
+              f"{counts['check_ko.py']} | {counts['lint_ko.py']} | {counts['revise_ko.py']} | {counts['tone_check.py']} | "
               f"{len(result.get('permission_denials') or [])} | {verdict} |")
 
 

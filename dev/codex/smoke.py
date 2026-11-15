@@ -21,7 +21,9 @@ import time
 
 ROOT = Path(__file__).resolve().parents[2]
 CASES = ("default", "casual", "retone-casual", "retone-default", "url", "pdf", "cleanup")
-WORK_SUFFIXES = (".facts.md", ".draft.md", ".unrevised.md", ".repeats.md", ".reader.md", ".pre-fix.md", ".audit.md")
+# Work files of the 0.6.0 workflow. check_ko.py saves the checked copy next to the article it checks: article.checked.md
+# for a Default article, article.draft.checked.md for the Default draft of a Casual article.
+WORK_SUFFIXES = (".facts.md", ".draft.md", ".checked.md", ".draft.checked.md")
 
 
 def note_text():
@@ -179,7 +181,7 @@ def checker_invocations(command):
     calls = []
     for i, word in enumerate(words[1:], 1):
         name = command_basename(word)
-        if name in ("lint_ko.py", "revise_ko.py", "tone_check.py") and re.fullmatch(
+        if name in ("check_ko.py", "lint_ko.py", "revise_ko.py", "tone_check.py") and re.fullmatch(
                 r"python(?:\d+(?:\.\d+)*)?(?:\.exe)?", command_basename(words[i - 1])):
             calls.append({"script": name, "action": words[i + 1] if i + 1 < len(words) else ""})
     return calls
@@ -198,7 +200,6 @@ def inspect_output(project, case, commands, hashes):
     scripts = ROOT / "skills/techblog/scripts"
     sys.path.insert(0, str(scripts))
     import lint_ko as lint
-    import revise_ko as revise
     import tone_check as tone_check
 
     result = {"source_unchanged": all(Path(p).is_file() and hashlib.sha256(Path(p).read_bytes()).hexdigest() == h
@@ -219,16 +220,11 @@ def inspect_output(project, case, commands, hashes):
         if original.exists():
             default, casual = (original, article) if tone == "casual" else (article, original)
             result["tone"] = tone_check.check(lint.read_text(str(default)), lint.read_text(str(casual)))
-    snapshot = project / "article.unrevised.md"
-    target = project / ("article.draft.md" if tone == "casual" else "article.md")
-    if snapshot.exists() and target.exists():
-        result["revision"] = revise.compare(lint.read_text(str(snapshot)), lint.read_text(str(target)),
-                                              lint.read_text(str(facts)) if facts.exists() else None)
     present = [s for s in WORK_SUFFIXES if (project / ("article" + s)).exists()]
     result["work_files"] = present
-    # The pre-fix copy (.pre-fix.md) exists only in runs where the post-revision review found something to fix,
-    # so even --keep-work runs do not require it.
-    required = [s for s in WORK_SUFFIXES if s != ".pre-fix.md" and (s != ".draft.md" or tone == "casual")]
+    # A --keep-work run leaves the fact sheet and the checked copy of the article that was checked. A Casual run
+    # checks the Default draft, so it leaves the draft and the draft's checked copy.
+    required = ([".facts.md", ".draft.md", ".draft.checked.md"] if tone == "casual" else [".facts.md", ".checked.md"])
     result["work_files_ok"] = (not present if case == "cleanup" or case.startswith("retone-") else
                                all(s in present for s in required))
     result["checker_commands"] = [c for c in commands if checker_invocations(c["command"])]
@@ -237,17 +233,19 @@ def inspect_output(project, case, commands, hashes):
                   for call in checker_invocations(c["command"])]
     if case.startswith("retone-"):
         # retone changes only sentence endings, not content. If a content item (A5.native_verbs etc.) flags the input
-        # article and lint exits with 1 (verdict FAIL), the check still ran. Tone is checked by tone_items_ok below
-        # and tone_check.
+        # article, tone_check.py --lint exits with 1 (verdict FAIL), but the check still ran. Tone is checked by
+        # tone_items_ok below and tone_check.
         successful += [call for c in commands if c.get("exit_code") == 1
-                       for call in checker_invocations(c["command"]) if call["script"] == "lint_ko.py"]
+                       for call in checker_invocations(c["command"]) if call["script"] == "tone_check.py"]
         result["tone_items_ok"] = not any(r["status"] in ("FAIL", "GATE") for r in result["lint"]["results"]
                                           if r["id"].startswith(("G4.", "T.")))
-    required = [("lint_ko.py", None)]
+    # A new article is checked with check_ko.py. A tone conversion is checked with tone_check.py, which also lints
+    # the converted article (--lint).
+    required = []
+    if not case.startswith("retone-"):
+        required.append(("check_ko.py", None))
     if case.startswith("retone-") or case == "casual":
         required.append(("tone_check.py", None))
-    if not case.startswith("retone-"):
-        required.extend([("revise_ko.py", "start"), ("revise_ko.py", "check")])
     if case == "cleanup":
         required.append(("tone_check.py", "--cleanup"))
     result["checkers_ran"] = all(any(c["script"] == name and (action is None or c["action"] == action)
@@ -303,8 +301,8 @@ def main():
         mention = "[${}]({})".format(skill_name, skill.as_posix())
         prompt, originals = prepare_case(project, args.case, args.source, mention)
         if args.direct_revision:
-            prompt += ("\n이번 실행에서는 subagent를 사용하지 말고 runtime.md의 직접 수행 절차로 "
-                       "6단계의 후처리와 한국어 문장 점검을 해줘.")
+            prompt += ("\n이번 실행에서는 subagent를 사용하지 말고 6단계의 독립 점검을 "
+                       "independent-review.md의 항목으로 직접 해줘.")
         hashes = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in originals}
         (work / "prompt.txt").write_text(prompt, encoding="utf-8")
         cmd = [codex, "--no-daemon", "-a", "never", "--search", "exec", "--sandbox", "workspace-write",
@@ -333,7 +331,8 @@ def main():
         ok = ok and not evaluation["skill_load_errors"]
         ok = ok and evaluation.get("work_files_ok", False)
         ok = ok and evaluation.get("checkers_ran", False)
-        ok = ok and not evaluation.get("revision", {}).get("must_fix", False)
+        # The 0.5.2 workflow compared the article with its draft copy here. check_ko.py now reports regressions during
+        # the run, and the lint result above covers the final article.
         if evaluation.get("tone"):
             ok = ok and not any(i["level"] == "FAIL" for i in evaluation["tone"]["issues"])
         if args.case.startswith("retone-"):

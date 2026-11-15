@@ -1,11 +1,11 @@
 # {{name}} 작업 순서
 
-SKILL.md에서 참조하는 문서다. 단계 이름은 core 문서가 사용하는 이름(자료 읽기, fact sheet, 개요, 초안 쓰기, 초안 점검, 독자 점검, 후처리, 한국어 문장 점검, 수정 후 검토, 어투 적용, 결과 보고)을 따른다. 사용하지 않는 단계는 삭제한다.
+SKILL.md에서 참조하는 문서다. 단계 이름은 core 문서가 사용하는 이름(자료 읽기, fact sheet, 개요, 초안 쓰기, 검사, 독립 점검, 수정한 부분 확인, 어투 적용, 결과 보고)을 따른다. 사용하지 않는 단계는 삭제한다. 글 전체를 확인하는 점검은 검사와 독립 점검이고 각각 한 번만 한다(AGENTS.md의 "Keeping a run cheap").
 
 1. 자료 읽기: TODO: 자료를 끝까지 읽는 방법은 [runtime.md](runtime.md)를 따른다.
 2. fact sheet: 자료가 있는 글이면 [fact-sheet.md](fact-sheet.md)대로 `<이름>.facts.md`를 작성한다. TODO: 이 스킬에서 추가하거나 정할 항목
-3. 초안 쓰기: [style-guide.md](style-guide.md)와 [genre.md](genre.md)를 읽고 Default(합니다체)로 쓴다. TODO
-4. 초안 점검: `scripts/lint_ko.py`를 실행해 Gate와 FAIL을 수정한다. 본문이 공백 제외 1,500자 미만인 글을 쓰는 스킬이면 `--short`(짧은 글 기준)를 붙인다. 수정 방법은 [ai-patterns.md](ai-patterns.md)에 있다. TODO
-5. 한국어 문장 점검: [korean-review.md](korean-review.md)대로 문장마다 읽는다. prompt나 이 문서에 기준 글을 적는다. TODO
-6. 어투 적용: 어투가 Default가 아니면 [tone.md](tone.md)대로 종결부만 바꾸고 `scripts/tone_check.py`로 확인한다(Plain은 `--tone plain`, 직접 입력한 어투는 `--tone free`).
-7. 결과 보고: TODO: 저장 경로, 설정값과 출처, 검사 결과
+3. 초안 쓰기: [style-guide.md](style-guide.md)와 [genre.md](genre.md)를 읽고 Default(합니다체)로 쓴다. 자료가 영어이거나 자료의 주장을 옮기는 글이면 [style-sources.md](style-sources.md)도 읽는다. TODO
+4. 검사: [checking.md](checking.md)의 검사 명령(`scripts/check_ko.py`)을 실행해 Gate와 FAIL을 수정하고 글을 fact sheet와 대조한다. TODO: 이 스킬에서 따로 대조할 항목
+5. 독립 점검과 수정한 부분 확인: checking.md대로 글만 읽는 subagent 하나에게 맡기고 지적을 반영한 뒤, 검사 명령이 출력하는 수정한 부분만 다시 읽는다. TODO: prompt에 넣을 독자, 목적, 기준 글과 독립 점검을 생략하는 조건
+6. 어투 적용: 어투가 Default가 아니면 checking.md의 "어투 적용하기"대로 종결부만 바꾸고 `scripts/tone_check.py`로 확인한다.
+7. 결과 보고: TODO: 저장 경로, 설정값과 출처, 검사 결과, 독립 점검 방식

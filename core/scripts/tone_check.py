@@ -4,8 +4,12 @@
 The source of this file is core/scripts/tone_check.py in the repo. dev/sync_core.py copies it to skills/<name>/scripts/ for each skill.
 
 Usage
-  python tone_check.py DEFAULT.md CONVERTED.md [--tone casual|plain|free] [--json]
-  python tone_check.py --cleanup FILE [FILE ...]   # deletes only .facts.md, .draft.md, .unrevised.md, .repeats.md, .reader.md, .pre-fix.md, .audit.md, .answer.md work files
+  python tone_check.py DEFAULT.md CONVERTED.md [--tone casual|plain|free] [--lint] [--json]
+  python tone_check.py --cleanup FILE [FILE ...]   # deletes only .facts.md, .draft.md, .checked.md, .unrevised.md, .repeats.md, .reader.md, .pre-fix.md, .audit.md, .answer.md work files
+
+--lint also runs the style lint on CONVERTED.md in the target tone and prints its verdict and the GATE, FAIL, and WARN
+items. Check candidates are not printed: they were read on the Default draft. The fact sheet (<name>.facts.md next
+to DEFAULT.md, when it exists) and the short profile (body under 1,500 characters) are applied automatically.
 
 --tone names the tone of CONVERTED.md: casual ("해요체", the default), plain ("해라체"), or free (a tone the user described
 in their own words; the ending class of the converted sentences is not checked).
@@ -187,8 +191,40 @@ def check(default_text, casual_text, tone="casual", allow=None):
     return {"pairs": pairs, "issues": issues}
 
 
-WORK_SUFFIXES = (".facts.md", ".draft.md", ".unrevised.md", ".repeats.md", ".reader.md", ".pre-fix.md", ".audit.md",
-                 ".answer.md")
+WORK_SUFFIXES = (".facts.md", ".draft.md", ".checked.md", ".unrevised.md", ".repeats.md", ".reader.md", ".pre-fix.md",
+                 ".audit.md", ".answer.md")
+
+
+def lint_converted(default_path, converted_path, tone):
+    """Lints the converted article in its target tone. Uses the fact sheet next to the Default draft when it exists and
+    the short profile when the body is under 1,500 characters, the same choices check_ko.py makes."""
+    text = L.read_text(converted_path)
+    base = default_path[:-3] if default_path.endswith(".md") else default_path
+    if base.endswith(".draft"):
+        base = base[:-len(".draft")]
+    facts = base + ".facts.md"
+    facts_text = L.read_text(facts) if os.path.isfile(facts) else None
+    short = L.analyze(text)["stats"]["chars"] < 1500
+    thresholds, patterns_spec = L.apply_profile(L.load_thresholds(), L.load_json(L.PATTERNS_PATH), short)
+    analysis = L.analyze(text, patterns_spec=patterns_spec, facts_text=facts_text)
+    ev = L.evaluate(analysis, thresholds, tone, max_hits=5, patterns_spec=patterns_spec)
+    return {"summary": ev["summary"], "short": short, "chars": analysis["stats"]["chars"],
+            "results": [r for r in ev["results"] if r["status"] in ("GATE", "FAIL", "WARN")]}
+
+
+def render_lint(path, tone, linted):
+    sm = linted["summary"]
+    lines = [f"문체 검사 | {os.path.basename(path)} | tone={tone} | {linted['chars']:,}자"
+             + (" | 짧은 글 기준" if linted["short"] else ""),
+             f"판정: {sm['verdict']} (Gate 위반 {sm['gate_fail']}, FAIL {sm['fail']}, WARN {sm['warn']})"]
+    for r in sorted(linted["results"], key=lambda r: L.STATUS_ORDER[r["status"]]):
+        lines.append(f"[{r['status']}] {r['id']} {r['title']}: {r['value']}")
+        if r.get("hint"):
+            lines.append(f"    수정 방향: {r['hint']}")
+        for h in r.get("hits", []):
+            m = f" «{h['match']}»" if h.get("match") else ""
+            lines.append(f"    L{h['line']}{m}: {h['text']}")
+    return "\n".join(lines)
 
 
 def cleanup(paths):
@@ -212,6 +248,7 @@ def main(argv=None):
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--tone", choices=tuple(TARGETS), default="casual", help="Tone of the converted article")
     ap.add_argument("--cleanup", action="store_true", help="Delete the given work files (" + ", ".join(WORK_SUFFIXES) + ")")
+    ap.add_argument("--lint", action="store_true", help="Also lint the converted article in the target tone")
     try:
         args = ap.parse_args(argv)
     except SystemExit as e:
@@ -229,15 +266,25 @@ def main(argv=None):
     fails = [i for i in res["issues"] if i["level"] == "FAIL"]
     warns = [i for i in res["issues"] if i["level"] == "WARN"]
     verdict = "PASS" if not fails else "FAIL"
+    linted = lint_converted(args.files[0], args.files[1], args.tone) if args.lint else None
     if args.json:
-        print(json.dumps({"verdict": verdict, "pairs": res["pairs"], "fail": len(fails), "warn": len(warns),
-                          "issues": res["issues"]}, ensure_ascii=False, indent=1))
+        out = {"verdict": verdict, "pairs": res["pairs"], "fail": len(fails), "warn": len(warns),
+               "issues": res["issues"]}
+        if linted:
+            out["lint"] = {"summary": linted["summary"],
+                           "results": [{"id": r["id"], "status": r["status"], "value": r["value"]}
+                                       for r in linted["results"]]}
+        print(json.dumps(out, ensure_ascii=False, indent=1))
     else:
         print(f"tone_check: {verdict} (문장 {res['pairs']}쌍, FAIL {len(fails)}, WARN {len(warns)})")
         for i in res["issues"]:
             print(f"{i['level']} {i['code']} D:L{i['d_line']}/C:L{i['c_line']} s{i['sent']} | {i['note']}")
             print(f"    D «{i['default']}»")
             print(f"    C «{i['casual']}»")
+        if linted:
+            print(render_lint(args.files[1], args.tone, linted))
+    if linted and linted["summary"]["verdict"] != "PASS":
+        return 1
     return 0 if verdict == "PASS" else 1
 
 

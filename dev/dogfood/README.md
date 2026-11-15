@@ -2,6 +2,8 @@
 
 이 폴더의 도구는 설치된 techblog 스킬을 headless Claude Code(`claude -p`)로 실행하고, 스킬이 쓴 글을 평가한다. 스킬이 글을 쓰는 데에는 이 폴더의 도구가 필요 없다. brief와 write는 아래 "brief와 write 실행" 섹션의 `run_skill.py`와 `askback.py`로 실행하고 평가한다.
 
+0.6.0에서 스킬의 점검 순서가 바뀌었다. `run_skill.py`와 `judge.py`는 0.6.0의 스킬에 그대로 사용할 수 있다. `run.py --revise-from`과 `evaluate.py`의 후처리 지표(초안 복사본 `article.unrevised.md`와의 비교, `revise_ko.py` 실행 순서)는 0.5.2까지의 점검 순서(독자 점검, 후처리, 한국어 문장 점검, 수정 후 검토)를 전제로 하므로 그 버전의 실행 결과에만 사용한다.
+
 ## 실행 조건
 
 - 스킬은 directory junction으로 설치한다. `~/.claude/skills/techblog`가 저장소의 `skills/techblog`를 가리킨다.

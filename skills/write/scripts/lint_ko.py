@@ -551,6 +551,62 @@ def ending_bucket(sentence, word, cls):
     return cls
 
 
+# ---------------------------------------------------------------- title and heading form
+
+# Nouns and particles that end in "다" or "요" but are not sentence endings.
+HEADING_DA_NOUNS = HAERA_NOUNS + ("캐나다", "우간다", "르완다", "소다", "베란다", "프라다", "혼다", "코다", "마다")
+HEADING_YO_NOUNS = NOUN_YO + ("가요", "민요", "동요", "긴요")
+# Verbs written with "보다". Any other word that ends in "보다" is read as a noun with the comparative particle.
+HEADING_BODA_VERBS = ("돌아보다", "되돌아보다", "살펴보다", "알아보다", "바라보다", "들여다보다", "지켜보다", "엿보다",
+                      "훑어보다", "톺아보다", "맛보다", "해보다", "써보다")
+HEADING_Q_RE = re.compile(r"(까|는가|은가|인가|던가|는지|은지|을지|할지|일지|될지)$")
+HEADING_POLITE_Q = ("까요", "나요", "가요", "니까", "지요", "죠")
+HEADING_NOMINAL_RE = re.compile(r"[가-힣]기$")
+HEADING_WRAPPED_RE = re.compile(r"^\s*[\"'“‘「『《〈].*[\"'”’」』》〉]\s*[.!?]?\s*$")
+HEADING_QUOTE_CLOSERS = ("\"", "'", "”", "’", "」", "』")
+HEADING_FORM_LABEL = {"polite": "합니다체나 해요체 문장", "plain": "해라체 문장", "polite_q": "합니다체나 해요체 질문"}
+
+
+def heading_form(text):
+    """Classifies how a title or heading ends.
+
+    Returns "polite" (합니다체 or 해요체 statement, request, or proposal), "polite_q" (합니다체 or 해요체 question),
+    "plain" (해라체 statement such as "검사한다", "원인이다"), "question" (해라체 question or a question mark),
+    "nominal" ("~하기", "~함", "~음"), or "noun" (a noun phrase, a phrase that ends in a particle or connective ending,
+    or text that does not end in Hangul). A heading that is one quotation is "noun": it cites someone's words.
+    """
+    t = PH_RE.sub(" ", text).strip()
+    if not t or HEADING_WRAPPED_RE.match(t):
+        return "noun"
+    question = t.rstrip(CLOSERS + " ").endswith("?")
+    w = last_word(t)
+    if not w or not HANGUL_RE.match(w[-1]):
+        return "question" if question else "noun"
+    if not question and t.rstrip(" .").endswith(HEADING_QUOTE_CLOSERS):
+        return "noun"  # ends with a quoted word: the heading mentions the word ('두 의미로 쓴 "쓰다"')
+    items = [i.strip() for i in re.split(r"[,/]", t)]
+    if len(items) >= 2 and all(i.endswith("다") for i in items[-2:]):
+        return "noun"  # a list of dictionary forms ("줄다, 늘다")
+    if w.endswith(HEADING_YO_NOUNS) or w.endswith(HEADING_DA_NOUNS):
+        return "question" if question else "noun"
+    if w.endswith("보다") and w != "보다" and not w.endswith(HEADING_BODA_VERBS):
+        return "question" if question else "noun"
+    cls = classify_ending(w)
+    if cls == "Q_KKAYO":
+        return "polite_q"
+    if cls == "HAPNIDA":
+        return "polite_q" if w.endswith("니까") else "polite"
+    if cls == "HAEYO":
+        return "polite_q" if question or w.endswith(HEADING_POLITE_Q) else "polite"
+    if question or HEADING_Q_RE.search(w):
+        return "question"
+    if cls == "HAERA":
+        return "plain"
+    if cls == "NOMINAL" or HEADING_NOMINAL_RE.search(w):
+        return "nominal"
+    return "noun"
+
+
 # ---------------------------------------------------------------- commas, enumerations
 
 CONNECTIVE_SUFFIXES = ("면서도", "으면서", "면서", "지만", "는데", "은데", "인데", "던데", "으며", "며",
@@ -2028,6 +2084,14 @@ def analyze(text, patterns_spec=None, facts_text=None):
     put("A11.question_heading_ratio", round(len(q_heads) / len(sub_heads), 3) if sub_heads else 0.0,
         [{"line": h["line"], "text": h["text"]} for h in q_heads])
 
+    # A22.heading_sentence: the title and headings that end as a sentence. A reference section heading is a fixed label.
+    sent_heads = []
+    for h in headings:
+        form = heading_form(h["text"])
+        if form in HEADING_FORM_LABEL and not REF_HEADING_RE.search(h["text"]):
+            sent_heads.append({"line": h["line"], "text": h["text"][:160], "match": HEADING_FORM_LABEL[form]})
+    put("A22.heading_sentence", len(sent_heads), sent_heads)
+
     # Patterns used as rates per 1,000 characters
     for pid in ("A5.style_words", "A5.policy_verbs", "A12.progressive", "A13.demonstrative_start",
                 "A14.translationese"):
@@ -2132,13 +2196,18 @@ def tone_metrics(analysis, tone, imperative_ok=False, inga_ok=False):
             off.append(_hit(s, f"{s.cls}:{s.word}"))
     n = sum(1 for s in analysis["_sentences"] if s.cls not in ("NOUN", "OTHER")) or 1
     b = analysis["endings"]["bucket"]
+
+    def with_bucket(name):
+        # The sentences behind a ratio. The short profile judges these items by the number of sentences.
+        return [_hit(s, s.word) for s in analysis["_sentences"] if s.bucket == name]
+
     out = {
         "G4.off_tone": {"value": len(off), "hits": off},
         "G4.banned_ending": {"value": len(banned), "hits": banned},
-        "T.jyo_ratio": {"value": round(b.get("C_JYO", 0) / n, 3), "hits": []},
-        "T.geudeun_ratio": {"value": round(b.get("C_GEUDEUN", 0) / n, 3), "hits": []},
+        "T.jyo_ratio": {"value": round(b.get("C_JYO", 0) / n, 3), "hits": with_bucket("C_JYO")},
+        "T.geudeun_ratio": {"value": round(b.get("C_GEUDEUN", 0) / n, 3), "hits": with_bucket("C_GEUDEUN")},
         "T.kkayo_ratio": {"value": round(b.get("Q_KKAYO", 0) / n, 3), "hits": []},
-        "T.neundeyo_ratio": {"value": round(b.get("C_NEUNDEYO", 0) / n, 3), "hits": []},
+        "T.neundeyo_ratio": {"value": round(b.get("C_NEUNDEYO", 0) / n, 3), "hits": with_bucket("C_NEUNDEYO")},
     }
     return out
 
@@ -2346,7 +2415,7 @@ def apply_profile(thresholds, patterns_spec, short=False):
             title = re.sub(r"\(1,000자당\)", "", spec.get("title") or mid).strip()
             th["metrics"][mid] = {"kind": "upper", "pass_max": pass_max, "warn_max": warn_max, "count": True,
                                   "title": f"{title} (짧은 글: 개수)",
-                                  **({"hint": spec["hint"]} if spec.get("hint") else {})}
+                                  **{k: spec[k] for k in ("hint", "tone") if spec.get(k)}}
     # Items the short profile shows as check candidates. The verdict item with the same name keeps its threshold.
     for mid, spec in (prof.get("check") or {}).items():
         th["metrics"][mid] = dict(spec, kind="check")

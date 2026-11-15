@@ -28,7 +28,7 @@ Default와 Casual은 기존 `evals/note-default`의 engineering note를 각각 �
 - `marketplace.jsonl`, `install.jsonl`: 플러그인 등록과 설치 결과.
 - `prompt.txt`, `run.jsonl`, `run.err`, `meta.json`: 입력, Codex 도구 실행 로그, stderr, 버전과 종료 코드, 명시적으로 호출한 스킬의 경로, 바이트 수, SHA-256.
 - `작업 폴더/`: 결과 글과 `--keep-work` 작업 파일. 경로에 공백과 한글을 포함한다.
-- `eval.json`: 별도 프로세스의 lint 결과, 어투 검사, 후처리 전후 비교, 검사기 호출과 원문 보존 여부, `skill_load_errors`.
+- `eval.json`: 별도 프로세스의 lint 결과, 어투 검사, 검사 스크립트 호출과 원문 보존 여부, `skill_load_errors`.
 
 프로세스 종료 코드 0만으로 합격으로 판정하지 않는다. JSONL의 `item.completed` / `error` 항목과 stderr에서 스킬 잘림이나 로드 실패를 검출하면 실패다. 새 글은 Gate/FAIL 0, 원문 보존, 작업 파일 보존과 정리 규칙을 만족해야 하고, 어투 변환은 tone_check의 FAIL이 없어야 실행기가 성공으로 처리한다. 어투 변환 입력에 이미 있던 어투 외 문체 문제는 별도로 기록한다. 후처리의 AI 문체 악화 여부, 실제 참조 문서 읽기, subagent 실행 또는 직접 후처리 보고, 사실 충실성은 로그와 원문을 함께 검토한다. Python이 없을 때처럼 수동으로 점검하는 경로는 자동 검사 통과로 기록하지 않는다.
 

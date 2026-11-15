@@ -8,13 +8,23 @@ K-Writer는 한국어 글쓰기 스킬 여러 개를 제공하는 플러그인�
 
 | 스킬 | 목적 | 사용자에게 받는 값 | 어투 | 구성 | 독립 점검 | 출력 |
 |---|---|---|---|---|---|---|
-| write | 사용자가 정한다(설명, 설득, 안내, 기록, 직접 입력) | 자료나 주제, 목적, 분량, 어투 | Default, Casual, Plain, 직접 입력 | 목적별 구성 | 본문 1,500자 이상이면 subagent 네 개, 미만이면 두 개 | 파일 |
-| techblog | 자료를 기술 블로그 글로 정리 | 자료, 독자, 어투, 분량 | Default, Casual | 기술 블로그 글의 구성 | subagent 네 개 | 파일 |
-| brief | 자료를 요약 | 자료, 분량, 어투 | Default, Casual, Plain, 직접 입력 | 핵심 문장과 분량별 형식 | 요약만 읽고 보고하는 subagent 한 개 | 대화(`-o`가 있으면 파일에도 저장) |
+| write | 사용자가 정한다(설명, 설득, 안내, 기록, 직접 입력). 발표 자료의 문구도 쓴다 | 자료나 주제, 목적, 분량, 어투 | Default, Casual, Plain, 직접 입력 | 목적별 구성, 발표 자료의 형식 | 글만 읽고 보고하는 subagent 한 개. 본문이 300자 미만이면 생략한다 | 파일 |
+| techblog | 자료를 기술 블로그 글로 정리 | 자료, 독자, 어투, 분량 | Default, Casual | 기술 블로그 글의 구성 | 글만 읽고 보고하는 subagent 한 개 | 파일 |
+| brief | 자료를 요약 | 자료, 분량, 어투 | Default, Casual, Plain, 직접 입력 | 핵심 문장과 분량별 형식 | 요약만 읽고 보고하는 subagent 한 개. 분량이 한 줄이면 생략한다 | 대화(`-o`가 있으면 파일에도 저장) |
 
 새 스킬은 write가 사용자에게 묻는 값 중 어느 것을 미리 정할지부터 정한다. 목적을 정하면 그 목적의 독자, 화자, 구성을 genre.md에 적고, 어투 선택지와 기본값을 settings.md에 적는다.
 
-독립 점검의 범위는 글의 길이에 맞춘다. core의 독자 점검, 후처리, 한국어 문장 점검 문서는 긴 글을 기준으로 작성했다. 0.5.0의 테스트 실행에서 이 절차를 다섯 문장짜리 요약에 그대로 적용했더니 독자 점검이 찾은 질문마다 설명이 추가되어 요약이 469자에서 630자로 늘었고 실행에 27분이 걸렸다. 그래서 brief는 요약만 읽는 subagent가 읽다가 멈춘 부분을 보고하고, 수정은 상위 agent가 정한 분량 안에서 한다.
+## 점검 흐름
+
+세 스킬은 같은 순서로 점검하고 방법은 core의 `checking.md`가 정한다.
+
+1. 검사: `check_ko.py`가 글 전체를 한 번 검사한다. 글을 쓴 agent는 검출된 문장을 수정하고 글을 fact sheet와 대조한다.
+2. 독립 점검: 초안을 작성한 대화를 상속하지 않는 subagent 하나가 `independent-review.md`와 글만 읽고 독자가 이해하지 못하거나 어색하게 읽을 부분을 보고한다. 이 subagent는 글을 수정하지 않는다. 글을 쓴 agent가 fact sheet와 자료를 확인하면서 수정한다.
+3. 수정한 부분 확인: `check_ko.py`를 다시 실행하면 지난 검사 뒤에 바뀐 문장, 헤딩, 표의 행과 그 앞뒤 세 문장만 출력한다. 글을 쓴 agent는 출력된 부분만 다시 읽는다.
+
+글 전체를 읽는 점검은 1과 2뿐이다. 0.5.2까지는 독자 점검, 후처리, 한국어 문장 점검, 수정 후 검토를 subagent 네 개가 차례로 했고 단계마다 글 전체를 다시 검사했다. 0.5.1에서 `claude -p`로 실행한 write는 한 건에 13.1~20.6분, 4.01~5.66달러가 들었고 본문 8,304자인 글은 58.5분, 15.78달러가 들었다. 사용자는 2026-11-15에 이미 통과한 부분까지 수정할 때마다 다시 검사하는 방식 때문에 시간과 토큰이 지나치게 든다고 지적했다. 그래서 0.6.0에서 점검을 위 세 단계로 줄였다. 실행 비용을 늘리지 않기 위한 규칙은 AGENTS.md의 "Keeping a run cheap"에 있다.
+
+스킬을 실행하는 agent가 읽는 문서도 줄였다. 초안을 쓰기 전에 읽는 `style-guide.md`에는 규칙과 예만 남기고, 자료가 영어일 때나 자료의 주장을 옮길 때만 필요한 섹션은 `style-sources.md`로 옮겼다. `ai-patterns.md`, `korean-review.md`, `revision.md`는 검출되거나 지적된 항목의 섹션만 읽는다. 규칙을 추가하게 된 검토와 테스트 실행의 기록은 `dev/style-guide-history.md`와 korean-review.md의 "유형을 추가한 경위"에 있다.
 
 ## 폴더
 
@@ -24,6 +34,7 @@ K-Writer는 한국어 글쓰기 스킬 여러 개를 제공하는 플러그인�
 | `dev/sync_core.py`, `dev/new_skill.py`, `dev/borrow_thresholds.py` | core를 스킬 폴더에 복사하는 스크립트, 새 스킬 폴더를 만드는 스크립트, 기준 글 표본이 없는 스킬에 다른 스킬의 기준치를 복사하는 스크립트 |
 | `dev/baseline/techblog/` | techblog의 기준 글(사람이 쓴 기술 블로그 글)을 측정하는 `measure.py`, 측정값으로 기준치를 계산하는 `calibrate.py`, 계산 결과 보고서 `calibration.md` |
 | `dev/baseline/brief/` | 사람이 쓴 요약의 표본(KCI 논문 초록 1,206편)을 수집하고 측정하는 `measure.py`. brief의 한 문단 분량 범위를 이 표본의 문장 길이와 대조하고, 점검 후보 항목이 이 표본에 얼마나 나오는지 측정한다. 기준치 보정에는 사용하지 않는다 |
+| `dev/baseline/headings/` | 제목과 헤딩이 명사로 끝나는지 문장으로 끝나는지를 사람이 쓴 기술 블로그 글과 보도자료 제목, 스킬 없이 쓴 모델의 발표 자료에서 측정하는 `measure.py`와 측정 기록 |
 | `dev/dogfood/` | `claude -p`로 스킬을 실행하고 스킬이 작성한 글을 judge 모델(글을 읽고 판정 항목처럼 정해진 기준으로 점수를 매기는 모델)로 평가하는 스크립트 |
 | `evals/` | 스킬에 맡길 요청과 채점 기준을 묶은 평가 케이스. `claude plugin eval`로 실행한다 |
 | `dev/codex/` | Codex에서 설치와 글 작성을 검증하는 스크립트 |
@@ -39,15 +50,20 @@ K-Writer는 한국어 글쓰기 스킬 여러 개를 제공하는 플러그인�
 
 | 파일 | 내용 | techblog가 읽는 시점 |
 |---|---|---|
-| `references/runtime.md` | Claude Code와 Codex의 입력, 경로, 도구, 검사 명령, PDF와 URL 읽기, subagent 실행 | SKILL.md를 읽은 다음, 모든 subagent가 시작할 때 |
+| `references/runtime.md` | Claude Code와 Codex의 입력, 경로, 도구, 검사 명령, PDF와 URL 읽기, subagent 실행 | SKILL.md를 읽은 다음 |
 | `references/settings-protocol.md` | 설정값을 묻는 순서(Claude Code의 AskUserQuestion, Codex의 대화), 질문할 수 없을 때의 처리, 값의 출처 보고 | settings.md와 함께 |
-| `references/style-guide.md` | 장르와 무관한 한국어 문장 규칙: 처음 나오는 용어 설명, 문장을 따로 읽어도 이해되게 쓰기, 영어 자료 옮기기, 자료의 말 옮기기, 문단과 문장, 서술어 호응, 단어 고르기, 용어 표기, 수치, 문장 부호 | 3단계(개요) |
+| `references/style-guide.md` | 장르와 무관한 한국어 문장 규칙: 문단과 문장이 전할 내용, 처음 나오는 용어 설명, 문장을 따로 읽어도 이해되게 쓰기, 문단과 문장, 제목과 헤딩, 서술어 호응, 단어 고르기, 용어 표기, 수치, 문장 부호 | 3단계(개요) |
+| `references/style-sources.md` | 자료를 옮기는 문장의 규칙: 영어 자료를 한국어로 옮기기, 자료의 말을 옮기는 문장, 위치와 순서의 대응 보여 주기 | 3단계(개요). 해당하는 섹션만 읽는다 |
 | `references/fact-sheet.md` | 자료 기반 글의 fact sheet 항목 | 1단계 전(drafting.md와 함께) |
 | `references/tone.md` | Default(합니다체), Casual(해요체), Plain(해라체)의 종결과 대응표, 사용자가 직접 정한 어투의 규칙, 숫자와 영어 뒤 조사 | 7단계(어투 적용) |
-| `references/ai-patterns.md` | lint 항목마다 AI 문체 표현을 수정하는 방법 | 5단계부터. 초안을 작성하기 전에는 읽지 않는다 |
-| `references/reader-check.md`, `revision.md`, `korean-review.md` | 독자 점검, 후처리, 한국어 문장 점검 절차 | 6단계(독립 점검) |
-| `scripts/lint_ko.py`, `patterns_ko.json`, `rules.json` | 문체 검사 스크립트, 정규식 패턴, 검사 항목 정의와 짧은 글 기준 | 5단계부터 |
-| `scripts/revise_ko.py`, `tone_check.py` | 후처리 보조, 어투를 바꾼 글과 Default 초안이 문장 끝만 다른지 검사, 작업 파일 삭제 | 6~8단계 |
+| `references/checking.md` | 점검 방법: 검사 명령, 검사 결과 수정, 독립 점검의 prompt, 지적 반영, 수정한 부분 확인, 어투 적용, 작업 파일 정리 | 5단계(검사)부터 |
+| `references/independent-review.md` | 독립 점검을 맡은 subagent가 읽는 문서: 지킬 것, 읽는 순서, 찾는 항목 여덟 가지, 보고 형식 | 6단계(독립 점검)의 subagent |
+| `references/ai-patterns.md` | lint 항목마다 AI 문체 표현을 수정하는 방법 | 5단계부터 검출된 항목의 섹션만. 초안을 작성하기 전에는 읽지 않는다 |
+| `references/korean-review.md`, `revision.md` | 어색한 표현과 문장의 유형별 수정 방법, 반복과 빠진 정보를 수정하는 방법 | 6단계에서 지적된 유형의 섹션만 |
+| `scripts/check_ko.py` | 검사 명령. 처음 실행하면 글 전체를 검사하고, 그 뒤에는 지난 검사 뒤에 바뀐 문장과 앞뒤 세 문장만 검사한다 | 5단계부터 |
+| `scripts/lint_ko.py`, `patterns_ko.json`, `rules.json` | 문체 검사 스크립트, 정규식 패턴, 검사 항목 정의와 짧은 글 기준. `check_ko.py`와 `tone_check.py`가 사용한다 | 5단계부터 |
+| `scripts/tone_check.py` | 어투를 바꾼 글과 Default 초안이 문장 끝만 다른지 검사, 어투를 바꾼 글의 문체 검사(`--lint`), 작업 파일 삭제 | 7~8단계 |
+| `scripts/revise_ko.py` | 문장 단위 비교와 반복 후보 찾기. `check_ko.py`가 이 스크립트의 함수를 사용한다. 0.5.2까지의 후처리 명령(`start`, `check`, `mark`, `audit`)은 기존 글과 수정본을 직접 비교할 때 사용할 수 있다 | 스킬의 작업 순서에서는 직접 실행하지 않는다 |
 
 ### 스킬 폴더의 파일(slot)
 
@@ -59,11 +75,11 @@ K-Writer는 한국어 글쓰기 스킬 여러 개를 제공하는 플러그인�
 | `references/genre.md` | 독자와 화자, 글의 구성, 분량, 장르 표현 규칙과 예. genre.md가 style-guide.md의 규칙을 바꾼다고 명시한 부분만 genre.md가 우선한다 |
 | `references/rubric.md` | 합격 조건, 판정 항목, 기준치의 근거 |
 | `scripts/thresholds.json` | `skill.standard`(기준 글 이름)와 기준 글로 보정한 값 |
-| 작업 문서 | 이름은 스킬이 정한다. techblog와 write는 `drafting.md`, `validation.md`, `finalization.md`이고 brief는 `drafting.md`, `validation.md`다. 초안을 작성하기 전에 읽는 작업 문서는 `drafting.md`로 이름을 정하고 사용할 표현만 적는다(AGENTS.md) |
+| 작업 문서 | 이름은 스킬이 정한다. 세 스킬 모두 `drafting.md`(자료 읽기부터 초안까지)와 `validation.md`(점검과 마무리)다. `validation.md`는 스킬마다 다른 대조 항목과 보고 형식만 정하고 점검 방법은 core의 `checking.md`를 따른다. 초안을 작성하기 전에 읽는 작업 문서는 `drafting.md`로 이름을 정하고 사용할 표현만 적는다(AGENTS.md) |
 
 Codex 0.155.1과 0.162.1은 플러그인 스킬의 `SKILL.md`를 frontmatter까지 포함해 UTF-8 기준 8,000바이트까지만 프롬프트에 넣는다. 이 한도를 넘으면 앞부분만 남기고 내용이 잘렸다는 경고를 출력한다. `tests/test_portability.py`는 2,000바이트의 여유를 두고 스킬마다 `SKILL.md`가 6,000바이트 이하인지 확인한다.
 
-core 문서는 스킬 문서를 slot 이름(settings.md, genre.md, rubric.md, thresholds.json)으로만 가리키고, 스킬의 단계 번호와 작업 문서 이름을 사용하지 않는다. 단계는 이름으로 가리킨다: 자료 읽기, fact sheet, 개요, 초안 쓰기, 초안 점검, 독자 점검, 후처리, 한국어 문장 점검, 수정 후 검토, 어투 적용, 결과 보고. 자연스러움의 기준은 "스킬이 정한 기준 글"로 표현하고, 스킬은 SKILL.md와 subagent prompt에 기준 글을 적는다. techblog의 기준 글은 사람이 쓴 한국어 기술 블로그 글이다. `tests/test_core.py`가 이 규칙을 검사한다.
+core 문서는 스킬 문서를 slot 이름(settings.md, genre.md, rubric.md, thresholds.json)으로만 가리키고, 스킬의 단계 번호와 작업 문서 이름을 사용하지 않는다. 단계는 이름으로 가리킨다: 자료 읽기, fact sheet, 개요, 초안 쓰기, 검사, 독립 점검, 수정한 부분 확인, 어투 적용, 결과 보고. 자연스러움의 기준은 "스킬이 정한 기준 글"로 표현하고, 스킬은 SKILL.md와 subagent prompt에 기준 글을 적는다. techblog의 기준 글은 사람이 쓴 한국어 기술 블로그 글이다. `tests/test_core.py`가 이 규칙을 검사한다.
 
 ## core 복사본
 
@@ -72,7 +88,7 @@ core 문서는 스킬 문서를 slot 이름(settings.md, genre.md, rubric.md, th
 - core를 수정한 뒤 `python dev/sync_core.py`를 실행한다. 스킬 폴더의 복사본은 직접 수정하지 않는다.
 - `python dev/sync_core.py --check`와 `tests/test_core.py`가 복사본이 원본과 바이트 단위로 같은지 확인한다.
 - core에서 파일을 삭제하거나 이름을 바꾸면 `python dev/sync_core.py --remove <이름>`으로 모든 스킬에서 복사본도 삭제한다.
-- 검사 스크립트 출력의 첫 줄(`techblog lint`, `techblog repeats`)에는 스크립트가 있는 스킬 폴더의 이름이 들어간다.
+- 검사 스크립트 출력의 첫 줄(`techblog lint`, `techblog check`)에는 스크립트가 있는 스킬 폴더의 이름이 들어간다.
 
 ## 설정과 어투
 
@@ -80,16 +96,16 @@ core 문서는 스킬 문서를 slot 이름(settings.md, genre.md, rubric.md, th
 
 core의 어투는 Default(합니다체), Casual(해요체), Plain(해라체) 세 가지이고, 스킬은 이 중 사용할 어투와 기본값을 정한다. 스킬이 어투의 "직접 입력"을 허용하면 사용자가 적은 어투(반말, 개조식 등)로도 쓴다. 어느 어투든 내용은 Default 초안에서 정하고 문장마다 종결부만 바꾼다(tone.md). `lint_ko.py --tone`과 `tone_check.py --tone`은 `plain`으로 해라체를 판정하고, `free`로 직접 정한 어투를 받아 종결 판정을 생략한다. 종결을 판정하는 어투를 추가하려면 tone.md와 `lint_ko.py`의 `TONE_CLASSES`, `tone_check.py`의 `TARGETS`를 함께 수정한다.
 
-스킬의 출력은 파일로 저장하는 글일 수도 있고 대화로 하는 답변일 수도 있다. 대화로 답하는 스킬이 검사 스크립트를 사용하려면 답변을 작업 파일에 쓰고 lint를 실행한 뒤 그 파일을 삭제한다.
+스킬의 출력은 파일로 저장하는 글일 수도 있고 대화로 하는 답변일 수도 있다. 대화로 답하는 스킬이 검사 스크립트를 사용하려면 답변을 작업 파일에 쓰고 검사 명령을 실행한 뒤 그 파일을 삭제한다.
 
 ## 기준치
 
 `lint_ko.py`는 core의 `rules.json`과 스킬의 `thresholds.json`을 합친 값으로 판정한다(`load_thresholds`).
 
-- `rules.json`: 검사 항목 115개의 정의, Gate와 policy, 고정 기준(fixed), 짧은 글 기준(`short`). 모든 스킬에 공통이다. 항목을 추가하거나 수정할 때는 이 파일을 수정한다.
+- `rules.json`: 검사 항목 116개의 정의, Gate와 policy, 고정 기준(fixed), 짧은 글 기준(`short`). 모든 스킬에 공통이다. 항목을 추가하거나 수정할 때는 이 파일을 수정한다.
 - `thresholds.json`: 그 스킬의 기준 글로 보정한 값(gate도 fixed도 아닌 항목의 PASS, WARN 경계와 사람 글 분포). metric 필드를 덮어쓰거나 `drop`으로 항목을 제외할 수 있다. 보정값이 없는 분포 지표는 INFO로 값만 보고한다.
 - 가져온 기준치: write와 brief는 기준치를 보정할 기준 글 표본이 아직 없다. brief는 논문 초록 1,206편을 측정했지만 초록이 학술 문체라서 대조에만 사용한다([dev/baseline/brief/README.md](dev/baseline/brief/README.md)). 보정한 값이 없으면 부정 대구나 번역투 같은 AI 문체 항목도 판정하지 못하므로, 두 스킬은 특정 표현의 빈도를 세는 항목 15개의 기준치를 techblog에서 가져온다. `thresholds.json`의 `borrowed`에 가져올 스킬과 항목을 적고 `python dev/borrow_thresholds.py`로 복사한다. techblog의 기준치를 다시 보정하면 이 명령을 다시 실행하고, `--check`와 `tests/test_tones_and_profiles.py`가 복사한 값이 원본과 같은지 확인한다. 문장 길이, 문단, 목록 비중처럼 글의 종류에 따라 달라지는 항목은 가져오지 않는다.
-- 짧은 글 기준: `lint_ko.py --short`와 `revise_ko.py`의 `check --short`, `audit --short`는 `short`의 값을 적용한다. 문장 수가 적으면 문장 하나로 값이 크게 달라지는 분포 항목을 제외하고, `count`에 적은 1,000자당 비율 항목을 개수로 판정하며, poisson 항목은 한 번까지 허용한다. 한 번까지 허용하는 부정 대구 문장은 점검 후보(`A1.np_check`)로도 출력한다(`short`의 `check`). brief는 요약에, write는 본문이 공백 제외 1,500자 미만인 글에 이 기준을 사용한다. 스킬의 `thresholds.json`에 `short`가 있으면 그 값이 core의 값을 대신한다.
+- 짧은 글 기준: `check_ko.py`는 본문이 공백 제외 1,500자 미만이면 `short`의 값을 자동으로 적용한다(`--short`와 `--full`로 직접 정할 수 있다). `lint_ko.py --short`와 `revise_ko.py`의 `check --short`, `audit --short`도 같은 값을 적용한다. 문장 수가 적으면 문장 하나로 값이 크게 달라지는 분포 항목을 제외하고, `count`에 적은 1,000자당 비율 항목과 해요체 종결 비율 항목을 개수로 판정하며, poisson 항목은 한 번까지 허용한다. 한 번까지 허용하는 부정 대구 문장은 점검 후보(`A1.np_check`)로도 출력한다(`short`의 `check`). brief는 요약에, write는 본문이 공백 제외 1,500자 미만인 글에 이 기준을 사용한다. 스킬의 `thresholds.json`에 `short`가 있으면 그 값이 core의 값을 대신한다.
 - 스킬별 허용: 스킬의 `thresholds.json`은 `allow_patterns`(패턴 ID마다 검사하지 않을 정규식), `allow_imperative`(Default 글의 요청문 "~해 주세요"), `allow_inga_question`(Default 글의 질문 "~인가요?")으로 그 장르에서 자연스러운 표현을 허용한다. 항목의 `kind`를 `check`로 바꾸면 Gate 대신 점검 후보로 출력하고, `group`을 `fact`로 정하면 "자료 대조 후보"로 묶어 출력한다. write가 이 값들을 사용하고 근거는 write의 rubric.md에 있다.
 - 보정은 `dev/baseline/<skill>/`의 표본으로 한다([dev/baseline/README.md](dev/baseline/README.md)). techblog의 `calibrate.py`는 합친 값으로 계산하고 보정값(`split_thresholds`)만 저장한다.
 

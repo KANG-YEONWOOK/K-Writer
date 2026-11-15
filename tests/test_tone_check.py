@@ -94,8 +94,8 @@ class ToneCheckTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             keep = os.path.join(d, "article.md")
             work = [os.path.join(d, "article" + suf)
-                    for suf in (".facts.md", ".draft.md", ".unrevised.md", ".repeats.md", ".reader.md",
-                                ".pre-fix.md", ".audit.md")]
+                    for suf in (".facts.md", ".draft.md", ".checked.md", ".draft.checked.md", ".unrevised.md",
+                                ".repeats.md", ".reader.md", ".pre-fix.md", ".audit.md")]
             for p in [keep] + work:
                 with open(p, "w", encoding="utf-8") as f:
                     f.write("x")
@@ -118,6 +118,27 @@ class ToneCheckTest(unittest.TestCase):
             r = subprocess.run([sys.executable, os.path.join(SCRIPTS, "tone_check.py"), a, b], capture_output=True, env=env)
             self.assertEqual(r.returncode, 0, r.stdout.decode("utf-8"))
             self.assertIn("tone_check: PASS", r.stdout.decode("utf-8"))
+
+    def test_lint_option_checks_the_converted_article_in_its_tone(self):
+        with tempfile.TemporaryDirectory() as d:
+            a, b = os.path.join(d, "a.draft.md"), os.path.join(d, "a.md")
+            with open(a, "w", encoding="utf-8") as f:
+                f.write(DEFAULT)
+            with open(b, "w", encoding="utf-8") as f:
+                f.write(CASUAL)
+            run = [sys.executable, os.path.join(SCRIPTS, "tone_check.py"), a, b, "--lint"]
+            r = subprocess.run(run, capture_output=True)
+            out = r.stdout.decode("utf-8")
+            self.assertEqual(r.returncode, 0, out)
+            self.assertIn("문체 검사 | a.md | tone=casual", out)
+            self.assertIn("짧은 글 기준", out)
+            # A sentence left in "합니다체" passes neither the ending comparison nor the lint in the target tone.
+            with open(b, "w", encoding="utf-8") as f:
+                f.write(CASUAL.replace("금지 패턴을 90% 줄였어요.", "금지 패턴을 90% 줄였습니다."))
+            r = subprocess.run(run, capture_output=True)
+            out = r.stdout.decode("utf-8")
+            self.assertEqual(r.returncode, 1, out)
+            self.assertIn("G4.off_tone", out)
 
 
 if __name__ == "__main__":

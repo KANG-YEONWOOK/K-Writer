@@ -120,6 +120,21 @@ class PlainAndFreeToneTest(Base):
 
 
 class ShortProfileTest(Base):
+    def test_casual_ending_ratios_are_judged_by_count_in_a_short_text(self):
+        # Five sentences: one "~거든요" is 20% of the endings, over the ratio limit, but it is one sentence.
+        casual = ("배치 크기를 10으로 줄였어요. 메시지가 큐에서 기다리는 시간이 짧아지거든요. p99 지연은 4.2초에서 0.8초로 줄었어요. "
+                  "처리량은 12% 떨어졌어요. 측정은 12개 서비스에서 했어요.\n")
+        _, rows, verdict = self.lint(casual, "casual", short=True)
+        self.assertEqual((rows["T.geudeun_ratio"]["value"], rows["T.geudeun_ratio"]["status"]), (1, "PASS"))
+        self.assertEqual(verdict, "PASS")
+        _, rows, _ = self.lint(casual, "casual")
+        self.assertEqual(rows["T.geudeun_ratio"]["status"], "FAIL")       # the standard profile keeps the ratio
+        more = casual.replace("줄었어요.", "줄었거든요.").replace("떨어졌어요.", "떨어졌거든요.")
+        _, rows, _ = self.lint(more, "casual", short=True)
+        self.assertEqual((rows["T.geudeun_ratio"]["value"], rows["T.geudeun_ratio"]["status"]), (3, "FAIL"))
+        _, rows, _ = self.lint(casual.replace("어요.", "습니다.").replace("거든요.", "집니다."), "default", short=True)
+        self.assertNotIn("T.geudeun_ratio", rows)                         # a Casual item stays a Casual item
+
     def test_core_rules_hold_the_profile_and_no_source_comparison(self):
         rules = L.load_json(L.RULES_PATH)
         self.assertEqual(rules["short"]["poisson_floor"], 1)

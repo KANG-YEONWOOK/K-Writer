@@ -4,7 +4,7 @@ description: 전달받은 자료(파일, PDF, URL, 붙여넣은 텍스트)나 �
 license: MIT
 allowed-tools: Read Write Edit Glob Grep WebFetch WebSearch Agent Bash(python "${CLAUDE_SKILL_DIR}/scripts/*) Bash(python ${CLAUDE_SKILL_DIR}/scripts/*) Bash(python3 "${CLAUDE_SKILL_DIR}/scripts/*) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/*)
 metadata:
-  version: "0.5.2"
+  version: "0.6.0"
   repository: https://github.com/KANG-YEONWOOK/K-Writer
 ---
 
@@ -20,16 +20,16 @@ Codex에서는 `$brief`와 함께 보낸 사용자 요청을 입력으로 받는
 
 ## 인자와 설정
 
-먼저 [settings.md](references/settings.md)를 읽고 인자(`default`/`casual`/`plain`, `-o`, `--keep-work`, `--defaults`)를 해석한다. 요약할 자료가 요청에도 대화에도 없으면 먼저 대화에서 요청하고 답을 기다린다. 분량과 어투 중 요청에 없는 값은 subagent를 띄우기 전에 한 번에 묻고 값을 정한 뒤 자료를 읽는다. 질문할 수 없으면 분량과 어투는 기본값을 사용하고 보고한다.
+먼저 [settings.md](references/settings.md)를 읽고 인자(`default`/`casual`/`plain`, `-o`, `--keep-work`, `--defaults`, `--quick`)를 해석한다. 요약할 자료가 요청에도 대화에도 없으면 먼저 대화에서 요청하고 답을 기다린다. 분량과 어투 중 요청에 없는 값은 한 번에 묻고 값을 정한 뒤 자료를 읽는다. 질문할 수 없으면 분량과 어투는 기본값을 사용하고 보고한다.
 
 ## 파일
 
 - 요약은 대화에 답한다. `-o <경로>`가 있으면 그 파일에도 저장한다.
-- 작업 파일은 `-o`가 있으면 출력 파일과 같은 폴더에, 없으면 현재 작업 디렉터리에 만든다. `<이름>`은 자료의 주제를 나타내는 영문 kebab-case 이름이다. fact sheet는 `<이름>.facts.md`, 합니다체 요약 초안은 `<이름>.draft.md`다. 5단계에서 스크립트가 점검 전 초안을 `<이름>.unrevised.md`에 복사하고 `<이름>.repeats.md`도 함께 만든다. 어투를 바꾼 요약은 `<이름>.answer.md`에 저장해 검사한다. 작업 파일은 7단계에서 삭제한다.
+- 작업 파일은 `-o`가 있으면 출력 파일과 같은 폴더에, 없으면 현재 작업 디렉터리에 만든다. `<이름>`은 자료의 주제를 나타내는 영문 kebab-case 이름이다. fact sheet는 `<이름>.facts.md`, 합니다체 요약 초안은 `<이름>.draft.md`다. 검사 스크립트는 검사한 초안의 복사본을 `<이름>.draft.checked.md`에 저장한다. 어투를 바꾼 요약은 `<이름>.answer.md`에 저장해 검사한다. 작업 파일은 7단계에서 삭제한다.
 
 ## 작업 순서와 필수 문서
 
-아래 문서는 각 단계의 실행 지침이다. 단계를 시작하기 전에 지정한 문서를 끝까지 읽는다. 작업 문서가 일부 섹션만 읽으라고 정한 문서는 그 섹션만 읽는다. 모든 `references/`와 `scripts/`는 이 `SKILL.md`가 있는 디렉터리 기준이다. 검사 명령과 실행 오류 처리도 [runtime.md](references/runtime.md)를 따른다.
+단계마다 지정한 문서만 읽는다. 일부 섹션만 읽으라고 정한 문서는 그 섹션만 읽는다. 모든 `references/`와 `scripts/`는 이 `SKILL.md`가 있는 디렉터리 기준이다.
 
 1. [drafting.md](references/drafting.md)를 읽고 1~3단계를 수행한다. 자료 읽기, fact sheet 작성, 합니다체 요약 초안 작성 순서다. 어떤 어투로 요청받아도 먼저 합니다체로 쓴다. [genre.md](references/genre.md)는 2단계에서, [style-guide.md](references/style-guide.md)는 3단계에서 읽고 AI 패턴 문서는 초안 작성 전에 읽지 않는다.
-2. [validation.md](references/validation.md)를 읽고 4~7단계를 수행한다. 요약 점검(문체 검사, fact sheet 대조, 독자가 되물을 질문 점검, 분량, [rubric.md](references/rubric.md)의 판정 항목), 독립 읽기 점검(요약만 읽는 subagent의 보고를 받아 직접 수정), 어투 적용, 출력과 보고 순서다. [ai-patterns.md](references/ai-patterns.md)와 [korean-review.md](references/korean-review.md)는 검출되거나 지적된 항목이 있을 때 그 항목의 섹션만 읽고, [tone.md](references/tone.md)는 어투를 적용할 때 읽는다.
+2. [validation.md](references/validation.md)와 [checking.md](references/checking.md)를 읽고 4~7단계를 수행한다. 요약 전체 검사와 자료 대조, 독립 점검, 수정한 부분 확인, 어투 적용, 출력과 보고 순서다. 요약 전체는 검사 스크립트와 독립 점검이 한 번씩만 확인하고 그 뒤에는 수정한 문장만 다시 확인한다. [ai-patterns.md](references/ai-patterns.md)와 [korean-review.md](references/korean-review.md)는 검출되거나 지적된 항목이 있을 때 그 항목의 섹션만 읽고, [tone.md](references/tone.md)는 어투를 적용할 때 읽는다.

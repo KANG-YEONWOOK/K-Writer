@@ -1,0 +1,312 @@
+{
+ "techblog": {
+  "titles": {
+   "2021~2022-11": {
+    "n": 311,
+    "sentence": 44,
+    "sentence_share": 0.1415,
+    "noun": 172,
+    "nominal": 82,
+    "question": 13,
+    "plain": 2,
+    "polite": 39,
+    "polite_q": 3
+   },
+   "2022-12~2024": {
+    "n": 476,
+    "sentence": 44,
+    "sentence_share": 0.0924,
+    "noun": 280,
+    "nominal": 129,
+    "question": 23,
+    "plain": 8,
+    "polite": 31,
+    "polite_q": 5
+   },
+   "2025~": {
+    "n": 494,
+    "sentence": 71,
+    "sentence_share": 0.1437,
+    "noun": 283,
+    "nominal": 116,
+    "question": 24,
+    "plain": 12,
+    "polite": 53,
+    "polite_q": 6
+   },
+   "~2020": {
+    "n": 826,
+    "sentence": 63,
+    "sentence_share": 0.0763,
+    "noun": 597,
+    "nominal": 142,
+    "question": 24,
+    "plain": 4,
+    "polite": 56,
+    "polite_q": 3
+   }
+  },
+  "headings": {
+   "2021~2022-11": {
+    "n": 2128,
+    "sentence": 195,
+    "sentence_share": 0.0916,
+    "noun": 1635,
+    "nominal": 187,
+    "question": 111,
+    "plain": 42,
+    "polite": 79,
+    "polite_q": 74,
+    "docs": 189,
+    "docs_with_sentence_heading": 65
+   },
+   "2022-12~2024": {
+    "n": 3836,
+    "sentence": 177,
+    "sentence_share": 0.0461,
+    "noun": 3169,
+    "nominal": 332,
+    "question": 158,
+    "plain": 39,
+    "polite": 99,
+    "polite_q": 39,
+    "docs": 344,
+    "docs_with_sentence_heading": 68
+   },
+   "2025~": {
+    "n": 5856,
+    "sentence": 542,
+    "sentence_share": 0.0926,
+    "noun": 4676,
+    "nominal": 352,
+    "question": 286,
+    "plain": 217,
+    "polite": 233,
+    "polite_q": 92,
+    "docs": 407,
+    "docs_with_sentence_heading": 154
+   },
+   "~2020": {
+    "n": 3259,
+    "sentence": 169,
+    "sentence_share": 0.0519,
+    "noun": 2783,
+    "nominal": 186,
+    "question": 121,
+    "plain": 53,
+    "polite": 89,
+    "polite_q": 27,
+    "docs": 215,
+    "docs_with_sentence_heading": 68
+   }
+  }
+ },
+ "press": {
+  "all": {
+   "n": 1598,
+   "sentence": 264,
+   "sentence_share": 0.1652,
+   "noun": 1323,
+   "nominal": 8,
+   "question": 3,
+   "plain": 161,
+   "polite": 102,
+   "polite_q": 1
+  },
+  "by_year": {
+   "2018": {
+    "n": 600,
+    "sentence": 101,
+    "sentence_share": 0.1683,
+    "noun": 494,
+    "nominal": 3,
+    "question": 2,
+    "plain": 67,
+    "polite": 34,
+    "polite_q": 0
+   },
+   "2019": {
+    "n": 500,
+    "sentence": 87,
+    "sentence_share": 0.174,
+    "noun": 410,
+    "nominal": 3,
+    "question": 0,
+    "plain": 50,
+    "polite": 37,
+    "polite_q": 0
+   },
+   "2020": {
+    "n": 498,
+    "sentence": 76,
+    "sentence_share": 0.1526,
+    "noun": 419,
+    "nominal": 2,
+    "question": 1,
+    "plain": 44,
+    "polite": 31,
+    "polite_q": 1
+   }
+  }
+ },
+ "no_skill": {
+  "roles": {
+   "deck_subtitle": {
+    "n": 56,
+    "sentence": 25,
+    "sentence_share": 0.4464,
+    "noun": 30,
+    "nominal": 1,
+    "question": 0,
+    "plain": 16,
+    "polite": 9,
+    "polite_q": 0
+   },
+   "deck_title": {
+    "n": 56,
+    "sentence": 21,
+    "sentence_share": 0.375,
+    "noun": 35,
+    "nominal": 0,
+    "question": 0,
+    "plain": 3,
+    "polite": 18,
+    "polite_q": 0
+   },
+   "report_heading": {
+    "n": 62,
+    "sentence": 0,
+    "sentence_share": 0.0,
+    "noun": 62,
+    "nominal": 0,
+    "question": 0,
+    "plain": 0,
+    "polite": 0,
+    "polite_q": 0
+   },
+   "report_title": {
+    "n": 4,
+    "sentence": 0,
+    "sentence_share": 0.0,
+    "noun": 4,
+    "nominal": 0,
+    "question": 0,
+    "plain": 0,
+    "polite": 0,
+    "polite_q": 0
+   }
+  },
+  "files": {
+   "deck1.md": {
+    "n": 20,
+    "sentence": 10,
+    "sentence_share": 0.5,
+    "noun": 10,
+    "nominal": 0,
+    "question": 0,
+    "plain": 0,
+    "polite": 10,
+    "polite_q": 0
+   },
+   "deck2.md": {
+    "n": 16,
+    "sentence": 8,
+    "sentence_share": 0.5,
+    "noun": 8,
+    "nominal": 0,
+    "question": 0,
+    "plain": 0,
+    "polite": 8,
+    "polite_q": 0
+   },
+   "deck3.md": {
+    "n": 20,
+    "sentence": 0,
+    "sentence_share": 0.0,
+    "noun": 20,
+    "nominal": 0,
+    "question": 0,
+    "plain": 0,
+    "polite": 0,
+    "polite_q": 0
+   },
+   "deck4.md": {
+    "n": 20,
+    "sentence": 9,
+    "sentence_share": 0.45,
+    "noun": 11,
+    "nominal": 0,
+    "question": 0,
+    "plain": 9,
+    "polite": 0,
+    "polite_q": 0
+   },
+   "deck5.md": {
+    "n": 16,
+    "sentence": 10,
+    "sentence_share": 0.625,
+    "noun": 6,
+    "nominal": 0,
+    "question": 0,
+    "plain": 10,
+    "polite": 0,
+    "polite_q": 0
+   },
+   "deck6.md": {
+    "n": 20,
+    "sentence": 9,
+    "sentence_share": 0.45,
+    "noun": 10,
+    "nominal": 1,
+    "question": 0,
+    "plain": 0,
+    "polite": 9,
+    "polite_q": 0
+   },
+   "report1.md": {
+    "n": 13,
+    "sentence": 0,
+    "sentence_share": 0.0,
+    "noun": 13,
+    "nominal": 0,
+    "question": 0,
+    "plain": 0,
+    "polite": 0,
+    "polite_q": 0
+   },
+   "report2.md": {
+    "n": 17,
+    "sentence": 0,
+    "sentence_share": 0.0,
+    "noun": 17,
+    "nominal": 0,
+    "question": 0,
+    "plain": 0,
+    "polite": 0,
+    "polite_q": 0
+   },
+   "report3.md": {
+    "n": 21,
+    "sentence": 0,
+    "sentence_share": 0.0,
+    "noun": 21,
+    "nominal": 0,
+    "question": 0,
+    "plain": 0,
+    "polite": 0,
+    "polite_q": 0
+   },
+   "report4.md": {
+    "n": 15,
+    "sentence": 0,
+    "sentence_share": 0.0,
+    "noun": 15,
+    "nominal": 0,
+    "question": 0,
+    "plain": 0,
+    "polite": 0,
+    "polite_q": 0
+   }
+  }
+ }
+}
