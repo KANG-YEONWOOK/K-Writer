@@ -10,7 +10,8 @@
     "question": 13,
     "plain": 2,
     "polite": 39,
-    "polite_q": 3
+    "polite_q": 3,
+    "np": 0
    },
    "2022-12~2024": {
     "n": 476,
@@ -21,7 +22,8 @@
     "question": 23,
     "plain": 8,
     "polite": 31,
-    "polite_q": 5
+    "polite_q": 5,
+    "np": 2
    },
    "2025~": {
     "n": 494,
@@ -32,7 +34,8 @@
     "question": 24,
     "plain": 12,
     "polite": 53,
-    "polite_q": 6
+    "polite_q": 6,
+    "np": 8
    },
    "~2020": {
     "n": 826,
@@ -43,7 +46,8 @@
     "question": 24,
     "plain": 4,
     "polite": 56,
-    "polite_q": 3
+    "polite_q": 3,
+    "np": 0
    }
   },
   "headings": {
@@ -57,6 +61,7 @@
     "plain": 42,
     "polite": 79,
     "polite_q": 74,
+    "np": 3,
     "docs": 189,
     "docs_with_sentence_heading": 65
    },
@@ -70,6 +75,7 @@
     "plain": 39,
     "polite": 99,
     "polite_q": 39,
+    "np": 1,
     "docs": 344,
     "docs_with_sentence_heading": 68
    },
@@ -83,6 +89,7 @@
     "plain": 217,
     "polite": 233,
     "polite_q": 92,
+    "np": 37,
     "docs": 407,
     "docs_with_sentence_heading": 154
    },
@@ -96,6 +103,7 @@
     "plain": 53,
     "polite": 89,
     "polite_q": 27,
+    "np": 1,
     "docs": 215,
     "docs_with_sentence_heading": 68
    }
@@ -111,7 +119,8 @@
    "question": 3,
    "plain": 161,
    "polite": 102,
-   "polite_q": 1
+   "polite_q": 1,
+   "np": 1
   },
   "by_year": {
    "2018": {
@@ -123,7 +132,8 @@
     "question": 2,
     "plain": 67,
     "polite": 34,
-    "polite_q": 0
+    "polite_q": 0,
+    "np": 0
    },
    "2019": {
     "n": 500,
@@ -134,7 +144,8 @@
     "question": 0,
     "plain": 50,
     "polite": 37,
-    "polite_q": 0
+    "polite_q": 0,
+    "np": 1
    },
    "2020": {
     "n": 498,
@@ -145,7 +156,8 @@
     "question": 1,
     "plain": 44,
     "polite": 31,
-    "polite_q": 1
+    "polite_q": 1,
+    "np": 0
    }
   }
  },
@@ -160,7 +172,8 @@
     "question": 0,
     "plain": 16,
     "polite": 9,
-    "polite_q": 0
+    "polite_q": 0,
+    "np": 1
    },
    "deck_title": {
     "n": 56,
@@ -171,7 +184,8 @@
     "question": 0,
     "plain": 3,
     "polite": 18,
-    "polite_q": 0
+    "polite_q": 0,
+    "np": 0
    },
    "report_heading": {
     "n": 62,
@@ -182,7 +196,8 @@
     "question": 0,
     "plain": 0,
     "polite": 0,
-    "polite_q": 0
+    "polite_q": 0,
+    "np": 0
    },
    "report_title": {
     "n": 4,
@@ -193,7 +208,8 @@
     "question": 0,
     "plain": 0,
     "polite": 0,
-    "polite_q": 0
+    "polite_q": 0,
+    "np": 0
    }
   },
   "files": {
@@ -206,7 +222,8 @@
     "question": 0,
     "plain": 0,
     "polite": 10,
-    "polite_q": 0
+    "polite_q": 0,
+    "np": 0
    },
    "deck2.md": {
     "n": 16,
@@ -217,7 +234,8 @@
     "question": 0,
     "plain": 0,
     "polite": 8,
-    "polite_q": 0
+    "polite_q": 0,
+    "np": 0
    },
    "deck3.md": {
     "n": 20,
@@ -228,7 +246,8 @@
     "question": 0,
     "plain": 0,
     "polite": 0,
-    "polite_q": 0
+    "polite_q": 0,
+    "np": 0
    },
    "deck4.md": {
     "n": 20,
@@ -239,7 +258,8 @@
     "question": 0,
     "plain": 9,
     "polite": 0,
-    "polite_q": 0
+    "polite_q": 0,
+    "np": 0
    },
    "deck5.md": {
     "n": 16,
@@ -250,7 +270,8 @@
     "question": 0,
     "plain": 10,
     "polite": 0,
-    "polite_q": 0
+    "polite_q": 0,
+    "np": 1
    },
    "deck6.md": {
     "n": 20,
@@ -261,7 +282,8 @@
     "question": 0,
     "plain": 0,
     "polite": 9,
-    "polite_q": 0
+    "polite_q": 0,
+    "np": 0
    },
    "report1.md": {
     "n": 13,
@@ -272,7 +294,8 @@
     "question": 0,
     "plain": 0,
     "polite": 0,
-    "polite_q": 0
+    "polite_q": 0,
+    "np": 0
    },
    "report2.md": {
     "n": 17,
@@ -283,7 +306,8 @@
     "question": 0,
     "plain": 0,
     "polite": 0,
-    "polite_q": 0
+    "polite_q": 0,
+    "np": 0
    },
    "report3.md": {
     "n": 21,
@@ -294,7 +318,8 @@
     "question": 0,
     "plain": 0,
     "polite": 0,
-    "polite_q": 0
+    "polite_q": 0,
+    "np": 0
    },
    "report4.md": {
     "n": 15,
@@ -305,7 +330,8 @@
     "question": 0,
     "plain": 0,
     "polite": 0,
-    "polite_q": 0
+    "polite_q": 0,
+    "np": 0
    }
   }
  }

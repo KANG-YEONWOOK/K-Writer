@@ -2,7 +2,8 @@
 """Measure how titles and headings end in human writing and in model writing without the skill.
 
 Classifies each title and heading with lint_ko.heading_form (noun, nominal, question, plain, polite, polite_q) and
-counts the forms per source and period. The repo keeps only the counts (stats.json) and the IDs of the sampled
+counts the forms per source and period. Also counts titles and headings with negative parallelism ("X가 아니라 Y",
+the patterns of lint item A1.np) as "np". The repo keeps only the counts (stats.json) and the IDs of the sampled
 press releases. Source text stays in the gitignored docs/ cache.
 
 Sources
@@ -31,6 +32,14 @@ sys.path.insert(0, os.path.join(ROOT, "core", "scripts"))
 import lint_ko as L  # noqa: E402
 
 FORMS = ("noun", "nominal", "question", "plain", "polite", "polite_q")
+NP_IDS = ("A1.np_anira", "A1.np_rather", "A1.np_geuchi", "A1.np_neomeo", "A1.np_deoisang", "A1.np_simple")
+_PATTERNS = L._compile_patterns(L.load_json(L.PATTERNS_PATH))
+NP_RX = [rx for pid in NP_IDS for rx in _PATTERNS[pid]["regex"]]
+
+
+def has_np(text):
+    masked = L.mask_quotes(text)
+    return any(rx.search(masked) for rx in NP_RX)
 SENTENCE_FORMS = ("plain", "polite", "polite_q")
 # A press release title often starts with a label such as "[참고]" or "(설명자료)". The label is not part of the title.
 PRESS_LABEL_RE = re.compile(r"^(?:\[[^\]]*\]|\([^)]*\))\s*")
@@ -50,10 +59,11 @@ def period(date):
 
 
 def summarize(counter):
-    n = sum(counter.values())
+    n = sum(counter[f] for f in FORMS)
     sent = sum(counter[f] for f in SENTENCE_FORMS)
     out = {"n": n, "sentence": sent, "sentence_share": round(sent / n, 4) if n else 0.0}
     out.update({f: counter[f] for f in FORMS})
+    out["np"] = counter["np"]
     return out
 
 
@@ -69,16 +79,20 @@ def measure_techblog(cache):
     heads = collections.defaultdict(collections.Counter)
     docs = collections.defaultdict(lambda: {"docs": 0, "docs_with_sentence_heading": 0})
     for item in meta.values():
-        titles[period(item.get("date"))][L.heading_form(item.get("title") or "")] += 1
+        title = item.get("title") or ""
+        titles[period(item.get("date"))][L.heading_form(title)] += 1
+        titles[period(item.get("date"))]["np"] += has_np(title)
     md = os.path.join(cache, "md")
     for name in sorted(os.listdir(md)):
         if not name.endswith(".md"):
             continue
         p = period((meta.get(name[:-3]) or {}).get("date"))
-        forms = [L.heading_form(t) for _, t in headings_of(L.read_text(os.path.join(md, name)), min_level=2)]
+        texts = [t for _, t in headings_of(L.read_text(os.path.join(md, name)), min_level=2)]
+        forms = [L.heading_form(t) for t in texts]
         if not forms:
             continue
         heads[p].update(forms)
+        heads[p]["np"] += sum(has_np(t) for t in texts)
         docs[p]["docs"] += 1
         docs[p]["docs_with_sentence_heading"] += any(f in SENTENCE_FORMS for f in forms)
     return {"titles": {p: summarize(c) for p, c in sorted(titles.items())},
@@ -89,7 +103,9 @@ def measure_press(path):
     rows = json.load(open(path, encoding="utf-8"))
     by_year = collections.defaultdict(collections.Counter)
     for r in rows:
-        by_year[r["date"][:4]][L.heading_form(PRESS_LABEL_RE.sub("", r["title"].strip()))] += 1
+        title = PRESS_LABEL_RE.sub("", r["title"].strip())
+        by_year[r["date"][:4]][L.heading_form(title)] += 1
+        by_year[r["date"][:4]]["np"] += has_np(title)
     total = collections.Counter()
     for c in by_year.values():
         total.update(c)
@@ -110,7 +126,9 @@ def measure_no_skill(folder):
                 role = "report_title" if level == 1 else "report_heading"
             form = L.heading_form(text)
             roles[role][form] += 1
+            roles[role]["np"] += has_np(text)
             own[form] += 1
+            own["np"] += has_np(text)
         files[name] = summarize(own)
     return {"roles": {r: summarize(c) for r, c in sorted(roles.items())}, "files": files}
 

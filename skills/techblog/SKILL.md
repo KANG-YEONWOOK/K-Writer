@@ -35,7 +35,7 @@ Codex에서는 `$techblog`와 함께 보낸 사용자 요청을 입력으로 받
 ### 새 글
 
 1. [drafting.md](references/drafting.md)를 읽고 1~4단계를 수행한다. 자료 전체 읽기, fact sheet 작성, 개요, Default 초안 작성 순서다. Casual도 먼저 합니다체로 쓴다. [style-guide.md](references/style-guide.md), [style-sources.md](references/style-sources.md), [genre.md](references/genre.md)는 3단계에서 읽고 AI 패턴 문서는 초안 작성 전에 읽지 않는다.
-2. [validation.md](references/validation.md)와 [checking.md](references/checking.md)를 읽고 5~8단계를 수행한다. 글 전체 검사와 자료 대조, 독립 점검, 수정한 부분 확인, Casual 어투 적용, 결과 보고 순서다. 글 전체는 검사 스크립트와 독립 점검이 한 번씩만 확인하고 그 뒤에는 수정한 문장과 그 앞뒤 세 문장만 다시 확인한다. [ai-patterns.md](references/ai-patterns.md), [korean-review.md](references/korean-review.md), [revision.md](references/revision.md)는 검출되거나 지적된 항목이 있을 때 그 항목의 섹션만 읽는다. [tone.md](references/tone.md)는 어투를 적용할 때 읽는다.
+2. [validation.md](references/validation.md)와 [checking.md](references/checking.md)를 읽고 5~8단계를 수행한다. 글 전체 검사와 자료 대조, 독립 점검, 수정한 부분 확인, Casual 어투 적용, 결과 보고 순서다. 글 전체는 검사 스크립트와 독립 점검이 한 번씩만 확인하고 그 뒤에는 수정한 문장과 그 앞뒤 세 문장씩만 다시 확인한다. [ai-patterns.md](references/ai-patterns.md), [korean-review.md](references/korean-review.md), [revision.md](references/revision.md)는 검출되거나 지적된 항목이 있을 때 그 항목의 섹션만 읽는다. [tone.md](references/tone.md)는 어투를 적용할 때 읽는다.
 
 ### 완성된 글의 어투만 변환
 

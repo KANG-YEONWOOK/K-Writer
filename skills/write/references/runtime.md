@@ -30,7 +30,7 @@
 - macOS와 Linux에서는 `python3`, Windows에서는 `python`을 실행한다. 사용할 수 있는 Python 3.8 이상 실행 파일이 따로 있으면 그 경로를 사용한다. 검사 스크립트는 외부 패키지가 필요 없다.
 - 아래 `<스킬 절대 경로>`는 로드한 `SKILL.md`가 있는 디렉터리로 바꾼다. 현재 작업 폴더나 환경 변수를 근거로 이 경로를 추측하지 않는다.
 - 경로는 큰따옴표로 감싸고 명령은 한 번에 하나씩 실행한다. Claude Code의 Bash 사전 허용은 frontmatter에 적힌 검사 스크립트에 한정된다. 검사 명령에 `cat`, `ls`, `; echo "exit=$?"` 같은 다른 명령을 이어 붙이면 사전 허용과 맞지 않아 권한이 거부된다. Bash 도구는 0이 아닌 종료 코드를 결과에 함께 보여 준다. 참고 문서는 Read로 열고 파일 목록은 Glob으로 확인한다.
-  - 검사: `python3 "<스킬 절대 경로>/scripts/check_ko.py" "<점검 대상>"`. 처음 실행하면 글 전체를 검사하고, 글을 수정한 뒤 다시 실행하면 수정한 문장과 그 앞뒤 세 문장만 검사한다. fact sheet(`<이름>.facts.md`)와 짧은 글 기준(본문 1,500자 미만)은 자동으로 적용한다. 점검 대상은 합니다체 글이다.
+  - 검사: `python3 "<스킬 절대 경로>/scripts/check_ko.py" "<점검 대상>"`. 처음 실행하면 글 전체를 검사하고, 글을 수정한 뒤 다시 실행하면 수정한 문장과 그 앞뒤 세 문장씩만 검사한다. fact sheet(`<이름>.facts.md`)와 짧은 글 기준(본문 1,500자 미만)은 자동으로 적용한다. 점검 대상은 합니다체 글이다.
   - 섹션 읽기: `python3 "<스킬 절대 경로>/scripts/section.py" korean-review.md "C" "V"`. 문서 이름과 읽을 섹션의 헤딩을 적으면 그 섹션만 출력한다. 헤딩은 전체나 일부를 적고, 유형과 항목은 앞의 기호만 적어도 된다(korean-review.md의 유형 C는 "C", ai-patterns.md의 A22.heading_sentence는 "A22"). `--list`를 붙이면 문서의 헤딩 목록을 출력한다. 섹션의 위치를 찾으려고 `grep`을 Bash로 실행하지 않는다.
   - 어투 검사: `python3 "<스킬 절대 경로>/scripts/tone_check.py" "<Default 글>" "<어투를 바꾼 글>" --tone casual --lint`. 어투를 바꾼 글이 Plain이면 `--tone plain`, 사용자가 직접 정한 어투면 `--tone free`를 붙인다. `--lint`는 어투를 바꾼 글의 문체 검사를 함께 실행한다.
   - 작업 파일 삭제: `python3 "<스킬 절대 경로>/scripts/tone_check.py" --cleanup "<이름>.facts.md" "<이름>.checked.md" "<이름>.draft.md" "<이름>.draft.checked.md"`. 대화로 답하는 스킬이 답변을 저장한 `<이름>.answer.md`도 이 명령으로 삭제한다. 이번 실행에서 만든 파일만 적는다.

@@ -20,7 +20,7 @@ K-Writer는 한국어 글쓰기 스킬 여러 개를 제공하는 플러그인�
 
 1. 검사: `check_ko.py`가 글 전체를 한 번 검사한다. 글을 쓴 agent는 검출된 문장을 수정하고 글을 fact sheet와 대조한다.
 2. 독립 점검: 초안을 작성한 대화를 상속하지 않는 subagent 하나가 `independent-review.md`와 글만 읽고 독자가 이해하지 못하거나 어색하게 읽을 부분을 보고한다. 이 subagent는 글을 수정하지 않는다. 글을 쓴 agent가 fact sheet와 자료를 확인하면서 수정한다.
-3. 수정한 부분 확인: `check_ko.py`를 다시 실행하면 지난 검사 뒤에 바뀐 문장, 헤딩, 표의 행과 그 앞뒤 세 문장만 출력한다. 글을 쓴 agent는 출력된 부분만 다시 읽는다.
+3. 수정한 부분 확인: `check_ko.py`를 다시 실행하면 지난 검사 뒤에 바뀐 문장, 헤딩, 표의 행과 그 앞뒤 세 문장씩만 출력한다. 글을 쓴 agent는 출력된 부분만 다시 읽는다.
 
 글 전체를 읽는 점검은 1과 2뿐이다. 0.5.2까지는 독자 점검, 후처리, 한국어 문장 점검, 수정 후 검토를 subagent 네 개가 차례로 했고 단계마다 글 전체를 다시 검사했다. 0.5.1에서 `claude -p`로 실행한 write는 한 건에 13.1~20.6분, 4.01~5.66달러가 들었고 본문 8,304자인 글은 58.5분, 15.78달러가 들었다. 사용자는 2026-11-15에 이미 통과한 부분까지 수정할 때마다 다시 검사하는 방식 때문에 시간과 토큰이 지나치게 든다고 지적했다. 그래서 0.6.0에서 점검을 위 세 단계로 줄였다. 실행 비용을 늘리지 않기 위한 규칙은 AGENTS.md의 "Keeping a run cheap"에 있다.
 
@@ -60,7 +60,7 @@ K-Writer는 한국어 글쓰기 스킬 여러 개를 제공하는 플러그인�
 | `references/independent-review.md` | 독립 점검을 맡은 subagent가 읽는 문서: 지킬 것, 읽는 순서, 찾는 항목 여덟 가지, 보고 형식 | 6단계(독립 점검)의 subagent |
 | `references/ai-patterns.md` | lint 항목마다 AI 문체 표현을 수정하는 방법 | 5단계부터 검출된 항목의 섹션만. 초안을 작성하기 전에는 읽지 않는다 |
 | `references/korean-review.md`, `revision.md` | 어색한 표현과 문장의 유형별 수정 방법, 반복과 빠진 정보를 수정하는 방법 | 6단계에서 지적된 유형의 섹션만 |
-| `scripts/check_ko.py` | 검사 명령. 처음 실행하면 글 전체를 검사하고, 그 뒤에는 지난 검사 뒤에 바뀐 문장과 앞뒤 세 문장만 검사한다 | 5단계부터 |
+| `scripts/check_ko.py` | 검사 명령. 처음 실행하면 글 전체를 검사하고, 그 뒤에는 지난 검사 뒤에 바뀐 문장과 앞뒤 세 문장씩만 검사한다 | 5단계부터 |
 | `scripts/lint_ko.py`, `patterns_ko.json`, `rules.json` | 문체 검사 스크립트, 정규식 패턴, 검사 항목 정의와 짧은 글 기준. `check_ko.py`와 `tone_check.py`가 사용한다 | 5단계부터 |
 | `scripts/tone_check.py` | 어투를 바꾼 글과 Default 초안이 문장 끝만 다른지 검사, 어투를 바꾼 글의 문체 검사(`--lint`), 작업 파일 삭제 | 7~8단계 |
 | `scripts/revise_ko.py` | 문장 단위 비교와 반복 후보 찾기. `check_ko.py`가 이 스크립트의 함수를 사용한다. 0.5.2까지의 후처리 명령(`start`, `check`, `mark`, `audit`)은 기존 글과 수정본을 직접 비교할 때 사용할 수 있다 | 스킬의 작업 순서에서는 직접 실행하지 않는다 |
@@ -102,7 +102,7 @@ core의 어투는 Default(합니다체), Casual(해요체), Plain(해라체) 세
 
 `lint_ko.py`는 core의 `rules.json`과 스킬의 `thresholds.json`을 합친 값으로 판정한다(`load_thresholds`).
 
-- `rules.json`: 검사 항목 116개의 정의, Gate와 policy, 고정 기준(fixed), 짧은 글 기준(`short`). 모든 스킬에 공통이다. 항목을 추가하거나 수정할 때는 이 파일을 수정한다.
+- `rules.json`: 검사 항목 117개의 정의, Gate와 policy, 고정 기준(fixed), 짧은 글 기준(`short`). 모든 스킬에 공통이다. 항목을 추가하거나 수정할 때는 이 파일을 수정한다.
 - `thresholds.json`: 그 스킬의 기준 글로 보정한 값(gate도 fixed도 아닌 항목의 PASS, WARN 경계와 사람 글 분포). metric 필드를 덮어쓰거나 `drop`으로 항목을 제외할 수 있다. 보정값이 없는 분포 지표는 INFO로 값만 보고한다.
 - 가져온 기준치: write와 brief는 기준치를 보정할 기준 글 표본이 아직 없다. brief는 논문 초록 1,206편을 측정했지만 초록이 학술 문체라서 대조에만 사용한다([dev/baseline/brief/README.md](dev/baseline/brief/README.md)). 보정한 값이 없으면 부정 대구나 번역투 같은 AI 문체 항목도 판정하지 못하므로, 두 스킬은 특정 표현의 빈도를 세는 항목 15개의 기준치를 techblog에서 가져온다. `thresholds.json`의 `borrowed`에 가져올 스킬과 항목을 적고 `python dev/borrow_thresholds.py`로 복사한다. techblog의 기준치를 다시 보정하면 이 명령을 다시 실행하고, `--check`와 `tests/test_tones_and_profiles.py`가 복사한 값이 원본과 같은지 확인한다. 문장 길이, 문단, 목록 비중처럼 글의 종류에 따라 달라지는 항목은 가져오지 않는다.
 - 짧은 글 기준: `check_ko.py`는 본문이 공백 제외 1,500자 미만이면 `short`의 값을 자동으로 적용한다(`--short`와 `--full`로 직접 정할 수 있다). `lint_ko.py --short`와 `revise_ko.py`의 `check --short`, `audit --short`도 같은 값을 적용한다. 문장 수가 적으면 문장 하나로 값이 크게 달라지는 분포 항목을 제외하고, `count`에 적은 1,000자당 비율 항목과 해요체 종결 비율 항목을 개수로 판정하며, poisson 항목은 한 번까지 허용한다. 한 번까지 허용하는 부정 대구 문장은 점검 후보(`A1.np_check`)로도 출력한다(`short`의 `check`). brief는 요약에, write는 본문이 공백 제외 1,500자 미만인 글에 이 기준을 사용한다. 스킬의 `thresholds.json`에 `short`가 있으면 그 값이 core의 값을 대신한다.

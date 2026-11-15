@@ -1848,6 +1848,11 @@ def analyze(text, patterns_spec=None, facts_text=None):
             metrics["G8.beyond_simple"]["hits"].append({"line": h["line"], "text": h["text"]})
     metrics["G8.beyond_simple"]["value"] = len(metrics["G8.beyond_simple"]["hits"])
     put("A1.np_title", len(np_title), np_title)
+    # Negative parallelism in headings below the title ("문제는 X가 아니라 Y"). Human posts up to 2020 had it in 1 of
+    # 3,259 headings and posts from 2025 on in 37 of 5,856 (dev/baseline/headings/README.md).
+    np_heads = [{"line": h["line"], "text": h["text"][:160]} for h in headings
+                if h is not title and any(rx.search(mask_quotes(h["text"])) for rx in np_rx)]
+    put("A1.np_heading", len(np_heads), np_heads)
 
     # A1: Negative parallelism (once per sentence) + the split-sentence form "X가 아닙니다. Y입니다."
     np_sents = set()

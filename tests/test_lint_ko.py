@@ -1263,6 +1263,21 @@ class HeadingFormTest(unittest.TestCase):
     def test_good_text_passes(self):
         a = L.analyze(GOOD_DEFAULT)
         self.assertEqual(a["metrics"]["A22.heading_sentence"]["value"], 0)
+        self.assertEqual(a["metrics"]["A1.np_heading"]["value"], 0)
+
+    def test_negative_parallelism_in_headings_below_the_title(self):
+        # Headings from human posts published in 2025 or later (dev/baseline/headings/README.md).
+        text = ("# 정산 지표 정리\n\n지표는 세 가지입니다.\n\n## 문제는 엑셀이 아니라 설명하기 어려운 숫자\n\n"
+                "숫자의 출처를 확인했습니다.\n\n## 코드 공유를 넘어 라이브러리로\n\n라이브러리로 배포했습니다.\n\n"
+                "## 설명하기 어려운 숫자\n\n출처를 표에 정리했습니다.\n")
+        m = L.analyze(text)["metrics"]
+        self.assertEqual([h["line"] for h in m["A1.np_heading"]["hits"]], [5, 9])
+        self.assertEqual(m["A1.np_title"]["value"], 0)
+        title = L.analyze("# 문제는 엑셀이 아니라 설명하기 어려운 숫자\n\n숫자의 출처를 확인했습니다.\n")["metrics"]
+        self.assertEqual((title["A1.np_title"]["value"], title["A1.np_heading"]["value"]), (1, 0))
+        th = L.load_thresholds()
+        ev = L.evaluate(L.analyze(text), th, "default")
+        self.assertEqual(next(r for r in ev["results"] if r["id"] == "A1.np_heading")["status"], "FAIL")
 
 
 class CliTest(unittest.TestCase):
