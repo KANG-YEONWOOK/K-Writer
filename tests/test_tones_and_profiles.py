@@ -259,7 +259,9 @@ class BorrowedLimitsTest(Base):
         self.assertEqual(self.borrow.borrowers(ROOT), ["brief", "write"])
         for skill in ("brief", "write"):
             self.assertEqual(self.borrow.differences(skill, ROOT), [], "python dev/borrow_thresholds.py를 실행한다")
-            self.assertEqual(len(self.borrow.borrowed_limits(skill, ROOT)), 15)
+        self.assertEqual(len(self.borrow.borrowed_limits("brief", ROOT)), 15)
+        # write judges A13 and A14 with the rates of its own reference texts (dev/baseline/write)
+        self.assertEqual(len(self.borrow.borrowed_limits("write", ROOT)), 13)
 
     def test_only_expression_items_are_borrowed(self):
         """Distribution and format items differ by genre, so a skill without its own sample must not borrow them."""
@@ -267,6 +269,25 @@ class BorrowedLimitsTest(Base):
             for mid in L.load_json(skill_thresholds(skill))["borrowed"]["metrics"]:
                 self.assertFalse(mid.startswith(("A8.", "A9.", "A10.", "A11.", "A16.", "A17.", "T.")), (skill, mid))
                 self.assertNotEqual(mid, "A2.comma_per_sentence")
+
+    def test_write_judges_demonstrative_openers_with_the_rate_of_its_reference_texts(self):
+        """CSAT passages open 1.25 sentences per 1,000 characters with "이러한", "이는", "이처럼" (dev/baseline/write).
+        techblog's limit failed 37% of them, so write judges A13 and A14 with a Poisson limit that follows the length
+        of the text, in the short profile too."""
+        body = ("캐시 무효화는 원본 데이터가 바뀌었을 때 캐시에 남은 예전 값을 삭제하는 일입니다. "
+                "무효화 메시지는 배치로 묶어 캐시 노드에 보냅니다. ")
+        text = (body * 5 + "이러한 배치가 크면 메시지 하나가 실패했을 때 배치 전체를 다시 보냅니다. " + body * 5
+                + "이는 재전송이 늘어나는 원인입니다. " + body * 4 + "이처럼 무효화 지연은 배치 크기에 따라 달라집니다.\n")
+        _, rows, _ = self.lint(text, "default", skill="write", short=True)
+        row = rows["A13.demonstrative_start_per_1k"]
+        self.assertEqual(row["value"], 3)
+        self.assertEqual(row["limit"]["basis"], "poisson")
+        self.assertEqual(row["status"], "PASS")
+        _, rows, _ = self.lint(text, "default", skill="brief", short=True)
+        self.assertEqual(rows["A13.demonstrative_start_per_1k"]["status"], "FAIL")    # the core short profile: count [0, 1]
+        spec = L.load_thresholds(skill_thresholds("write"))["metrics"]["A13.demonstrative_start_per_1k"]
+        self.assertEqual(L.judge(4, spec, 1500)[0], "PASS")
+        self.assertEqual(L.judge(7, spec, 1500)[0], "FAIL")
 
     def test_expression_items_are_judged(self):
         text = "\n\n".join(["캐시 문제가 아니라 배치 크기 문제입니다. 지연이 아니라 처리량이 원인입니다."] * 4) + "\n"

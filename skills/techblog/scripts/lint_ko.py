@@ -854,6 +854,160 @@ def same_predicate_adjacent_hits(paragraphs):
     return hits
 
 
+# ---------------------------------------------------------------- flow: links between sentences, topic words, noun runs
+
+# Particles and endings stripped from a word before sentences are compared. The comparison key is the first two
+# syllables of what is left, so "무효화가", "무효화를", and "무효화된" count as the same word.
+FLOW_SUFFIX_RE = re.compile(
+    r"(?:에서는|에서도|에서의|에서|에게서|에게는|에게|으로부터|로부터|으로써|으로서|으로는|으로도|으로|로써|로서|로는|로도|"
+    r"이라고|라고|이라는|라는|이란|이라|이며|이고|이다|입니다|이었다|였다|이지만|까지|부터|처럼|보다|마다|조차|마저|밖에|"
+    r"이나|에는|에도|에의|와의|과의|와는|과는|들은|들이|들을|들의|들에|들과|들도|들|"
+    r"했습니다|합니다|했다|한다|하는|하고|하여|해서|하며|하면|하기|하지|해야|했고|했던|하던|"
+    r"됐습니다|됩니다|됐다|된다|되는|되고|되어|되며|되면|되기|되지|됐고|"
+    r"은|는|이|가|을|를|의|에|와|과|도|만|로|나|며|고|다|요)$")
+FLOW_STOP = frozenset(
+    "것 수 등 때 및 또는 그리고 대한 대해 대하여 통해 통한 위해 위한 있다 없다 한다 된다 같은 다른 모든 어떤 여러 가장 매우 더 잘 "
+    "이런 그런 이러한 그러한 있는 없는 하는 되는 있고 있으며 있어 한 할 된 될 중 간 후 전 내 약 각 수도 경우 때문 "
+    "이후 이전 사이 가지 정도 하나 다음 이상 이하 동안 가운데 당시 오늘 최근 우리 여러분 모두 사실 그동안 따라 "
+    "따른 관련 관한 대해서 위해서 통해서 그러나 하지만 따라서 또한 즉 특히 물론 다만 바로 이미 아직 다시 "
+    "함께 먼저 매년 올해 지난 현재 지금 앞으로 이번 있습니다 없습니다 합니다 됩니다 것입니다 것이다 있었다".split())
+# Sentence openers that tie a sentence to the text before it: conjunctive adverbs and demonstratives.
+FLOW_CONJ_RE = re.compile(
+    r"^(?:그러나|하지만|그런데|그리고|또한|또|따라서|그러므로|그래서|그러면|그럼에도|그렇지만|반면|반대로|한편|즉|곧|"
+    r"다시 말해|요컨대|예를 들어|예를 들면|예컨대|가령|이를테면|특히|물론|다만|단|오히려|결국|더욱이|게다가|나아가|"
+    r"아울러|우선|먼저|다음으로|마지막으로|끝으로|첫째|둘째|셋째|넷째|왜냐하면|그렇다면|그러자|그 결과|더구나|"
+    r"뿐만 아니라|그뿐 아니라)(?=[\s,])")
+FLOW_DEMO_RE = re.compile(
+    r"^(?:이런|그런|이러한|그러한|이와 같은|이 같은|이것|그것|이들|그들|이때|그때|이처럼|이같이|이렇게|그렇게|이렇듯|"
+    r"여기서|여기에|이곳|그곳|이로써|이로부터|이로 인해|이에 따라|이 때문에|그 때문에|이 중|그중|이 가운데|"
+    r"그 가운데|그 결과|그 후|그 뒤|이후|이에|이는|이를|이와|그와|이로|그는|그가|(?:이|그) (?=[가-힣A-Za-z0-9‘“]))")
+FLOW_WORD_RE = re.compile(r"[A-Za-z][A-Za-z0-9\-]*|[가-힣]+")
+# A Hangul word that ends in one of these syllables is taken to carry a particle or an ending. The list is wide on
+# purpose: a noun that happens to end in such a syllable only shortens a run, so the runs that are reported are real.
+FLOW_BOUND_RE = re.compile(
+    r"(?:은|는|이|가|을|를|의|에|와|과|도|만|로|나|며|고|다|요|서|면|게|지|어|아|여|해|한|된|할|될|던|적|히|리|께|든|야|"
+    r"라|란|까|니|죠|음|함|기|들|중|등|및|더|약|럼|록|쁜|운|른|큰|긴|온|린|뀐|쓴|뺀|낸)$")
+# Adverbs and determiners that do not end in a particle but are not nouns.
+FLOW_RUN_STOP = frozenset(
+    "오히려 모두 대부분 거의 매우 가장 다시 아직 이미 바로 서로 함께 직접 각각 주로 특히 또한 먼저 아주 너무 조금 훨씬 "
+    "계속 항상 자주 가끔 결국 실제 현재 최근 당시 이후 이전 이상 이하 미만 초과 안팎 정도 가량 이번 지난 다음 매번 "
+    "처음 마지막 모든 여러 어떤 어느 무슨 같은 다른 새로운 그대로 따로 스스로 반드시 꼭 약간 대략 대체로 일단 우선 "
+    "비교적 상당히 충분히 전혀 결코 별로 과연 물론 역시 단지 오직 다만 만약 비록 혹시 아마 무엇 누구 언제 어디 얼마 "
+    "하나 둘째 첫째 셋째 그리고 그러나 하지만 따라서 그래서 그런데 그러면 한편 반면".split())
+FLOW_MIN_SENTENCES = 8
+FLOW_TOPIC_WORDS = 5
+NOUN_RUN_MIN = 4
+
+
+def flow_words(text):
+    """Returns {comparison key: word} for the content words of a sentence."""
+    out = {}
+    for w in FLOW_WORD_RE.findall(PH_RE.sub(" ", text)):
+        if "A" <= w[0] <= "Z" or "a" <= w[0] <= "z":
+            if len(w) >= 2:
+                out.setdefault(w.lower(), w)
+            continue
+        if w in FLOW_STOP:
+            continue
+        stem = w
+        for _ in range(2):
+            m = FLOW_SUFFIX_RE.search(stem)
+            if not m or len(stem) - len(m.group(0)) < 2:
+                break
+            stem = stem[:m.start()]
+        if len(stem) >= 2 and stem not in FLOW_STOP:
+            out.setdefault(stem[:2], stem)
+    return out
+
+
+FLOW_REASON_END_RE = re.compile(r"(?:때문|까닭)(?:이다|입니다|이에요|예요|이죠|이었다|이었습니다)[.\"'”’)]*$")
+
+
+def flow_opener(text):
+    """True if the sentence shows its relation to the text before it: it opens with a conjunctive adverb or a
+    demonstrative, or it ends by giving a reason ("~기 때문이다")."""
+    s = text.strip().lstrip("\"'“‘")
+    return bool(FLOW_CONJ_RE.match(s) or FLOW_DEMO_RE.match(s) or FLOW_REASON_END_RE.search(s))
+
+
+def noun_run(text):
+    """Returns the longest run of nouns joined without a particle or an ending, as a list of words.
+
+    A word counts as a bare noun when it is Hangul, has two or more syllables, and does not end in a syllable that
+    usually is a particle or an ending (FLOW_BOUND_RE). The noun that carries the particle closes the run
+    ("캐시 무효화 지연 원인을" is a run of four). A number, a one-syllable word, an adverb, or punctuation ends a run.
+    """
+    best, run = [], []
+    for tok in PH_RE.sub(" ⟦⟧ ", text).split():
+        word = tok.strip(".,?!\"'“”‘’()[]:;~")
+        stop_after = tok[-1:] in ",.?!:;)”’\"'"
+        hangul = bool(re.fullmatch(r"[가-힣]{2,}", word)) and word not in FLOW_RUN_STOP
+        latin = bool(re.fullmatch(r"[A-Za-z][A-Za-z\-]*", word))
+        if hangul and not FLOW_BOUND_RE.search(word):
+            run.append(word)
+            if len(run) > len(best):
+                best = list(run)
+            if stop_after:
+                run = []
+        elif latin and run and not stop_after:
+            run.append(word)          # a Latin word inside a run of nouns
+        else:
+            m = FLOW_SUFFIX_RE.search(word) if hangul and run else None
+            if m and len(word) - len(m.group(0)) >= 2 and word[:m.start()] not in FLOW_STOP:
+                closed = run + [word]
+                if len(closed) > len(best):
+                    best = closed
+            run = []
+    return best
+
+
+def flow_metrics(para_sents, title=""):
+    """Links between adjacent sentences, paragraphs without a topic word, and noun runs.
+
+    para_sents: the sentences of each paragraph (Sentence objects). Returns a dict of metric values and hits.
+    The comparison uses surface words (see flow_words), not morphological analysis.
+    """
+    paras = [[s for s in ps if not s.in_refs] for ps in para_sents]
+    paras = [ps for ps in paras if ps]
+    words = [[flow_words(s.text) for s in ps] for ps in paras]
+    flat = [w for ws in words for w in ws]
+    runs = []
+    for ps in paras:
+        for s in ps:
+            best = noun_run(s.masked)
+            if len(best) >= NOUN_RUN_MIN:
+                runs.append(_hit(s, " ".join(best)))
+    res = {"sentences": len(flat), "unlinked": [], "offtopic": [], "runs": runs, "pairs": 0,
+           "topic_cover": 0.0, "topic_words": []}
+    if len(flat) < FLOW_MIN_SENTENCES:
+        return res
+    df = {}
+    shown = {}
+    for w in flat:
+        for k, word in w.items():
+            df[k] = df.get(k, 0) + 1
+            shown.setdefault(k, word)
+    need = 2 if len(flat) < 30 else 3
+    ranked = sorted((k for k in df if df[k] >= need), key=lambda k: (-df[k], k))[:FLOW_TOPIC_WORDS]
+    topic = set(ranked) | set(flow_words(title))
+    res["topic_words"] = [shown[k] for k in ranked]
+    res["topic_cover"] = sum(1 for w in flat if topic & set(w)) / len(flat)
+    for ps, ws in zip(paras, words):
+        if len(ps) >= 2 and ranked and not any(topic & set(w) for w in ws):
+            res["offtopic"].append(_hit(ps[0], "주제어 없음"))
+        for i in range(1, len(ps)):
+            res["pairs"] += 1
+            before = set(ws[i - 1]) | (set(ws[i - 2]) if i >= 2 else set())
+            if set(ws[i]) & before or flow_opener(ps[i].text):
+                continue
+            hit = _hit(ps[i], "" if topic & set(ws[i]) else "주제어 없음")
+            hit["previous"] = _hit(ps[i - 1])
+            res["unlinked"].append(hit)
+    # Sentences that share no topic word either are listed first.
+    res["unlinked"].sort(key=lambda h: (h.get("match") != "주제어 없음", h["line"]))
+    return res
+
+
 def _unit_hit(line, text, target, m):
     """A location found in a non-sentence unit (heading, table row, block). match includes eight characters on each side."""
     a, b = max(0, m.start() - 8), min(len(target), m.end() + 8)
@@ -2097,6 +2251,15 @@ def analyze(text, patterns_spec=None, facts_text=None):
             sent_heads.append({"line": h["line"], "text": h["text"][:160], "match": HEADING_FORM_LABEL[form]})
     put("A22.heading_sentence", len(sent_heads), sent_heads)
 
+    # A23 links between adjacent sentences and topic words, A24 nouns joined without particles. Check candidates and
+    # reference values only; the human values are in rules.json.
+    flow = flow_metrics(para_sents, title_text)
+    put("A23.unlinked", len(flow["unlinked"]), flow["unlinked"])
+    put("A23.unlinked_share", round(len(flow["unlinked"]) / flow["pairs"], 3) if flow["pairs"] else 0.0)
+    put("A23.offtopic_para", len(flow["offtopic"]), flow["offtopic"])
+    put("A23.topic_cover", round(flow["topic_cover"], 3), topic_words=flow["topic_words"])
+    put("A24.noun_run", len(flow["runs"]), flow["runs"])
+
     # Patterns used as rates per 1,000 characters
     for pid in ("A5.style_words", "A5.policy_verbs", "A12.progressive", "A13.demonstrative_start",
                 "A14.translationese"):
@@ -2354,7 +2517,7 @@ def render_text(path, tone, analysis, ev, show_all=False, standard=DEFAULT_STAND
             m = f" «{h['match']}»" if h.get("match") else ""
             lines.append(f"    L{h['line']}{m}: {h['text']}")
     groups = (
-        ([r for r in checks if r.get("group") not in ("ko", "term", "rhythm", "fact")], False,
+        ([r for r in checks if r.get("group") not in ("ko", "term", "rhythm", "fact", "flow")], False,
          "단독 읽기 점검 후보 (판정에 반영되지 않음): 이 문장과 바로 앞 문장만 읽고 무엇에 대한 내용인지, "
          "누구의 말인지, 수치가 무엇을 측정한 값인지, 무엇을 무엇으로 바꾸거나 정했는지, 어느 값을 말하는지 알 수 있으면 "
          "그대로 둔다."),
@@ -2362,6 +2525,10 @@ def render_text(path, tone, analysis, ev, show_all=False, standard=DEFAULT_STAND
          "서술어 반복 점검 후보 (판정에 반영되지 않음): 인접한 두 문장을 함께 읽는다. 반복 때문에 읽는 흐름이 "
          "끊기고 의미와 조건을 더 명확하게 쓸 수 있을 때만 항목을 합치거나 근거와 결과를 연결한다. 자연스러운 반복과 "
          "필요한 주어, 목적어는 유지하고, 유지한 후보의 문맥과 이유를 기록한다."),
+        ([r for r in checks if r.get("group") == "flow"], True,
+         "문장 연결과 주제 점검 후보 (판정에 반영되지 않음): 검출된 문장을 앞 문장과 이어 읽는다. 앞 문장의 어느 내용을 "
+         "이어받는지, 그 문단이 전하는 내용과 글의 핵심 주제를 설명하는지 말할 수 있으면 그대로 둔다. 말할 수 없으면 "
+         "앞 문장에서 말한 대상으로 문장을 시작하거나 두 문장의 관계를 드러내고, 핵심 주제와 관계없는 내용이면 삭제한다."),
         ([r for r in checks if r.get("group") == "ko"], True,
          "한국어 점검 후보 (판정에 반영되지 않음): 검출된 표현이 references/ai-patterns.md의 \"과교정하지 않기\"에 "
          f"있는 용법이면 그대로 두고, 아니면 {standard}에서 사용하는 표현으로 수정한다."),
@@ -2415,7 +2582,9 @@ def apply_profile(thresholds, patterns_spec, short=False):
     th["metrics"] = {mid: spec for mid, spec in thresholds["metrics"].items() if not _dropped(mid, drops)}
     # Rates per 1,000 characters are not judged on short texts (min_chars), so the listed items are judged by count
     for mid, (pass_max, warn_max) in (prof.get("count") or {}).items():
-        if mid in th["metrics"]:
+        # A skill that judges one of these items by a Poisson rate of its own standard articles keeps that limit:
+        # a Poisson limit already follows the length of the text.
+        if mid in th["metrics"] and th["metrics"][mid].get("kind") != "poisson":
             spec = th["metrics"][mid]
             title = re.sub(r"\(1,000자당\)", "", spec.get("title") or mid).strip()
             th["metrics"][mid] = {"kind": "upper", "pass_max": pass_max, "warn_max": warn_max, "count": True,

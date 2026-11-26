@@ -23,6 +23,9 @@ the checked copy as it is.
 
 The fact sheet path defaults to <name>.facts.md when that file exists. The short profile (lint_ko.py --short) is
 applied automatically when the body of ARTICLE is under 1,500 characters; --short and --full override that.
+When a writing plan (<name>.plan.md) is next to ARTICLE, the article is also compared with the plan (plan_ko.py):
+plan lines with no matching sentence, numbers of the plan that the article lost, and sentences with no plan line.
+Later runs list unplanned sentences only among the changed sentences.
 
 Exit codes: 0 the whole article passes, 1 a Gate violation, a FAIL, too many WARN items, or a worsened AI style item,
 2 usage or input error
@@ -39,6 +42,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import lint_ko as L  # noqa: E402
 import revise_ko as R  # noqa: E402
+import plan_ko as P  # noqa: E402
 
 SKILL_NAME = os.path.basename(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 CHECKED_SUFFIX = ".checked.md"
@@ -62,6 +66,18 @@ def checked_path(path):
 def default_facts(path):
     fp = R.facts_path(path)
     return fp if os.path.isfile(fp) else None
+
+
+def default_plan(path):
+    pp = P.plan_path(path)
+    return pp if os.path.isfile(pp) else None
+
+
+def plan_report(plan_file, text, only_lines=None):
+    """The comparison of the article with its plan as text, or "" when there is nothing to report after an edit."""
+    res = P.compare(P.parse_plan(L.read_text(plan_file)), text)
+    out = P.render_compare(res, only_lines=only_lines, title=only_lines is None)
+    return out, res
 
 
 def lint(text, tone, facts_text, short):
@@ -250,6 +266,9 @@ def render_delta(base, path, res, short, saved):
         lines.append("")
         lines.append(f"바뀐 부분 {k} (L{min(ls)}~L{max(ls)}). -는 지난 검사의 문장, +는 지금 문장, 표시가 없는 줄은 앞뒤 문맥이다.")
         lines.extend(_unit_line(mark, u) for mark, u in rows)
+    if res.get("plan_text"):
+        lines.append("")
+        lines.append(res["plan_text"])
     if res["groups"]:
         lines.append("")
         lines.append("바뀐 부분마다 + 문장을 앞뒤 문맥과 이어 읽고 확인한다:")
@@ -291,16 +310,20 @@ def main(argv=None):
         print(f"파일이 없습니다: {facts}", file=sys.stderr)
         return 2
     base = checked_path(args.article)
+    plan = default_plan(args.article)
     try:
         text = L.read_text(args.article)
         short = use_short(text, args.short)
         if args.all or not os.path.isfile(base):
             out, ev = full_report(args.article, args.tone, facts, short)
             code = 0 if ev["summary"]["verdict"] == "PASS" else 1
+            plan_text, plan_res = plan_report(plan, text) if plan else ("", None)
             if args.json:
                 out = json.dumps({"mode": "full", "file": args.article, "short": short, "summary": ev["summary"],
-                                  "results": ev["results"]}, ensure_ascii=False, indent=1)
+                                  "results": ev["results"], "plan": plan_res}, ensure_ascii=False, indent=1)
             else:
+                if plan_text:
+                    out += "\n\n" + plan_text
                 out += "\n\n" + ("짧은 글 기준(본문 1,500자 미만)을 적용했다. " if short else "")
                 if not args.keep:
                     out += (f"지금 글을 검사한 글로 저장했다: {base}. 글을 수정한 뒤 같은 명령을 다시 실행하면 "
@@ -311,6 +334,9 @@ def main(argv=None):
             return code
         facts_text = L.read_text(facts) if facts else None
         res = delta(L.read_text(base), text, args.tone, facts_text, short, max(0, args.context))
+        if plan:
+            changed = {u["line"] for rows in res["groups"] for mark, u in rows if mark == "+"}
+            res["plan_text"], res["plan"] = plan_report(plan, text, only_lines=changed)
         saved = None
         if not args.keep and res["groups"]:
             shutil.copyfile(args.article, base)
@@ -321,6 +347,7 @@ def main(argv=None):
             for k in ("must", "scoped", "worse"):
                 slim[k] = [{"id": r["id"], "status": r["status"], "value": r["value"], "hits": r.get("hits", [])}
                            for r in res[k]]
+            slim.pop("plan_text", None)
             print(json.dumps(dict(slim, mode="delta", file=args.article, base=base, short=short),
                              ensure_ascii=False, indent=1))
         else:

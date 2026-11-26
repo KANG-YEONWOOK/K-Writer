@@ -5,7 +5,7 @@ The source of this file is core/scripts/tone_check.py in the repo. dev/sync_core
 
 Usage
   python tone_check.py DEFAULT.md CONVERTED.md [--tone casual|plain|free] [--lint] [--json]
-  python tone_check.py --cleanup FILE [FILE ...]   # deletes only .facts.md, .draft.md, .checked.md, .unrevised.md, .repeats.md, .reader.md, .pre-fix.md, .audit.md, .answer.md work files
+  python tone_check.py --cleanup FILE [FILE ...]   # deletes only .facts.md, .plan.md, .draft.md, .checked.md, .unrevised.md, .repeats.md, .reader.md, .pre-fix.md, .audit.md, .answer.md work files
 
 --lint also runs the style lint on CONVERTED.md in the target tone and prints its verdict and the GATE, FAIL, and WARN
 items. Check candidates are not printed: they were read on the Default draft. The fact sheet (<name>.facts.md next
@@ -191,8 +191,8 @@ def check(default_text, casual_text, tone="casual", allow=None):
     return {"pairs": pairs, "issues": issues}
 
 
-WORK_SUFFIXES = (".facts.md", ".draft.md", ".checked.md", ".unrevised.md", ".repeats.md", ".reader.md", ".pre-fix.md",
-                 ".audit.md", ".answer.md")
+WORK_SUFFIXES = (".facts.md", ".plan.md", ".draft.md", ".checked.md", ".unrevised.md", ".repeats.md", ".reader.md",
+                 ".pre-fix.md", ".audit.md", ".answer.md")
 
 
 def lint_converted(default_path, converted_path, tone):
