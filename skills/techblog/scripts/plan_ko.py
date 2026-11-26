@@ -204,15 +204,22 @@ def check(plan, facts_text=None):
             if want_source and not s["source"] and not any(r in s["role"] for r in NO_SOURCE_ROLES):
                 cand("근거가 없는 계획 문장", s["line"], s["text"],
                      "이 문장의 사실이 있는 fact sheet 항목을 괄호에 적는다. fact sheet에 없는 사실이면 문장을 제외한다")
-    # The same thing planned in two units
+    # The same thing planned in two units. The opening unit states the main point that the later
+    # units explain, so it is not compared. Two sentences that share their words but give
+    # different values ("24시간 넘게" and "48시간 넘게") are two facts.
+    opening = plan["units"][0]["n"] if plan["units"] else None
     for i, a in enumerate(sents):
         wa = words(a["text"])
-        if len(wa) < 4:
+        if len(wa) < 4 or a["unit"] == opening:
             continue
+        na = numbers(a["text"])
         for b in sents[i + 1:]:
             if b["unit"] == a["unit"]:
                 continue
             wb = words(b["text"])
+            nb = numbers(b["text"])
+            if na and nb and not na & nb:
+                continue
             if len(wb) >= 4 and len(wa & wb) / min(len(wa), len(wb)) >= DUPLICATE:
                 cand("두 단위에 겹치는 계획 문장", b["line"], f"L{a['line']} {a['text']} / L{b['line']} {b['text']}",
                      "같은 내용이면 그 내용을 다루는 단위 한 곳에만 남긴다")

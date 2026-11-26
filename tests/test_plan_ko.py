@@ -109,6 +109,21 @@ class PlanCheckTest(unittest.TestCase):
         self.assertIn("근거가 없는 계획 문장", kinds)
         self.assertIn("핵심 주제와 겹치는 단어가 없는 단위", kinds)
 
+    def test_sentence_planned_in_two_later_units_is_a_candidate(self):
+        """The opening unit states the result that the later units explain, and two sentences with the same words
+        but different values are two facts. In the 0.7.0 runs both were printed as sentences planned twice."""
+        unit3 = ("## 단위 3. 남은 문제\n- 형태: 문단\n- 전할 내용: 배치 크기가 10인 설정에서도 재전송이 남았다.\n\n"
+                 "{}\n\n## 제외한 사실")
+        same = "1. [현상] 배치 크기가 100이던 설정에서는 재전송이 전체 전송의 18%였다. (사실 3)"
+        kinds = [c["kind"] for c in P.check(P.parse_plan(PLAN.replace("## 제외한 사실", unit3.format(same))))["candidates"]]
+        self.assertEqual(kinds, ["두 단위에 겹치는 계획 문장"])
+        other_value = "1. [현상] 배치 크기가 10이던 설정에서는 재전송이 전체 전송의 3%였다. (사실 5)"
+        res = P.check(P.parse_plan(PLAN.replace("## 제외한 사실", unit3.format(other_value))))
+        self.assertEqual(res["candidates"], [])
+        opening = "1. [결과] 쓰기 비율이 30% 미만인 서비스 12개에서 p99 무효화 지연이 4.2초에서 0.8초로 줄었다. (사실 1)"
+        kinds = [c["kind"] for c in P.check(P.parse_plan(PLAN.replace("## 제외한 사실", unit3.format(opening))))["candidates"]]
+        self.assertNotIn("두 단위에 겹치는 계획 문장", kinds)
+
     def test_fact_sheet_numbers_are_matched_with_the_plan(self):
         facts = "# fact sheet\n\n| 항목 | 값 |\n|---|---|\n| p99 무효화 지연 | 4.2초에서 0.8초 |\n| 재시도 간격 | 250ms |\n"
         res = P.check(P.parse_plan(PLAN), facts)
