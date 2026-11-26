@@ -1,0 +1,52 @@
+{
+ "t1-1": {
+  "case": "t1-ratelimiter-default",
+  "A": "0.7.1",
+  "B": "0.6.0"
+ },
+ "t1-2": {
+  "case": "t1-ratelimiter-default",
+  "A": "0.6.0",
+  "B": "0.7.1"
+ },
+ "w2-1": {
+  "case": "w2-report-plain",
+  "A": "0.7.0",
+  "B": "0.6.0"
+ },
+ "w2-2": {
+  "case": "w2-report-plain",
+  "A": "0.6.0",
+  "B": "0.7.0"
+ },
+ "w3-1": {
+  "case": "w3-release-explain",
+  "A": "0.7.0",
+  "B": "0.6.0"
+ },
+ "w3-2": {
+  "case": "w3-release-explain",
+  "A": "0.6.0",
+  "B": "0.7.0"
+ },
+ "w4-1": {
+  "case": "w4-proposal-default",
+  "A": "0.6.0",
+  "B": "0.7.0"
+ },
+ "w4-2": {
+  "case": "w4-proposal-default",
+  "A": "0.7.0",
+  "B": "0.6.0"
+ },
+ "w5-1": {
+  "case": "w5-pep-explain-long",
+  "A": "0.7.0",
+  "B": "0.6.0"
+ },
+ "w5-2": {
+  "case": "w5-pep-explain-long",
+  "A": "0.6.0",
+  "B": "0.7.0"
+ }
+}

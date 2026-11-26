@@ -52,6 +52,14 @@ python dev/dogfood/askback.py --report <작업 폴더>/judge/before.json <작업
 - 같은 judge로 사람 글도 판정해 대조군으로 사용한다. 논문 초록 40편(290문장)에서 두 번 모두 ask_back인 문장은 8.6%, awkward가 한 번 이상인 문장은 29.3%였다. 초록에는 "방안을 제안하였다"처럼 내용을 밝히지 않은 문장과 띄어쓰기 오류가 많아서, 이 값은 judge가 사람 글에서도 이만큼 지적한다는 참고값이고 판정 기준으로는 사용하지 않는다.
 - judge는 긴 글에서 사용자가 지적한 문장과 같은 유형의 문장을 놓치기도 한다. 0.5.0으로 쓴 1,153자 요약의 "…구성과 분량 범위는 측정해서 정한 값이 아니고…"와 1,167자 글에 있던 같은 내용의 문장은 두 번 모두 clear로 판정됐다. 최종 판단은 사람이 읽어서 한다.
 
+## 0.7.0과 0.7.1의 실행 결과 (`results/0.7.0`)
+
+0.7.0에서 write에, 0.7.1에서 techblog에 설계 단계를 추가하고 실행한 결과를 `results/0.7.0`에 기록했다. 이 결과의 평가는 `EVALUATION.md`의 K-Writer 0.7.0과 0.7.1 섹션에 있다.
+
+- 케이스 폴더마다 최종 글(`k-writer-0.7.0.md`)과 그 글의 설계 문서(`k-writer-0.7.0.plan.md`)가 있다. 같은 날 0.6.0(commit 1e3a11f)으로도 실행한 w2, w3, w4, w5 폴더에는 0.6.0의 최종 글(`k-writer-0.6.0.md`)도 있다.
+- `t1-ratelimiter-default`에는 techblog 0.6.0과 0.7.1이 `sources/rate-limiter-note.md`를 정리한 글과 0.7.1의 설계 문서가 있다. techblog는 `run_skill.py --cases`에 케이스 파일을 따로 만들어 실행했다. 케이스는 `{"name": "t1-ratelimiter-default", "files": ["dev/dogfood/sources/rate-limiter-note.md"], "prompt": "/k-writer:techblog rate-limiter-note.md default --defaults --keep-work -o article.md"}` 하나다. 0.6.0은 `--plugin`에 0.6.0 commit의 복사본을 지정해 실행했다.
+- `judge-guide.md`는 두 버전의 글을 비교한 subagent가 읽은 판정 지침이다. `judge/`에는 쌍마다 A와 B의 순서를 바꿔 판정한 결과가 있고, 판정마다 A와 B가 어느 버전의 글이었는지는 `judge/keys.json`에 있다.
+
 ## 케이스 (`cases.json`)
 
 | 이름 | 자료 | 어투 | 용도 |

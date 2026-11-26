@@ -29,7 +29,7 @@ Comments and docstrings in code are in English. Korean stays in code only where 
 
 ## What not to rewrite
 
-- `evals/*/results/`: outputs recorded from past runs. `EVALUATION.md` cites them.
+- `evals/*/results/` and `dev/dogfood/results/`: outputs recorded from past runs. `EVALUATION.md` cites them.
 - `evals/*/article*.md`, `evals/*/source.md`, and Korean samples in `tests/`: fixtures, some awkward on purpose.
 - Example rows in `ai-patterns.md` and `korean-review.md` that show the form to avoid.
 - Numbers, dates, versions, and verdicts in `EVALUATION.md` and `dev/*/REPORT.md`. The writing may improve; the record does not change.
