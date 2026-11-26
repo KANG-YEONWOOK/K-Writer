@@ -1,0 +1,803 @@
+{
+ "csat": {
+  "corpus": "csat",
+  "docs": 82,
+  "sentences": 1838,
+  "chars": 114637,
+  "docs_with_paragraphs": 46,
+  "paragraphs": 207,
+  "sentence_length": {
+   "n": 1838,
+   "mean": 62.4,
+   "p25": 43,
+   "median": 59.0,
+   "p75": 77,
+   "p90": 97
+  },
+  "clauses_per_sentence": {
+   "n": 1838,
+   "mean": 2.31,
+   "p25": 1,
+   "median": 2.0,
+   "p75": 3,
+   "p90": 4
+  },
+  "paragraph_sentences": {
+   "n": 207,
+   "mean": 4.8,
+   "p25": 3,
+   "median": 4,
+   "p75": 6,
+   "p90": 8
+  },
+  "paragraph_chars": {
+   "n": 207,
+   "mean": 304.0,
+   "p25": 209,
+   "median": 277,
+   "p75": 371,
+   "p90": 480
+  },
+  "paragraphs_per_doc": {
+   "n": 46,
+   "mean": 4.5,
+   "p25": 4,
+   "median": 4.0,
+   "p75": 5,
+   "p90": 6
+  },
+  "start_conjunctive_share": 0.241,
+  "start_demonstrative_share": 0.235,
+  "topic_marker_in_head_share": 0.458,
+  "josa_per_noun": 0.584,
+  "predicate_per_noun": 0.437,
+  "noun_chain3_sentence_share": 0.227,
+  "noun_chain4_sentence_share": 0.033,
+  "paren_per_1k_chars": 1.05,
+  "endings": {
+   "present": 0.438,
+   "copula": 0.15,
+   "past": 0.12,
+   "exist": 0.085,
+   "can": 0.071,
+   "geot": 0.057,
+   "because": 0.032,
+   "nominal": 0.028,
+   "question": 0.02
+  },
+  "markers_per_100_sentences": {
+   "contrast": 8.22,
+   "define": 3.43,
+   "result": 3.37,
+   "reason_end": 3.26,
+   "addition": 3.1,
+   "example": 2.72,
+   "restate": 2.5,
+   "question": 1.96,
+   "order": 1.41
+  },
+  "within_paragraph_links": {
+   "pairs": 1477,
+   "noun_overlap_prev": 0.806,
+   "noun_overlap_prev2": 0.88,
+   "demonstrative": 0.269,
+   "conjunctive": 0.264,
+   "no_link_prev": 0.095,
+   "no_link_prev2": 0.053,
+   "no_link_prev2_but_doc_topic": 0.481,
+   "given_noun_position_in_sentence": {
+    "n": 1191,
+    "mean": 0.18,
+    "p25": 0.03,
+    "median": 0.1,
+    "p75": 0.25,
+    "p90": 0.48
+   },
+   "given_noun_position_in_previous": {
+    "n": 1191,
+    "mean": 0.57,
+    "p25": 0.4,
+    "median": 0.62,
+    "p75": 0.77,
+    "p90": 0.85
+   }
+  },
+  "paragraph_first_sentence_links": {
+   "paragraphs": 161,
+   "noun_overlap_prev_last_sentence": 0.801,
+   "noun_overlap_prev_paragraph": 0.963,
+   "demonstrative": 0.112,
+   "conjunctive": 0.186,
+   "no_link": 0.025,
+   "has_doc_top5_noun": 0.876
+  },
+  "paragraph_topic": {
+   "paragraphs_3plus_sentences": 179,
+   "top_noun_in_first_sentence": 0.827,
+   "top_noun_in_last_sentence": 0.732,
+   "sentences_with_top2_nouns": {
+    "n": 179,
+    "mean": 0.85,
+    "p25": 0.75,
+    "median": 0.86,
+    "p75": 1.0,
+    "p90": 1.0
+   },
+   "paragraph_has_doc_top3": 0.981,
+   "paragraph_has_doc_top5": 0.995
+  },
+  "document_topic": {
+   "sentences_with_top3_nouns": {
+    "n": 82,
+    "mean": 0.78,
+    "p25": 0.7,
+    "median": 0.79,
+    "p75": 0.87,
+    "p90": 0.95
+   },
+   "sentences_with_top5_nouns": {
+    "n": 82,
+    "mean": 0.85,
+    "p25": 0.78,
+    "median": 0.87,
+    "p75": 0.94,
+    "p90": 0.96
+   },
+   "top1_in_first_sentence": 0.573,
+   "top1_in_first_paragraph": 0.866,
+   "top3_in_first_paragraph": 0.772
+  },
+  "new_noun_rate_by_decile": [
+   0.84,
+   0.59,
+   0.55,
+   0.51,
+   0.46,
+   0.43,
+   0.42,
+   0.38,
+   0.37,
+   0.38
+  ],
+  "paragraph_first_sentence_start": {
+   "plain": 0.77,
+   "conj": 0.147,
+   "demo": 0.083
+  }
+ },
+ "csat_paragraph_ok": {
+  "corpus": "csat_paragraph_ok",
+  "docs": 46,
+  "sentences": 993,
+  "chars": 62926,
+  "docs_with_paragraphs": 46,
+  "paragraphs": 207,
+  "sentence_length": {
+   "n": 993,
+   "mean": 63.4,
+   "p25": 44,
+   "median": 60,
+   "p75": 78,
+   "p90": 99
+  },
+  "clauses_per_sentence": {
+   "n": 993,
+   "mean": 2.35,
+   "p25": 1,
+   "median": 2,
+   "p75": 3,
+   "p90": 4
+  },
+  "paragraph_sentences": {
+   "n": 207,
+   "mean": 4.8,
+   "p25": 3,
+   "median": 4,
+   "p75": 6,
+   "p90": 8
+  },
+  "paragraph_chars": {
+   "n": 207,
+   "mean": 304.0,
+   "p25": 209,
+   "median": 277,
+   "p75": 371,
+   "p90": 480
+  },
+  "paragraphs_per_doc": {
+   "n": 46,
+   "mean": 4.5,
+   "p25": 4,
+   "median": 4.0,
+   "p75": 5,
+   "p90": 6
+  },
+  "start_conjunctive_share": 0.23,
+  "start_demonstrative_share": 0.238,
+  "topic_marker_in_head_share": 0.443,
+  "josa_per_noun": 0.592,
+  "predicate_per_noun": 0.434,
+  "noun_chain3_sentence_share": 0.217,
+  "noun_chain4_sentence_share": 0.031,
+  "paren_per_1k_chars": 1.18,
+  "endings": {
+   "present": 0.413,
+   "copula": 0.184,
+   "past": 0.144,
+   "exist": 0.075,
+   "can": 0.063,
+   "geot": 0.049,
+   "nominal": 0.026,
+   "because": 0.026,
+   "question": 0.019
+  },
+  "markers_per_100_sentences": {
+   "contrast": 6.95,
+   "result": 3.32,
+   "addition": 3.22,
+   "define": 3.22,
+   "example": 3.02,
+   "restate": 2.72,
+   "reason_end": 2.62,
+   "question": 1.91,
+   "order": 1.41
+  },
+  "within_paragraph_links": {
+   "pairs": 786,
+   "noun_overlap_prev": 0.808,
+   "noun_overlap_prev2": 0.888,
+   "demonstrative": 0.277,
+   "conjunctive": 0.252,
+   "no_link_prev": 0.104,
+   "no_link_prev2": 0.052,
+   "no_link_prev2_but_doc_topic": 0.488,
+   "given_noun_position_in_sentence": {
+    "n": 635,
+    "mean": 0.18,
+    "p25": 0.03,
+    "median": 0.1,
+    "p75": 0.25,
+    "p90": 0.51
+   },
+   "given_noun_position_in_previous": {
+    "n": 635,
+    "mean": 0.58,
+    "p25": 0.42,
+    "median": 0.63,
+    "p75": 0.77,
+    "p90": 0.85
+   }
+  },
+  "paragraph_first_sentence_links": {
+   "paragraphs": 161,
+   "noun_overlap_prev_last_sentence": 0.801,
+   "noun_overlap_prev_paragraph": 0.963,
+   "demonstrative": 0.112,
+   "conjunctive": 0.186,
+   "no_link": 0.025,
+   "has_doc_top5_noun": 0.876
+  },
+  "paragraph_topic": {
+   "paragraphs_3plus_sentences": 179,
+   "top_noun_in_first_sentence": 0.827,
+   "top_noun_in_last_sentence": 0.732,
+   "sentences_with_top2_nouns": {
+    "n": 179,
+    "mean": 0.85,
+    "p25": 0.75,
+    "median": 0.86,
+    "p75": 1.0,
+    "p90": 1.0
+   },
+   "paragraph_has_doc_top3": 0.981,
+   "paragraph_has_doc_top5": 0.995
+  },
+  "document_topic": {
+   "sentences_with_top3_nouns": {
+    "n": 46,
+    "mean": 0.79,
+    "p25": 0.7,
+    "median": 0.77,
+    "p75": 0.88,
+    "p90": 0.96
+   },
+   "sentences_with_top5_nouns": {
+    "n": 46,
+    "mean": 0.85,
+    "p25": 0.79,
+    "median": 0.86,
+    "p75": 0.95,
+    "p90": 1.0
+   },
+   "top1_in_first_sentence": 0.565,
+   "top1_in_first_paragraph": 0.826,
+   "top3_in_first_paragraph": 0.746
+  },
+  "new_noun_rate_by_decile": [
+   0.84,
+   0.6,
+   0.55,
+   0.51,
+   0.48,
+   0.44,
+   0.44,
+   0.39,
+   0.41,
+   0.37
+  ],
+  "paragraph_first_sentence_start": {
+   "plain": 0.783,
+   "conj": 0.145,
+   "demo": 0.072
+  }
+ },
+ "news": {
+  "corpus": "news",
+  "docs": 1200,
+  "sentences": 24309,
+  "chars": 1492941,
+  "docs_with_paragraphs": 1200,
+  "paragraphs": 6185,
+  "sentence_length": {
+   "n": 24309,
+   "mean": 61.4,
+   "p25": 39,
+   "median": 56,
+   "p75": 78,
+   "p90": 104
+  },
+  "clauses_per_sentence": {
+   "n": 24309,
+   "mean": 1.97,
+   "p25": 1,
+   "median": 2,
+   "p75": 2,
+   "p90": 3
+  },
+  "paragraph_sentences": {
+   "n": 6185,
+   "mean": 3.9,
+   "p25": 2,
+   "median": 3,
+   "p75": 5,
+   "p90": 7
+  },
+  "paragraph_chars": {
+   "n": 6185,
+   "mean": 241.0,
+   "p25": 139,
+   "median": 197,
+   "p75": 293,
+   "p90": 442
+  },
+  "paragraphs_per_doc": {
+   "n": 1200,
+   "mean": 5.2,
+   "p25": 4,
+   "median": 5.0,
+   "p75": 6,
+   "p90": 7
+  },
+  "start_conjunctive_share": 0.064,
+  "start_demonstrative_share": 0.075,
+  "topic_marker_in_head_share": 0.426,
+  "josa_per_noun": 0.422,
+  "predicate_per_noun": 0.321,
+  "noun_chain3_sentence_share": 0.562,
+  "noun_chain4_sentence_share": 0.253,
+  "paren_per_1k_chars": 3.53,
+  "endings": {
+   "past": 0.441,
+   "present": 0.216,
+   "copula": 0.137,
+   "exist": 0.098,
+   "nominal": 0.061,
+   "geot": 0.018,
+   "can": 0.015,
+   "because": 0.012,
+   "question": 0.002
+  },
+  "markers_per_100_sentences": {
+   "contrast": 2.85,
+   "reason_end": 1.37,
+   "addition": 1.14,
+   "result": 0.73,
+   "order": 0.24,
+   "example": 0.2,
+   "define": 0.18,
+   "question": 0.18,
+   "restate": 0.11
+  },
+  "within_paragraph_links": {
+   "pairs": 18124,
+   "noun_overlap_prev": 0.615,
+   "noun_overlap_prev2": 0.727,
+   "demonstrative": 0.08,
+   "conjunctive": 0.067,
+   "no_link_prev": 0.329,
+   "no_link_prev2": 0.233,
+   "no_link_prev2_but_doc_topic": 0.466,
+   "given_noun_position_in_sentence": {
+    "n": 11153,
+    "mean": 0.22,
+    "p25": 0.03,
+    "median": 0.14,
+    "p75": 0.36,
+    "p90": 0.58
+   },
+   "given_noun_position_in_previous": {
+    "n": 11153,
+    "mean": 0.47,
+    "p25": 0.26,
+    "median": 0.5,
+    "p75": 0.68,
+    "p90": 0.79
+   }
+  },
+  "paragraph_first_sentence_links": {
+   "paragraphs": 4985,
+   "noun_overlap_prev_last_sentence": 0.598,
+   "noun_overlap_prev_paragraph": 0.858,
+   "demonstrative": 0.074,
+   "conjunctive": 0.068,
+   "no_link": 0.121,
+   "has_doc_top5_noun": 0.861
+  },
+  "paragraph_topic": {
+   "paragraphs_3plus_sentences": 3964,
+   "top_noun_in_first_sentence": 0.818,
+   "top_noun_in_last_sentence": 0.591,
+   "sentences_with_top2_nouns": {
+    "n": 3964,
+    "mean": 0.78,
+    "p25": 0.67,
+    "median": 0.75,
+    "p75": 1.0,
+    "p90": 1.0
+   },
+   "paragraph_has_doc_top3": 0.946,
+   "paragraph_has_doc_top5": 0.973
+  },
+  "document_topic": {
+   "sentences_with_top3_nouns": {
+    "n": 1200,
+    "mean": 0.72,
+    "p25": 0.62,
+    "median": 0.73,
+    "p75": 0.82,
+    "p90": 0.91
+   },
+   "sentences_with_top5_nouns": {
+    "n": 1200,
+    "mean": 0.8,
+    "p25": 0.72,
+    "median": 0.81,
+    "p75": 0.9,
+    "p90": 0.95
+   },
+   "top1_in_first_sentence": 0.657,
+   "top1_in_first_paragraph": 0.88,
+   "top3_in_first_paragraph": 0.821
+  },
+  "new_noun_rate_by_decile": [
+   0.89,
+   0.7,
+   0.64,
+   0.6,
+   0.58,
+   0.56,
+   0.55,
+   0.54,
+   0.53,
+   0.56
+  ],
+  "paragraph_first_sentence_start": {
+   "plain": 0.892,
+   "conj": 0.055,
+   "demo": 0.054
+  }
+ },
+ "abstract": {
+  "corpus": "abstract",
+  "docs": 301,
+  "sentences": 2580,
+  "chars": 204915,
+  "docs_with_paragraphs": 0,
+  "paragraphs": 0,
+  "sentence_length": {
+   "n": 2580,
+   "mean": 79.4,
+   "p25": 52,
+   "median": 73.0,
+   "p75": 99,
+   "p90": 129
+  },
+  "clauses_per_sentence": {
+   "n": 2580,
+   "mean": 2.2,
+   "p25": 1,
+   "median": 2.0,
+   "p75": 3,
+   "p90": 4
+  },
+  "paragraph_sentences": null,
+  "paragraph_chars": null,
+  "paragraphs_per_doc": null,
+  "start_conjunctive_share": 0.238,
+  "start_demonstrative_share": 0.18,
+  "topic_marker_in_head_share": 0.435,
+  "josa_per_noun": 0.458,
+  "predicate_per_noun": 0.326,
+  "noun_chain3_sentence_share": 0.59,
+  "noun_chain4_sentence_share": 0.259,
+  "paren_per_1k_chars": 2.68,
+  "endings": {
+   "copula": 0.281,
+   "present": 0.247,
+   "past": 0.179,
+   "exist": 0.142,
+   "geot": 0.059,
+   "can": 0.055,
+   "nominal": 0.026,
+   "because": 0.009,
+   "question": 0.002
+  },
+  "markers_per_100_sentences": {
+   "order": 6.16,
+   "addition": 6.05,
+   "contrast": 4.5,
+   "result": 3.91,
+   "restate": 1.94,
+   "reason_end": 0.97,
+   "define": 0.5,
+   "question": 0.23,
+   "example": 0.16
+  },
+  "within_paragraph_links": {
+   "pairs": 2279,
+   "noun_overlap_prev": 0.84,
+   "noun_overlap_prev2": 0.921,
+   "demonstrative": 0.19,
+   "conjunctive": 0.27,
+   "no_link_prev": 0.086,
+   "no_link_prev2": 0.039,
+   "no_link_prev2_but_doc_topic": 0.551,
+   "given_noun_position_in_sentence": {
+    "n": 1915,
+    "mean": 0.17,
+    "p25": 0.03,
+    "median": 0.09,
+    "p75": 0.24,
+    "p90": 0.46
+   },
+   "given_noun_position_in_previous": {
+    "n": 1915,
+    "mean": 0.58,
+    "p25": 0.42,
+    "median": 0.64,
+    "p75": 0.79,
+    "p90": 0.87
+   }
+  },
+  "paragraph_first_sentence_links": {
+   "paragraphs": 0,
+   "noun_overlap_prev_last_sentence": 0.0,
+   "noun_overlap_prev_paragraph": 0.0,
+   "demonstrative": 0.0,
+   "conjunctive": 0.0,
+   "no_link": 0.0,
+   "has_doc_top5_noun": 0.0
+  },
+  "paragraph_topic": {
+   "paragraphs_3plus_sentences": 0,
+   "top_noun_in_first_sentence": 0.0,
+   "top_noun_in_last_sentence": 0.0,
+   "sentences_with_top2_nouns": null,
+   "paragraph_has_doc_top3": 0.0,
+   "paragraph_has_doc_top5": 0.0
+  },
+  "document_topic": {
+   "sentences_with_top3_nouns": {
+    "n": 301,
+    "mean": 0.89,
+    "p25": 0.8,
+    "median": 0.92,
+    "p75": 1.0,
+    "p90": 1.0
+   },
+   "sentences_with_top5_nouns": {
+    "n": 301,
+    "mean": 0.94,
+    "p25": 0.88,
+    "median": 1.0,
+    "p75": 1.0,
+    "p90": 1.0
+   },
+   "top1_in_first_sentence": 0.837,
+   "top1_in_first_paragraph": 1.0,
+   "top3_in_first_paragraph": 1.0
+  },
+  "new_noun_rate_by_decile": [
+   0.95,
+   0.71,
+   0.66,
+   0.62,
+   0.59,
+   0.56,
+   0.5,
+   0.5,
+   0.48,
+   0.5
+  ],
+  "paragraph_first_sentence_start": {
+   "plain": 0.897,
+   "demo": 0.103
+  }
+ },
+ "speech": {
+  "corpus": "speech",
+  "docs": 412,
+  "sentences": 28648,
+  "chars": 1336800,
+  "docs_with_paragraphs": 412,
+  "paragraphs": 8151,
+  "sentence_length": {
+   "n": 28648,
+   "mean": 46.7,
+   "p25": 28,
+   "median": 42.0,
+   "p75": 60,
+   "p90": 81
+  },
+  "clauses_per_sentence": {
+   "n": 28648,
+   "mean": 1.98,
+   "p25": 1,
+   "median": 2.0,
+   "p75": 2,
+   "p90": 4
+  },
+  "paragraph_sentences": {
+   "n": 8151,
+   "mean": 3.5,
+   "p25": 2,
+   "median": 3,
+   "p75": 4,
+   "p90": 7
+  },
+  "paragraph_chars": {
+   "n": 8151,
+   "mean": 164.0,
+   "p25": 81,
+   "median": 141,
+   "p75": 213,
+   "p90": 305
+  },
+  "paragraphs_per_doc": {
+   "n": 412,
+   "mean": 19.8,
+   "p25": 7,
+   "median": 14.0,
+   "p75": 21,
+   "p90": 38
+  },
+  "start_conjunctive_share": 0.125,
+  "start_demonstrative_share": 0.077,
+  "topic_marker_in_head_share": 0.266,
+  "josa_per_noun": 0.517,
+  "predicate_per_noun": 0.502,
+  "noun_chain3_sentence_share": 0.234,
+  "noun_chain4_sentence_share": 0.069,
+  "paren_per_1k_chars": 0.38,
+  "endings": {
+   "present": 0.391,
+   "past": 0.175,
+   "exist": 0.126,
+   "geot": 0.111,
+   "copula": 0.104,
+   "nominal": 0.062,
+   "can": 0.022,
+   "because": 0.006,
+   "question": 0.002
+  },
+  "markers_per_100_sentences": {
+   "addition": 3.82,
+   "contrast": 3.7,
+   "result": 1.83,
+   "order": 1.12,
+   "reason_end": 0.62,
+   "restate": 0.27,
+   "question": 0.24,
+   "example": 0.12,
+   "define": 0.02
+  },
+  "within_paragraph_links": {
+   "pairs": 20497,
+   "noun_overlap_prev": 0.452,
+   "noun_overlap_prev2": 0.55,
+   "demonstrative": 0.086,
+   "conjunctive": 0.129,
+   "no_link_prev": 0.427,
+   "no_link_prev2": 0.353,
+   "no_link_prev2_but_doc_topic": 0.335,
+   "given_noun_position_in_sentence": {
+    "n": 9269,
+    "mean": 0.25,
+    "p25": 0.04,
+    "median": 0.18,
+    "p75": 0.4,
+    "p90": 0.62
+   },
+   "given_noun_position_in_previous": {
+    "n": 9269,
+    "mean": 0.43,
+    "p25": 0.21,
+    "median": 0.45,
+    "p75": 0.65,
+    "p90": 0.77
+   }
+  },
+  "paragraph_first_sentence_links": {
+   "paragraphs": 7739,
+   "noun_overlap_prev_last_sentence": 0.321,
+   "noun_overlap_prev_paragraph": 0.545,
+   "demonstrative": 0.057,
+   "conjunctive": 0.121,
+   "no_link": 0.384,
+   "has_doc_top5_noun": 0.593
+  },
+  "paragraph_topic": {
+   "paragraphs_3plus_sentences": 4030,
+   "top_noun_in_first_sentence": 0.724,
+   "top_noun_in_last_sentence": 0.509,
+   "sentences_with_top2_nouns": {
+    "n": 4030,
+    "mean": 0.71,
+    "p25": 0.57,
+    "median": 0.67,
+    "p75": 0.83,
+    "p90": 1.0
+   },
+   "paragraph_has_doc_top3": 0.717,
+   "paragraph_has_doc_top5": 0.802
+  },
+  "document_topic": {
+   "sentences_with_top3_nouns": {
+    "n": 412,
+    "mean": 0.51,
+    "p25": 0.41,
+    "median": 0.52,
+    "p75": 0.6,
+    "p90": 0.69
+   },
+   "sentences_with_top5_nouns": {
+    "n": 412,
+    "mean": 0.61,
+    "p25": 0.52,
+    "median": 0.61,
+    "p75": 0.7,
+    "p90": 0.77
+   },
+   "top1_in_first_sentence": 0.34,
+   "top1_in_first_paragraph": 0.481,
+   "top3_in_first_paragraph": 0.404
+  },
+  "new_noun_rate_by_decile": [
+   0.77,
+   0.62,
+   0.56,
+   0.52,
+   0.48,
+   0.46,
+   0.45,
+   0.42,
+   0.4,
+   0.34
+  ],
+  "paragraph_first_sentence_start": {
+   "plain": 0.833,
+   "conj": 0.116,
+   "demo": 0.051
+  }
+ }
+}

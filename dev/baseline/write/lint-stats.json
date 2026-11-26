@@ -1,0 +1,200 @@
+{
+ "csat": {
+  "docs": 46,
+  "sentences": 974,
+  "chars": 48360,
+  "unlinked_share_pooled": null,
+  "unlinked_per_doc": {
+   "median": 0,
+   "p90": 2,
+   "p95": 2
+  },
+  "unlinked_share": {
+   "p10": 0.0,
+   "median": 0.0,
+   "p90": 0.105,
+   "p95": 0.111
+  },
+  "unlinked_without_topic_word_per_100_sentences": 1.13,
+  "unlinked_per_100_sentences": 2.36,
+  "offtopic_para_docs_share": 0.043,
+  "offtopic_para_per_doc_mean": 0.043,
+  "topic_cover": {
+   "p10": 0.75,
+   "median": 0.889,
+   "p90": 1.0
+  },
+  "noun_run_per_1k_chars_pooled": 0.165,
+  "noun_run_per_1k_chars": {
+   "median": 0.0,
+   "p90": 0.906,
+   "p95": 1.025
+  },
+  "noun_run_docs_share": 0.152
+ },
+ "news": {
+  "docs": 399,
+  "sentences": 7757,
+  "chars": 392530,
+  "unlinked_share_pooled": null,
+  "unlinked_per_doc": {
+   "median": 2,
+   "p90": 7,
+   "p95": 9
+  },
+  "unlinked_share": {
+   "p10": 0.0,
+   "median": 0.167,
+   "p90": 0.4,
+   "p95": 0.48
+  },
+  "unlinked_without_topic_word_per_100_sentences": 7.8,
+  "unlinked_per_100_sentences": 15.08,
+  "offtopic_para_docs_share": 0.023,
+  "offtopic_para_per_doc_mean": 0.023,
+  "topic_cover": {
+   "p10": 0.667,
+   "median": 0.833,
+   "p90": 1.0
+  },
+  "noun_run_per_1k_chars_pooled": 1.233,
+  "noun_run_per_1k_chars": {
+   "median": 1.058,
+   "p90": 2.915,
+   "p95": 3.6
+  },
+  "noun_run_docs_share": 0.677
+ },
+ "abstract": {
+  "docs": 161,
+  "sentences": 1783,
+  "chars": 104471,
+  "unlinked_share_pooled": null,
+  "unlinked_per_doc": {
+   "median": 0,
+   "p90": 1,
+   "p95": 2
+  },
+  "unlinked_share": {
+   "p10": 0.0,
+   "median": 0.0,
+   "p90": 0.125,
+   "p95": 0.143
+  },
+  "unlinked_without_topic_word_per_100_sentences": 1.4,
+  "unlinked_per_100_sentences": 3.65,
+  "offtopic_para_docs_share": 0.0,
+  "offtopic_para_per_doc_mean": 0.0,
+  "topic_cover": {
+   "p10": 0.786,
+   "median": 0.929,
+   "p90": 1.0
+  },
+  "noun_run_per_1k_chars_pooled": 0.689,
+  "noun_run_per_1k_chars": {
+   "median": 0.0,
+   "p90": 2.198,
+   "p95": 3.472
+  },
+  "noun_run_docs_share": 0.273
+ },
+ "speech": {
+  "docs": 400,
+  "sentences": 27950,
+  "chars": 1032367,
+  "unlinked_share_pooled": null,
+  "unlinked_per_doc": {
+   "median": 11,
+   "p90": 32,
+   "p95": 54
+  },
+  "unlinked_share": {
+   "p10": 0.16,
+   "median": 0.341,
+   "p90": 0.55,
+   "p95": 0.622
+  },
+  "unlinked_without_topic_word_per_100_sentences": 15.33,
+  "unlinked_per_100_sentences": 23.61,
+  "offtopic_para_docs_share": 0.465,
+  "offtopic_para_per_doc_mean": 1.962,
+  "topic_cover": {
+   "p10": 0.441,
+   "median": 0.621,
+   "p90": 0.786
+  },
+  "noun_run_per_1k_chars_pooled": 0.357,
+  "noun_run_per_1k_chars": {
+   "median": 0.098,
+   "p90": 1.328,
+   "p95": 1.896
+  },
+  "noun_run_docs_share": 0.507
+ },
+ "ai_no_skill_reports": {
+  "docs": 4,
+  "sentences": 137,
+  "chars": 4944,
+  "unlinked_share_pooled": null,
+  "unlinked_per_doc": {
+   "median": 9,
+   "p90": 9,
+   "p95": 9
+  },
+  "unlinked_share": {
+   "p10": 0.222,
+   "median": 0.474,
+   "p90": 0.529,
+   "p95": 0.529
+  },
+  "unlinked_without_topic_word_per_100_sentences": 8.76,
+  "unlinked_per_100_sentences": 16.06,
+  "offtopic_para_docs_share": 0.0,
+  "offtopic_para_per_doc_mean": 0.0,
+  "topic_cover": {
+   "p10": 0.735,
+   "median": 0.806,
+   "p90": 1.0
+  },
+  "noun_run_per_1k_chars_pooled": 1.416,
+  "noun_run_per_1k_chars": {
+   "median": 2.016,
+   "p90": 3.293,
+   "p95": 3.293
+  },
+  "noun_run_docs_share": 0.75
+ },
+ "k_writer_outputs": {
+  "docs": 14,
+  "sentences": 700,
+  "chars": 35623,
+  "unlinked_share_pooled": null,
+  "unlinked_per_doc": {
+   "median": 4,
+   "p90": 7,
+   "p95": 10
+  },
+  "unlinked_share": {
+   "p10": 0.087,
+   "median": 0.25,
+   "p90": 0.385,
+   "p95": 0.467
+  },
+  "unlinked_without_topic_word_per_100_sentences": 3.43,
+  "unlinked_per_100_sentences": 8.14,
+  "offtopic_para_docs_share": 0.071,
+  "offtopic_para_per_doc_mean": 0.143,
+  "topic_cover": {
+   "p10": 0.667,
+   "median": 0.789,
+   "p90": 0.857
+  },
+  "noun_run_per_1k_chars_pooled": 0.253,
+  "noun_run_per_1k_chars": {
+   "median": 0.0,
+   "p90": 0.849,
+   "p95": 3.364
+  },
+  "noun_run_docs_share": 0.286
+ }
+}
