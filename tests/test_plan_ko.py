@@ -65,6 +65,27 @@ class PlanCheckTest(unittest.TestCase):
         self.assertTrue(sents[1]["text"].endswith("줄였다."))   # "(2025)" inside the sentence is not the source
         self.assertEqual(len(plan["excluded"]), 1)
 
+    def test_long_source_and_title_line_are_not_flagged(self):
+        """In the first runs a source that listed five fact sheet rows was read as part of the sentence, and the title
+        line was reported as a plan line that is not a sentence. Both made the writer rewrite a correct plan."""
+        text = PLAN.replace("(사실 3)", "(사실: 재전송 비율, 배치 크기 설정, 측정 기간, 측정 대상 서비스, 용어: 재전송(자료 2쪽))")
+        text = text.replace("1. [결과] 쓰기 비율이", "- [제목] 배치 크기를 줄여 캐시 무효화 지연 단축\n1. [결과] 쓰기 비율이")
+        text = text.replace("## 제외한 사실", "## 단위 3. 제목만 있는 단위\n- 형태: 제목\n- 전할 내용: 글의 제목을 정한다.\n\n"
+                            "1. [제목] 캐시 무효화 지연 단축 (요청)\n\n## 제외한 사실")
+        plan = P.parse_plan(text)
+        sents = P.all_sentences(plan)
+        self.assertEqual(len(sents), 4)
+        self.assertTrue(sents[2]["text"].endswith("18%였다."))
+        self.assertTrue(sents[2]["source"].startswith("사실: 재전송 비율"))
+        self.assertEqual([b["kind"] for u in plan["units"] for b in u["blocks"]], ["제목", "제목"])
+        res = P.check(plan)
+        self.assertEqual(res["errors"], [])
+        self.assertEqual(res["candidates"], [])
+
+    def test_bare_numbers_of_the_fact_sheet_are_not_listed(self):
+        facts = "| 항목 | 값 | 자료 위치 |\n|---|---|---|\n| 재시도 간격 | 250ms | 13 |\n| 측정 연도 | 2025 | 28 |\n"
+        self.assertEqual(P.check(P.parse_plan(PLAN), facts)["numbers"]["unassigned"], ["250ms"])
+
     def test_complete_plan_has_no_error_and_no_candidate(self):
         res = P.check(P.parse_plan(PLAN))
         self.assertEqual(res["errors"], [])

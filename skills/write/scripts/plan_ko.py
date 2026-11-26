@@ -18,6 +18,7 @@ as a paragraph or a section) with what it tells the reader and how it unfolds, a
   "문단 1: <what this paragraph tells>"        (only when a unit has more than one paragraph)
   "1. [role] <what the sentence tells, written as a full sentence> (source)"
   "- [목록] <items of a list, table, or code block that is not written as sentences>"
+  "- [제목] <title or heading, a noun phrase>"
   "## 제외한 사실"                              (facts left out, one per line with the reason)
 
 check: reports structure errors (exit 1) and candidates to read (exit 0): plan lines that are not full sentences,
@@ -49,13 +50,14 @@ HEADING_RE = re.compile(r"^#{1,6}\s+")
 KEY_RE = re.compile(r"^\s*(?:[-*]\s*)?(핵심 주제|전할 내용|전개 순서|전개|형태|독자|목적|분량|앞 단위와의 연결)\s*[:：]\s*(.*)$")
 PARA_RE = re.compile(r"^\s*(?:[-*]\s*)?문단\s*(\d+)?\s*[:：.]\s*(.*)$")
 SENT_RE = re.compile(r"^\s*(\d+(?:-\d+)?)[.)]\s*\[([^\]]+)\]\s*(.+?)\s*$")
-BLOCK_RE = re.compile(r"^\s*[-*]\s*\[(목록|표|코드|그림|인용)\]\s*(.*)$")
-SOURCE_RE = re.compile(r"\s*\(([^()]*)\)\s*$")
+BLOCK_RE = re.compile(r"^\s*(?:[-*]|\d+(?:-\d+)?[.)])\s*\[(제목|부제|헤딩|소제목|목록|표|코드|그림|인용)\]\s*(.*)$")
+SOURCE_RE = re.compile(r"\s*\(((?:[^()]|\([^()]*\))*)\)\s*$")
 PROPOSITION_END_RE = re.compile(r"(?:다|까|요|오)[.?!]?[\"'”’)]*$")
 # Roles whose line is not a statement of fact, so it needs no source.
 NO_SOURCE_ROLES = ("전환", "예고", "연결", "질문", "인사", "맺음", "요청", "소개")
 SHORT_LINE = 15
-LONG_LINE = 110
+LONG_LINE = 130
+SOURCE_MAX = 60        # a longer parenthetical at the end is a source only when a full sentence comes before it
 MATCH_PLAN = 0.5       # share of a plan line's words that an article sentence (or two adjacent ones) must have
 MATCH_ARTICLE = 0.5    # share of an article sentence's words that a plan line (or two adjacent ones) must have
 DUPLICATE = 0.8
@@ -70,9 +72,12 @@ def plan_path(article):
 
 
 def split_source(content):
+    """Splits "<sentence> (<source>)". The source may list several fact sheet rows and hold parentheses itself."""
     m = SOURCE_RE.search(content)
-    if m and len(m.group(1)) <= 60:
-        return content[:m.start()].rstrip(), m.group(1).strip()
+    if m:
+        before = content[:m.start()].rstrip()
+        if before and (len(m.group(1)) <= SOURCE_MAX or PROPOSITION_END_RE.search(before)):
+            return before, m.group(1).strip()
     return content, ""
 
 
@@ -127,7 +132,8 @@ def parse_plan(text):
             continue
         m = BLOCK_RE.match(line)
         if m:
-            unit["blocks"].append({"kind": m.group(1), "text": m.group(2).strip(), "line": n, "para": para})
+            text, _ = split_source(m.group(2).strip())
+            unit["blocks"].append({"kind": m.group(1), "text": text, "line": n, "para": para})
             continue
         m = SENT_RE.match(line)
         if m:
@@ -177,7 +183,7 @@ def check(plan, facts_text=None):
             cand("문장이 아닌 전할 내용", u["line"], u["point"],
                  "단위의 전할 내용을 무엇이 어떠한지, 누가 무엇을 했는지 서술어까지 적는다")
         unit_words = set()
-        for s in u["sentences"]:
+        for s in u["sentences"] + u["blocks"]:
             unit_words |= words(s["text"])
         point_words = words(u["point"])
         if u["point"] and main_words and not (point_words | unit_words) & main_words:
@@ -217,7 +223,8 @@ def check(plan, facts_text=None):
         plan_nums = numbers(plan_text) | numbers("\n".join(plan["excluded"]))
         seen = set()
         for key, raw in L.extract_numbers(L.strip_general_knowledge(facts_text)):
-            if key not in plan_nums and key not in seen:
+            # A bare number in a fact sheet is mostly a line or page of the source, a year, or an item number.
+            if key not in plan_nums and key not in seen and not re.fullmatch(r"[\d,.\s]+", raw):
                 seen.add(key)
                 nums["unassigned"].append(raw)
         fact_nums = L.number_set(facts_text)
