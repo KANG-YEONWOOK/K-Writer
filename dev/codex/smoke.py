@@ -20,7 +20,12 @@ import sys
 import time
 
 ROOT = Path(__file__).resolve().parents[2]
-CASES = ("default", "casual", "retone-casual", "retone-default", "url", "pdf", "cleanup")
+CASES = ("default", "casual", "retone-casual", "retone-default", "url", "pdf", "cleanup", "method")
+# The "method" case calls no skill. It asks whether the base writing method that the plugin's SessionStart hook prints
+# (hooks/writing-method.md) is in the model's context, and passes when the answer names these section titles.
+METHOD_TITLES = ("쓸 내용 정하기", "문장 쓰기", "점검하기", "글의 크기에 따른 방법")
+METHOD_PROMPT = ("컨텍스트에 'K-Writer 기본 글쓰기 방식'이라는 제목의 안내가 있으면 그 안내의 섹션 제목 네 개를 "
+                 "그대로 답해줘. 없으면 없다고 답해줘.")
 # Work files of the 0.6.0 workflow. check_ko.py saves the checked copy next to the article it checks: article.checked.md
 # for a Default article, article.draft.checked.md for the Default draft of a Casual article.
 WORK_SUFFIXES = (".facts.md", ".draft.md", ".checked.md", ".draft.checked.md")
@@ -60,7 +65,7 @@ def prepare_case(project, case, source=None, skill_mention="$techblog"):
 
 def stage_package(destination):
     destination.mkdir()
-    for name in ("plugin.json", ".codex-plugin", ".claude-plugin", ".agents", "skills", "LICENSE"):
+    for name in ("plugin.json", ".codex-plugin", ".claude-plugin", ".agents", "skills", "hooks", "LICENSE"):
         src = ROOT / name
         if src.is_dir():
             shutil.copytree(src, destination / name, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
@@ -107,6 +112,26 @@ def command_events(path):
             if event.get("type") == "item.completed" and item.get("type") == "command_execution":
                 commands.append({"command": item.get("command", ""), "exit_code": item.get("exit_code")})
     return commands
+
+
+def agent_messages(path):
+    """Texts of the agent messages in a Codex exec JSONL log, in order."""
+    messages = []
+    with path.open(encoding="utf-8") as stream:
+        for line in stream:
+            try:
+                event = json.loads(line)
+            except ValueError:
+                continue
+            item = event.get("item", {})
+            if event.get("type") == "item.completed" and item.get("type") == "agent_message":
+                messages.append(item.get("text", ""))
+    return messages
+
+
+def method_in_context(messages):
+    """True when the last agent message names every section title of the base writing method."""
+    return bool(messages) and all(title in messages[-1] for title in METHOD_TITLES)
 
 
 def skill_load_errors(log, stderr):
@@ -253,6 +278,29 @@ def inspect_output(project, case, commands, hashes):
     return result
 
 
+def run_method_case(codex, args, work, project, env):
+    """Ask a question without calling a skill and check that the hook's text reached the model.
+
+    Codex runs a plugin's hooks only after the user has reviewed and trusted them (/hooks). This isolated profile has
+    no trust record, so the run passes --dangerously-bypass-hook-trust; the hook it runs is the one in this checkout.
+    """
+    (work / "prompt.txt").write_text(METHOD_PROMPT, encoding="utf-8")
+    cmd = [codex, "--no-daemon", "-a", "never", "exec", "--sandbox", "workspace-write", "--skip-git-repo-check",
+           "--ephemeral", "--json", "--dangerously-bypass-hook-trust", "-C", str(project), "-"]
+    if args.windows_sandbox:
+        cmd[1:1] = ["-c", "windows.sandbox=" + args.windows_sandbox]
+    print("Running plugin / method in {}".format(work), flush=True)
+    outcome = run_logged(cmd, project, env, work / "run.jsonl", args.timeout, METHOD_PROMPT)
+    messages = agent_messages(work / "run.jsonl")
+    evaluation = {"method_in_context": method_in_context(messages), "last_message": messages[-1] if messages else ""}
+    meta = dict(outcome, installation=args.installation, case=args.case, command=cmd,
+                codex_version=subprocess.check_output([codex, "--version"], text=True, encoding="utf-8").strip())
+    (work / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+    (work / "eval.json").write_text(json.dumps(evaluation, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(json.dumps({"run": outcome, "method_in_context": evaluation["method_in_context"]}, ensure_ascii=False))
+    return 0 if outcome["exit"] == 0 and evaluation["method_in_context"] else 1
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--installation", choices=("direct", "plugin"), required=True)
@@ -271,6 +319,8 @@ def main():
         parser.error("--work must be a new directory")
     if args.case == "pdf" and not args.source:
         parser.error("pdf requires --source")
+    if args.case == "method" and args.installation != "plugin":
+        parser.error("method checks the plugin's hook, so it requires --installation plugin")
     work = args.work.resolve()
     project = work / "작업 폴더"
     profile = work / "codex-profile"
@@ -295,6 +345,8 @@ def main():
                 outcome = run_logged(command, project, env, work / (label + ".jsonl"), 120)
                 if outcome["exit"] != 0:
                     raise RuntimeError("{} failed; see {}".format(label, work / (label + ".err")))
+        if args.case == "method":
+            return run_method_case(codex, args, work, project, env)
         skill = installed_skill(project, profile, args.installation).resolve()
         skill_name = "k-writer:techblog" if args.installation == "plugin" else "techblog"
         # A linked mention selects the installed skill by path before model inference.
