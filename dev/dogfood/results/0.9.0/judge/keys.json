@@ -1,0 +1,112 @@
+{
+ "b1-1": {
+  "case": "b1-release-detail",
+  "A": "k-writer-0.8.0",
+  "B": "k-writer-0.9.0-first"
+ },
+ "b1-2": {
+  "case": "b1-release-detail",
+  "A": "k-writer-0.9.0-first",
+  "B": "k-writer-0.8.0"
+ },
+ "b1-r2-1": {
+  "case": "b1-release-detail",
+  "A": "k-writer-0.8.0",
+  "B": "k-writer-0.9.0"
+ },
+ "b1-r2-2": {
+  "case": "b1-release-detail",
+  "A": "k-writer-0.9.0",
+  "B": "k-writer-0.8.0"
+ },
+ "b12-1": {
+  "case": "b12-note-line",
+  "A": "k-writer-0.8.1",
+  "B": "k-writer-0.9.0"
+ },
+ "b12-2": {
+  "case": "b12-note-line",
+  "A": "k-writer-0.9.0",
+  "B": "k-writer-0.8.1"
+ },
+ "b13-1": {
+  "case": "b13-pep-300",
+  "A": "k-writer-0.8.1",
+  "B": "k-writer-0.9.0-first"
+ },
+ "b13-2": {
+  "case": "b13-pep-300",
+  "A": "k-writer-0.9.0-first",
+  "B": "k-writer-0.8.1"
+ },
+ "b13-r2-1": {
+  "case": "b13-pep-300",
+  "A": "k-writer-0.8.1",
+  "B": "k-writer-0.9.0-second"
+ },
+ "b13-r2-2": {
+  "case": "b13-pep-300",
+  "A": "k-writer-0.9.0-second",
+  "B": "k-writer-0.8.1"
+ },
+ "b13-r3-1": {
+  "case": "b13-pep-300",
+  "A": "k-writer-0.8.1",
+  "B": "k-writer-0.9.0"
+ },
+ "b13-r3-2": {
+  "case": "b13-pep-300",
+  "A": "k-writer-0.9.0",
+  "B": "k-writer-0.8.1"
+ },
+ "b3a-1": {
+  "case": "b3-note-para",
+  "A": "k-writer-0.7.1",
+  "B": "k-writer-0.9.0-first"
+ },
+ "b3a-2": {
+  "case": "b3-note-para",
+  "A": "k-writer-0.9.0-first",
+  "B": "k-writer-0.7.1"
+ },
+ "b3b-1": {
+  "case": "b3-note-para",
+  "A": "k-writer-0.8.0",
+  "B": "k-writer-0.9.0-first"
+ },
+ "b3b-2": {
+  "case": "b3-note-para",
+  "A": "k-writer-0.9.0-first",
+  "B": "k-writer-0.8.0"
+ },
+ "b3b-r2-1": {
+  "case": "b3-note-para",
+  "A": "k-writer-0.8.0",
+  "B": "k-writer-0.9.0"
+ },
+ "b3b-r2-2": {
+  "case": "b3-note-para",
+  "A": "k-writer-0.9.0",
+  "B": "k-writer-0.8.0"
+ },
+ "w3-1": {
+  "case": "w3-release-explain",
+  "A": "k-writer-0.7.0",
+  "B": "k-writer-0.9.0-first"
+ },
+ "w3-2": {
+  "case": "w3-release-explain",
+  "A": "k-writer-0.9.0-first",
+  "B": "k-writer-0.7.0"
+ },
+ "w3-r2-1": {
+  "case": "w3-release-explain",
+  "A": "k-writer-0.7.0",
+  "B": "k-writer-0.9.0"
+ },
+ "w3-r2-2": {
+  "case": "w3-release-explain",
+  "A": "k-writer-0.9.0",
+  "B": "k-writer-0.7.0"
+ }
+}

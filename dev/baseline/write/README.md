@@ -123,19 +123,22 @@ python -I dev/baseline/write/calibrate.py docs/corpus/write . dev/baseline/write
 | 논문 초록 | 수 있다 3.5%, 수 있었다 1.8%, 것으로 나타났다 1.8%, 필요가 있다 1.1%, 다음과 같다 0.9%, 분석하였다 2.2% |
 | 연설문 | 것입니다 11.9%, 생각합니다 3.8%, 바랍니다 2.0%, 하겠습니다 1.1%, 감사드립니다 0.5% |
 
-## write에 반영한 것
+## 스킬에 반영한 것
 
-| 측정 결과 | 반영한 곳 |
-|---|---|
-| 잘 쓴 설명문은 주제에서 벗어나지 않고 문장마다 앞 문장을 이어받는다 | 글을 쓰기 전에 핵심 주제, 단위, 문장별 내용을 정하는 설계 단계(`core/references/planning.md`, write의 drafting.md 3단계) |
-| 문단 하나는 한 가지 일을 하고 핵심을 말한 다음 풀이, 예, 이유가 온다 | planning.md의 "단위의 전개" |
-| 앞 문장에 붙는 문장의 93%가 바로 앞 문장에 붙는다 | planning.md의 "문장별 내용"(문장의 순서) |
-| 겹치는 명사의 위치, 연결 장치의 비율, 조사와 서술어의 수 | `core/references/style-guide.md`의 "문장을 이어 쓰기" |
-| 문단의 길이(수능 지문 4문장, 기사 3문장) | write의 genre.md "분량과 형식" |
-| 기사, 초록, 연설문의 순서와 종결 표현 | write의 genre.md "직접 입력한 목적", "전하는 일에 맞는 서술어" |
-| 앞 문장과 이어지지 않는 문장, 주제어가 없는 문단, 조사 없이 이은 명사 | lint 항목 A23.unlinked, A23.offtopic_para, A23.topic_cover, A24.noun_run(`core/scripts/lint_ko.py`), ai-patterns.md의 "A23, A24" |
-| 건너뛴 내용과 핵심 주제와 관계없는 내용 | korean-review.md의 유형 Y, Z, independent-review.md의 항목 9, 10, write의 rubric.md J11, J12 |
-| 지시어와 번역투 항목의 빈도 | write의 `scripts/thresholds.json`(A13, A14, A7.see_judgment) |
+아래 표의 "사용하는 스킬"은 그 기준을 읽거나 그 기준으로 점검하는 스킬이다. core의 문서와 검사 스크립트는 세 스킬이 함께 사용한다. 0.7.0에서는 write에, 0.7.1에서는 techblog에 반영했고, 0.9.0에서 brief가 같은 기준을 읽게 했다. 0.9.0에서는 write의 genre.md에만 있던 "전하는 일에 맞는 서술어" 표를 core의 style-guide.md로 옮기고, write의 판정 항목 J11, J12와 같은 항목을 techblog(J11, J12)와 brief(J9)의 rubric.md에 추가했다.
+
+| 측정 결과 | 반영한 곳 | 사용하는 스킬 |
+|---|---|---|
+| 잘 쓴 설명문은 주제에서 벗어나지 않고 문장마다 앞 문장을 이어받는다 | 글을 쓰기 전에 핵심 주제, 단위, 문장별 내용을 정하는 설계 단계(`core/references/planning.md`, 스킬의 drafting.md 3단계) | write, techblog, brief |
+| 문단 하나는 한 가지 일을 하고 핵심을 말한 다음 풀이, 예, 이유가 온다 | planning.md의 "단위의 전개" | write, techblog, brief(문단이 여럿인 요약) |
+| 앞 문장에 붙는 문장의 93%가 바로 앞 문장에 붙는다 | planning.md의 "문장별 내용"(문장의 순서) | write, techblog, brief(문단이 여럿인 요약) |
+| 겹치는 명사의 위치, 연결 장치의 비율, 조사와 서술어의 수 | `core/references/style-guide.md`의 "문장을 이어 쓰기" | write, techblog, brief |
+| 기사, 초록, 연설문, 수능 지문의 종결 표현 | style-guide.md의 "전하는 일에 맞는 서술어" | write, techblog, brief |
+| 문단의 길이(수능 지문 4문장, 기사 3문장) | write의 genre.md "분량과 형식" | write |
+| 기사, 초록, 연설문의 순서 | write의 genre.md "직접 입력한 목적" | write |
+| 앞 문장과 이어지지 않는 문장, 주제어가 없는 문단, 조사 없이 이은 명사 | lint 항목 A23.unlinked, A23.offtopic_para, A23.topic_cover, A24.noun_run(`core/scripts/lint_ko.py`), ai-patterns.md의 "A23, A24" | write, techblog, brief |
+| 건너뛴 내용과 핵심 주제와 관계없는 내용 | korean-review.md의 유형 Y, Z, independent-review.md의 항목 9, 10, rubric.md의 판정 항목(write J11, J12, techblog J11, J12, brief J9) | write, techblog, brief |
+| 지시어와 번역투 항목의 빈도 | write의 `scripts/thresholds.json`(A13, A14, A7.see_judgment) | write |
 
 ## 한계
 

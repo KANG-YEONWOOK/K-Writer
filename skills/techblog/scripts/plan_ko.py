@@ -6,6 +6,7 @@ The source of this file is core/scripts/plan_ko.py in the repo. dev/sync_core.py
 Usage
   python plan_ko.py check PLAN [--facts FACTS.md] [--json]
   python plan_ko.py compare PLAN ARTICLE [--json]
+  python plan_ko.py elements FACTS.md [--max N] [--json]
 
 A plan lists the units of an article top-down: the main point of the whole article, each unit (one subtopic, written
 as a paragraph or a section) with what it tells the reader and how it unfolds, and one line per sentence.
@@ -24,11 +25,31 @@ as a paragraph or a section) with what it tells the reader and how it unfolds, a
 check: reports structure errors (exit 1) and candidates to read (exit 0): plan lines that are not full sentences,
 lines without a source, units that share no word with the main point, lines that hold several things, sentences
 repeated across units, and numbers of the fact sheet that no line uses.
+
+When the material holds more than the text can, the fact sheet lists the key elements of the text before the plan is
+written ("## 핵심 요소"). Each round ("### 1차", "### 2차", ...) extracts again from the round before it, by merging
+elements or by keeping the ones the reader cannot do without, until the number of elements fits the length. The text
+is written from the last round.
+
+  "### 2차: 한 문단 (요소 4개)"
+  "문단 1: <what this paragraph tells>"       (only in the last round of a text of several paragraphs)
+  "1. [role] <what must be in the text, as a full sentence> | 키워드: <name>, <value>, <condition> | <source>"
+  "2. = 1차 5"                                 (element 5 of round 1, kept as it is)
+  "- 제외: <elements of the round before that were left out, with the reason>"
+
+elements: reports candidates to read in this section: elements that are not full sentences or run over 130
+characters, elements without keywords, keywords that their own element does not contain, a reference to an element
+that does not exist, a paragraph line that joins two points or holds more than five elements, a round that keeps less
+than 40% of the round before it, and (with --max N) a last round of more than N elements. It then
+prints the last round with every reference filled in, which is the list the text is written from. check prints the
+same candidates and the keywords of the last round that the plan does not have. compare_elements (used by check_ko.py) lists the keywords of the last round
+that the article does not have.
 compare: reports plan lines with no matching sentence in the article, article sentences with no matching plan line,
 and numbers of the plan that the article does not have. check_ko.py prints the same comparison when a plan file is
 next to the article.
 
-Exit codes: 0 no structure error, 1 structure errors (check only), 2 usage or input error
+Exit codes: 0 no structure error, 1 structure errors (check), no key elements in the fact sheet (elements),
+2 usage or input error
 Uses only the standard library (Python 3.8 or later).
 """
 
@@ -61,6 +82,16 @@ SOURCE_MAX = 60        # a longer parenthetical at the end is a source only when
 MATCH_PLAN = 0.5       # share of a plan line's words that an article sentence (or two adjacent ones) must have
 MATCH_ARTICLE = 0.5    # share of an article sentence's words that a plan line (or two adjacent ones) must have
 DUPLICATE = 0.8
+
+ELEMENTS_RE = re.compile(r"^(#{1,4})\s*핵심\s*요소\s*$")
+ROUND_RE = re.compile(r"^#{2,5}\s*(\d+)\s*차")
+KEYWORDS_RE = re.compile(r"^키워드\s*[:：]\s*(.*)$")
+DROPPED_RE = re.compile(r"^\s*[-*]\s*제외\s*[:：]\s*(.*)$")
+KEPT_RE = re.compile(r"^\s*(\d+(?:-\d+)?)[.)]\s*(?:\[([^\]]+)\]\s*)?=\s*(\d+)\s*차\s*(\d+(?:-\d+)?)\s*$")
+TWO_POINTS_RE = re.compile(r"(?:([가-힣])고|으며|이며|지만),?\s")   # a connective that may join two clauses
+PARA_MAX = 5           # elements that one paragraph of a summary holds
+ROUND_KEEP = 0.4       # a round that keeps a smaller share of the round before it has skipped a level
+ROUND_MIN = 6          # rounds with fewer elements than this may be cut to any size
 
 
 def plan_path(article):
@@ -157,6 +188,242 @@ def numbers(text):
     return {key for key, _ in L.extract_numbers(text)}
 
 
+# ---------------------------------------------------------------- key elements
+
+def parse_elements(text):
+    """Rounds of the "## 핵심 요소" section of a fact sheet, in order. [] when the fact sheet has no such section.
+
+    "2. = 1차 5" keeps element 5 of round 1 as it is: its role, text, and keywords are copied. A reference to an element
+    that does not exist stays in the round with "missing" set.
+    """
+    rounds, cur, level, para = [], None, 0, 0
+    for n, raw in enumerate(L.normalize_text(text or "").split("\n"), 1):
+        line = raw.rstrip()
+        if not line.strip():
+            continue
+        m = ELEMENTS_RE.match(line)
+        if m:
+            level, cur = len(m.group(1)), None
+            continue
+        if not level:
+            continue
+        h = re.match(r"^(#{1,6})\s+(.*)$", line)
+        if h:
+            if len(h.group(1)) <= level:       # the next section of the fact sheet
+                level, cur = 0, None
+                continue
+            m = ROUND_RE.match(line)
+            cur = {"n": int(m.group(1)) if m else len(rounds) + 1, "title": h.group(2).strip(), "line": n,
+                   "elements": [], "dropped": [], "paras": []}
+            rounds.append(cur)
+            para = 0
+            continue
+        if cur is None:                        # elements listed without a round heading are one round
+            cur = {"n": 1, "title": "", "line": n, "elements": [], "dropped": [], "paras": []}
+            rounds.append(cur)
+        m = DROPPED_RE.match(line)
+        if m:
+            cur["dropped"].append(m.group(1).strip())
+            continue
+        m = PARA_RE.match(line)
+        if m:
+            para += 1
+            cur["paras"].append({"n": para, "point": m.group(2).strip(), "line": n})
+            continue
+        m = KEPT_RE.match(line)
+        if m:
+            ref = f"{m.group(3)}차 {m.group(4)}"
+            found = next((e for r in rounds if r is not cur and r["n"] == int(m.group(3))
+                          for e in r["elements"] if e["id"] == m.group(4)), None)
+            base = found or {"role": "", "text": "", "keywords": []}
+            cur["elements"].append({"id": m.group(1), "role": m.group(2) or base["role"], "text": base["text"],
+                                    "keywords": list(base["keywords"]), "source": ref, "line": n, "para": para,
+                                    "kept": True, "missing": found is None})
+            continue
+        m = SENT_RE.match(line)
+        if not m:
+            continue
+        parts = [p.strip() for p in m.group(3).split("|")]
+        keywords, source = [], ""
+        for part in parts[1:]:
+            k = KEYWORDS_RE.match(part)
+            if k:
+                keywords = [w.strip() for w in re.split(r",\s+|;|，", k.group(1)) if w.strip()]
+            elif part:
+                source = part
+        content, tail = split_source(parts[0])
+        cur["elements"].append({"id": m.group(1), "role": m.group(2).strip(), "text": content,
+                                "keywords": keywords, "source": source or tail, "line": n, "para": para})
+    return [r for r in rounds if r["elements"] or r["dropped"]]
+
+
+def joins_two_points(text):
+    """True when a paragraph point joins two clauses: a past-tense "~했고", or "~으며", "~이며", "~지만"."""
+    for m in TWO_POINTS_RE.finditer(text):
+        ch = m.group(1)
+        # "~고" joins two statements when the syllable before it ends in ㅆ (했고, 졌고, 있었고).
+        if ch is None or (ord(ch) - 0xAC00) % 28 == 20:
+            return True
+    return False
+
+
+def squash(text):
+    """Text without spaces, emphasis marks, and thousands separators, to look a keyword up in."""
+    text = re.sub(r"[*_`~]", "", L.normalize_text(text or ""))
+    text = re.sub(r"(?<=\d),(?=\d)", "", text)
+    return re.sub(r"\s+", "", text).lower()
+
+
+def check_elements(rounds, plan_text=None, limit=None):
+    """Candidates to read in the key elements. plan_text: the sentences of the plan written from the last round.
+    limit: the number of elements that the length of the text holds."""
+    cands = []
+
+    def cand(kind, line, text, why):
+        cands.append({"kind": kind, "line": line, "text": text, "why": why})
+
+    for r in rounds:
+        for q in r["paras"]:
+            label = f"{r['n']}차 문단 {q['n']}: {q['point']}"
+            if q["point"] and not PROPOSITION_END_RE.search(q["point"]):
+                cand("문장이 아닌 문단의 전할 내용", q["line"], label,
+                     "그 문단을 읽은 독자가 알게 되는 것을 서술어까지 한 문장으로 적는다")
+            elif joins_two_points(q["point"]):
+                cand("두 내용을 이은 문단의 전할 내용", q["line"], label,
+                     "한 문단은 한 가지 내용을 다룬다. 서로 다른 내용 둘을 이었으면 문단을 둘로 나눈다")
+            held = sum(1 for e in r["elements"] if e.get("para") == q["n"])
+            if held > PARA_MAX:
+                cand("요소가 많은 문단", q["line"], f"{label} (요소 {held}개)",
+                     f"한 문단에는 요소를 {PARA_MAX}개까지 묶는다. 내용이 바뀌는 곳에서 문단을 나눈다")
+        for e in r["elements"]:
+            if e.get("missing"):
+                cand("앞 차수에 없는 요소", e["line"], f"{r['n']}차 {e['id']}. = {e['source']}",
+                     "\"= 1차 3\"은 앞 차수의 요소를 그대로 남긴다는 표시다. 차수와 번호를 확인한다")
+                continue
+            if e.get("kept"):                  # checked where the element was written
+                continue
+            label = f"{r['n']}차 {e['id']}. {e['text']}"
+            if not PROPOSITION_END_RE.search(e["text"]):
+                cand("문장이 아닌 핵심 요소", e["line"], label,
+                     "요소의 내용을 무엇이 어떠한지, 누가 무엇을 했는지 서술어까지 적는다")
+            elif len(e["text"]) > LONG_LINE:
+                cand("여러 내용을 담은 핵심 요소", e["line"], label,
+                     f"요소 하나는 공백을 포함해 {LONG_LINE}자 안의 한 문장이다. 서로 다른 사실을 합쳐 길어졌으면 합치지 "
+                     "않고 더 필요한 요소를 선택한다. 내용을 줄여 쓰지 않는다")
+            if not e["keywords"]:
+                cand("키워드가 없는 핵심 요소", e["line"], label,
+                     "글에 그대로 나와야 하는 대상의 이름, 수치, 조건을 \"| 키워드: \" 뒤에 적는다")
+            body = squash(e["text"])
+            lost = [k for k in e["keywords"] if squash(k) not in body]
+            if lost:
+                cand("요소의 내용에 없는 키워드", e["line"], f"{', '.join(lost)} ← {label}",
+                     "키워드는 그 요소의 내용에 나온 말로 적는다. 내용에 없는 대상이나 값이면 내용에 추가한다")
+    for prev, cur in zip(rounds, rounds[1:]):
+        a, b = len(prev["elements"]), len(cur["elements"])
+        if a >= ROUND_MIN and b < a * ROUND_KEEP:
+            cand("한 차수에서 절반 넘게 줄인 핵심 요소", cur["line"], f"{prev['n']}차 {a}개 → {cur['n']}차 {b}개",
+                 "한 차수에서는 요소를 절반 정도까지만 줄인다. 합칠 수 있는 요소를 먼저 합치고, 남은 목록으로 다시 추출한다")
+    if limit and rounds and len(rounds[-1]["elements"]) > limit:
+        last = rounds[-1]
+        cand("분량에 담을 수보다 많은 마지막 차수", last["line"], f"{last['n']}차 {len(last['elements'])}개, 분량에 담을 요소 {limit}개",
+             "이 목록에서 요소를 합치거나 꼭 필요한 요소를 다시 선택해 다음 차수를 적는다. 요소의 내용을 줄여 쓰지 않는다")
+    if plan_text is not None and rounds:
+        body = squash(plan_text)
+        last = rounds[-1]
+        for e in last["elements"]:
+            lost = [k for k in e["keywords"] if squash(k) not in body]
+            if lost:
+                cand("설계에 없는 핵심 요소의 키워드", e["line"], f"{', '.join(lost)} ← {last['n']}차 {e['id']}. {e['text']}",
+                     "마지막 차수의 요소는 모두 설계의 문장으로 적는다. 다른 표현으로 적었으면 키워드를 그 표현으로 수정한다")
+    return cands
+
+
+def compare_elements(rounds, article_text):
+    """Keywords of the last round that the article does not have."""
+    if not rounds:
+        return None
+    last = rounds[-1]
+    body = squash(article_text)
+    missing, total = [], 0
+    for e in last["elements"]:
+        total += len(e["keywords"])
+        lost = [k for k in e["keywords"] if squash(k) not in body]
+        if lost:
+            missing.append({"id": e["id"], "line": e["line"], "text": e["text"], "keywords": lost})
+    return {"round": last["n"], "elements": len(last["elements"]), "keywords": total, "missing": missing,
+            "rounds": [{"n": r["n"], "elements": len(r["elements"])} for r in rounds]}
+
+
+def render_elements(res, before=None):
+    """before: the comparison of the last checked text. When given, only the keywords that the edit removed are listed."""
+    if not res:
+        return ""
+    missing = res["missing"]
+    if before is not None:
+        had = {(m["id"], k) for m in before["missing"] for k in m["keywords"]}
+        missing = [dict(m, keywords=[k for k in m["keywords"] if (m["id"], k) not in had]) for m in missing]
+        missing = [m for m in missing if m["keywords"]]
+    lost = sum(len(m["keywords"]) for m in missing)
+    if not lost:
+        return "" if before is not None else (
+            f"핵심 요소 대조: 마지막 차수({res['round']}차)의 요소 {res['elements']}개에 적은 키워드 {res['keywords']}개가 "
+            "글에 모두 있다.")
+    if before is not None:
+        lines = [f"핵심 요소 대조: 지난 검사 뒤에 글에서 빠진 키워드 {lost}개. 문장을 수정하면서 빠진 대상, 수치, 조건이면 "
+                 "그 문장에 다시 쓴다. 그 요소를 쓰지 않기로 했으면 핵심 요소 섹션에 차수를 하나 더 적어 제외한다."]
+    else:
+        lines = [f"핵심 요소 대조: 마지막 차수({res['round']}차)의 요소 {res['elements']}개에 적은 키워드 {res['keywords']}개 "
+                 f"중 {lost}개를 글에서 찾지 못했다.",
+                 "[핵심 요소 대조] 글에 없는 키워드: 그 요소의 내용이 글에 있는지 확인한다. 줄여 쓰면서 빠진 대상, 수치, "
+                 "조건이면 그 문장에 다시 쓴다. 다른 표현으로 이미 썼으면 그대로 둔다. 쓰지 않기로 한 요소는 핵심 요소 "
+                 "섹션에 차수를 하나 더 적어 제외한다."]
+    for m in missing[:15]:
+        lines.append(f"    요소 {m['id']} (fact sheet L{m['line']}): {', '.join(m['keywords'])} ← {m['text'][:110]}")
+    return "\n".join(lines)
+
+
+ELEMENT_QUESTIONS = (
+    "마지막 차수의 요소마다 \"이 요소가 없으면 독자가 무엇을 모르거나 잘못 알게 되는가\"에 답할 수 있는가",
+    "결론의 범위를 바꾸는 조건과 한계, 결론을 얻는 대신 생긴 비용, 독자가 할 일의 기한과 방법이 마지막 차수에 남아 있는가",
+    "합친 요소를 한 문장으로 말할 수 있는가. 합치면서 대상의 이름이나 값이 사라지지 않았는가",
+    "요소의 내용이 주어, 목적어, 값, 조건을 갖춘 문장인가. 분량은 요소의 수로 맞추고 요소의 내용은 줄이지 않았는가",
+)
+
+
+def render_element_check(path, rounds, cands):
+    flow = " → ".join(f"{r['n']}차 {len(r['elements'])}개" for r in rounds)
+    lines = [f"{SKILL_NAME} elements | {os.path.basename(path)} | {flow}"]
+    if cands:
+        lines.append("")
+        lines.append("핵심 요소 점검 후보 (줄을 읽고 해당하면 수정한다):")
+        kinds = []
+        for c in cands:
+            if c["kind"] not in kinds:
+                kinds.append(c["kind"])
+        for kind in kinds:
+            group = [c for c in cands if c["kind"] == kind]
+            lines.append(f"[{kind}] {len(group)}개: {group[0]['why']}.")
+            lines.extend(f"    L{c['line']}: {c['text'][:150]}" for c in group[:12])
+    else:
+        lines.append("점검 후보가 없다.")
+    last = rounds[-1]
+    lines.append("")
+    lines.append(f"마지막 차수({last['n']}차)의 요소. 글은 이 목록의 요소를 순서대로 하나씩 문장으로 쓴다:")
+    points = {q["n"]: q["point"] for q in last["paras"]}
+    para = 0
+    for e in last["elements"]:
+        if e.get("para") and e["para"] != para:
+            para = e["para"]
+            lines.append(f"  문단 {para}: {points.get(para, '')}")
+        if e.get("missing"):
+            continue
+        lines.append(f"  {e['id']}. [{e['role']}] {e['text']} | 키워드: {', '.join(e['keywords'])}")
+    lines.append("")
+    lines.append("마지막 차수를 읽고 확인한다:")
+    lines.extend(f"  {i}. {q}" for i, q in enumerate(ELEMENT_QUESTIONS, 1))
+    return "\n".join(lines)
+
+
 # ---------------------------------------------------------------- check
 
 def check(plan, facts_text=None):
@@ -240,6 +507,8 @@ def check(plan, facts_text=None):
             if key not in fact_nums and key not in seen:
                 seen.add(key)
                 nums["unknown"].append(raw)
+    if facts_text is not None:
+        cands.extend(check_elements(parse_elements(facts_text), plan_text))
     stats = {"units": len(plan["units"]),
              "paragraphs": sum(max(1, len(u["paras"])) for u in plan["units"] if u["sentences"]),
              "sentences": len(sents),
@@ -439,6 +708,10 @@ def main(argv=None):
     m.add_argument("plan")
     m.add_argument("article")
     m.add_argument("--json", action="store_true")
+    e = sub.add_parser("elements")
+    e.add_argument("facts")
+    e.add_argument("--max", type=int, help="the number of elements that the length of the text holds")
+    e.add_argument("--json", action="store_true")
     try:
         args = ap.parse_args(argv)
     except SystemExit as e:
@@ -446,11 +719,24 @@ def main(argv=None):
     if not args.cmd:
         ap.print_usage(sys.stderr)
         return 2
-    for path in [args.plan] + ([args.article] if args.cmd == "compare" else []):
+    paths = [args.facts] if args.cmd == "elements" else [args.plan] + ([args.article] if args.cmd == "compare" else [])
+    for path in paths:
         if not os.path.isfile(path):
             print(f"파일이 없습니다: {path}", file=sys.stderr)
             return 2
     try:
+        if args.cmd == "elements":
+            rounds = parse_elements(L.read_text(args.facts))
+            if not rounds:
+                print(f"핵심 요소가 없습니다: {args.facts}에 \"## 핵심 요소\" 섹션과 \"### 1차\" 아래의 요소를 적습니다.",
+                      file=sys.stderr)
+                return 1
+            cands = check_elements(rounds, limit=args.max)
+            if args.json:
+                print(json.dumps({"rounds": rounds, "candidates": cands}, ensure_ascii=False, indent=1))
+            else:
+                print(render_element_check(args.facts, rounds, cands))
+            return 0
         plan = parse_plan(L.read_text(args.plan))
         if args.cmd == "check":
             facts = args.facts

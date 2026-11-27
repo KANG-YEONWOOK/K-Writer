@@ -1,5 +1,6 @@
-"""Checks plan_ko.py (the writing plan check and the comparison of an article with its plan), the plan comparison
-that check_ko.py prints, and the lint items for links between sentences, topic words, and noun runs (A23, A24)."""
+"""Checks plan_ko.py (the writing plan check, the key elements of a fact sheet, and the comparison of an article with
+its plan), the comparisons that check_ko.py prints, and the lint items for links between sentences, topic words, and
+noun runs (A23, A24)."""
 import os
 import shutil
 import subprocess
@@ -206,6 +207,153 @@ class CheckWithPlanTest(unittest.TestCase):
         os.remove(os.path.join(self.dir, "note.plan.md"))
         _, out = self.run_check()
         self.assertNotIn("설계 대조", out)
+
+
+FACTS = """# fact sheet
+
+- 핵심 주제: 무효화 메시지의 배치 크기를 100에서 10으로 줄이자 p99 무효화 지연이 4.2초에서 0.8초로 줄었다.
+- 분량: 한 문단
+
+| 사실 | 값과 조건 |
+|---|---|
+| 무효화 지연이 줄었다 | p99 4.2초에서 0.8초, 배치 크기 100에서 10 |
+| 재전송 비율 | 18% |
+| 처리량이 떨어졌다 | 쓰기 비율 30% 이상에서 15% |
+
+## 핵심 요소
+
+### 1차: 자료 전체 (요소 6개)
+1. [결론] 무효화 메시지의 배치 크기를 100에서 10으로 줄이자 p99 무효화 지연이 4.2초에서 0.8초로 줄었다. | 키워드: 배치 크기, p99 무효화 지연, 4.2초, 0.8초 | 사실 1
+2. [원인] 배치 안의 메시지 하나가 실패하면 캐시 노드는 그 배치의 메시지 100개를 모두 다시 받는다. | 키워드: 메시지 100개 | 사실 1
+3. [근거] 배치 크기가 100이던 설정에서는 재전송이 전체 전송의 18%였다. | 키워드: 재전송, 18% | 사실 2
+4. [한계] 쓰기 비율이 30% 이상인 서비스에서는 처리량이 15% 떨어졌다. | 키워드: 쓰기 비율, 30%, 처리량, 15% | 사실 3
+5. [한계] 실험은 서비스 12개에서만 했다. | 키워드: 서비스 12개 | 사실 1
+6. [방법] 김 등(2025)은 운영 로그로 지연을 측정했다. | 키워드: 운영 로그 | 사실 1
+
+### 2차: 한 문단 (요소 3개)
+1. [결론] 무효화 메시지의 배치 크기를 100에서 10으로 줄이자 p99 무효화 지연이 4.2초에서 0.8초로 줄었다. | 키워드: 배치 크기, p99 무효화 지연, 4.2초, 0.8초 | 1차 1
+2. [원인] 배치가 100이면 메시지 하나가 실패했을 때 100개를 모두 다시 받아 재전송이 전체 전송의 18%였다. | 키워드: 재전송, 18% | 1차 2+3
+3. [한계] 쓰기 비율이 30% 이상인 서비스에서는 처리량이 15% 떨어졌다. | 키워드: 쓰기 비율, 30%, 처리량, 15% | 1차 4
+- 제외: 1차 5, 6(실험 범위와 측정 방법은 결론을 바꾸지 않는다)
+
+## 원문
+
+본문
+"""
+
+SUMMARY = ("무효화 메시지의 배치 크기를 100에서 10으로 줄이자 p99 무효화 지연이 4.2초에서 0.8초로 줄었습니다. 배치 크기가 100일 "
+           "때는 메시지 하나가 실패하면 100개를 모두 다시 받아 재전송이 전체 전송의 18%였습니다. 다만 쓰기 비율이 30% 이상인 "
+           "서비스에서는 처리량이 15% 떨어졌습니다.\n")
+
+
+class KeyElementsTest(unittest.TestCase):
+    def test_parse_reads_rounds_keywords_and_dropped_elements(self):
+        rounds = P.parse_elements(FACTS)
+        self.assertEqual([(r["n"], len(r["elements"])) for r in rounds], [(1, 6), (2, 3)])
+        self.assertEqual(rounds[0]["elements"][0]["keywords"], ["배치 크기", "p99 무효화 지연", "4.2초", "0.8초"])
+        self.assertEqual(rounds[1]["elements"][1]["source"], "1차 2+3")
+        self.assertEqual(len(rounds[1]["dropped"]), 1)
+        self.assertEqual(P.parse_elements("# fact sheet\n\n| 사실 |\n|---|\n| 값 |\n"), [])
+        # the section ends at the next heading of the same level
+        self.assertNotIn("본문", [e["text"] for r in rounds for e in r["elements"]])
+
+    def test_complete_elements_have_no_candidate(self):
+        self.assertEqual(P.check_elements(P.parse_elements(FACTS)), [])
+
+    def test_element_without_keywords_or_predicate_and_skipped_round_are_candidates(self):
+        facts = FACTS.replace("5. [한계] 실험은 서비스 12개에서만 했다. | 키워드: 서비스 12개 | 사실 1", "5. [한계] 실험 범위")
+        facts = facts.replace("| 키워드: 재전송, 18% | 1차 2+3", "| 키워드: 재전송, 18%, 캐시 노드 | 1차 2+3")
+        facts = facts.replace("3. [한계] 쓰기 비율이 30% 이상인 서비스에서는 처리량이 15% 떨어졌다. | 키워드: 쓰기 비율, 30%, 처리량, 15% | 1차 4\n", "")
+        kinds = [c["kind"] for c in P.check_elements(P.parse_elements(facts), limit=1)]
+        self.assertIn("문장이 아닌 핵심 요소", kinds)
+        self.assertIn("키워드가 없는 핵심 요소", kinds)
+        self.assertIn("요소의 내용에 없는 키워드", kinds)                  # "캐시 노드" is not in the merged element
+        self.assertIn("한 차수에서 절반 넘게 줄인 핵심 요소", kinds)        # 6 elements to 2
+        self.assertIn("분량에 담을 수보다 많은 마지막 차수", kinds)        # 2 elements, room for 1
+
+    def test_kept_elements_are_copied_and_paragraph_lines_are_read(self):
+        # "= 1차 N" keeps an element as it is; "문단 N:" groups the last round of a text of several paragraphs.
+        facts = FACTS.split("### 2차")[0] + (
+            "### 2차: 자세히 (요소 4개)\n"
+            "문단 1: 배치 크기를 줄이자 무효화 지연이 줄었다.\n"
+            "1. = 1차 1\n"
+            "2. [원인] 배치가 100이면 메시지 하나가 실패했을 때 100개를 모두 다시 받아 재전송이 전체 전송의 18%였다. "
+            "| 키워드: 재전송, 18% | 1차 2+3\n"
+            "문단 2: 결과의 한계\n"
+            "3. = 1차 4\n"
+            "4. = 1차 9\n"
+            "- 제외: 1차 5, 6(실험 범위와 측정 방법은 결론을 바꾸지 않는다)\n")
+        rounds = P.parse_elements(facts)
+        last = rounds[-1]
+        self.assertEqual([e["text"] for e in last["elements"]][0], rounds[0]["elements"][0]["text"])
+        self.assertEqual(last["elements"][0]["keywords"], ["배치 크기", "p99 무효화 지연", "4.2초", "0.8초"])
+        self.assertEqual([(e["id"], e["para"], e["source"]) for e in last["elements"]],
+                         [("1", 1, "1차 1"), ("2", 1, "1차 2+3"), ("3", 2, "1차 4"), ("4", 2, "1차 9")])
+        self.assertEqual([q["point"] for q in last["paras"]], ["배치 크기를 줄이자 무효화 지연이 줄었다.", "결과의 한계"])
+        kinds = [c["kind"] for c in P.check_elements(rounds)]
+        self.assertEqual(sorted(kinds), ["문장이 아닌 문단의 전할 내용", "앞 차수에 없는 요소"])
+        # a paragraph line that joins two points, a paragraph of more than five elements, an element over 130 characters
+        joined = facts.replace("문단 2: 결과의 한계", "문단 2: 처리량이 떨어졌고, 실험은 서비스 12개에서만 했다.")
+        joined = joined.replace("4. = 1차 9\n", "4. = 1차 5\n5. = 1차 6\n6. = 1차 2\n7. = 1차 3\n8. = 1차 1\n")
+        long = ("9. [근거] " + "배치 크기가 100이던 설정에서는 재전송이 전체 전송의 18%였고 " * 4 + "지연이 늘었다. | 키워드: 18% | 사실 2\n")
+        joined = joined.replace("- 제외: 1차 5, 6(실험 범위와 측정 방법은 결론을 바꾸지 않는다)\n", long)
+        kinds = [c["kind"] for c in P.check_elements(P.parse_elements(joined))]
+        self.assertEqual(sorted(kinds), ["두 내용을 이은 문단의 전할 내용", "여러 내용을 담은 핵심 요소", "요소가 많은 문단"])
+        out = P.render_element_check("note.facts.md", rounds, P.check_elements(rounds))
+        self.assertIn("  문단 1: 배치 크기를 줄이자 무효화 지연이 줄었다.", out)
+        self.assertIn("  1. [결론] 무효화 메시지의 배치 크기를 100에서 10으로 줄이자", out)       # the reference is filled in
+        self.assertIn("  3. [한계] 쓰기 비율이 30% 이상인 서비스에서는 처리량이 15% 떨어졌다.", out)
+        # the keywords of a kept element are looked up in the article like the others
+        res = P.compare_elements(rounds, SUMMARY.replace("처리량이 15% 떨어졌습니다", "성능이 떨어졌습니다"))
+        self.assertEqual([(m["id"], m["keywords"]) for m in res["missing"]], [("3", ["처리량", "15%"])])
+
+    def test_keywords_of_the_last_round_are_looked_up_in_the_article(self):
+        rounds = P.parse_elements(FACTS)
+        res = P.compare_elements(rounds, SUMMARY)
+        self.assertEqual((res["round"], res["elements"], res["keywords"], res["missing"]), (2, 3, 10, []))
+        self.assertIn("키워드 10개가 글에 모두 있다", P.render_elements(res))
+        self.assertEqual(P.render_elements(res, before=res), "")
+        res = P.compare_elements(rounds, SUMMARY.replace("처리량이 15% 떨어졌습니다", "성능이 떨어졌습니다"))
+        self.assertEqual([(m["id"], m["keywords"]) for m in res["missing"]], [("3", ["처리량", "15%"])])
+        self.assertIn("2개를 글에서 찾지 못했다", P.render_elements(res))
+        self.assertEqual(P.render_elements(res, before=res), "")           # nothing more was lost since the last check
+        full = P.compare_elements(rounds, SUMMARY)
+        self.assertIn("지난 검사 뒤에 글에서 빠진 키워드 2개", P.render_elements(res, before=full))
+        # spaces, emphasis marks, and thousands separators do not hide a keyword
+        self.assertIn(P.squash("p99 무효화 지연"), P.squash("**p99  무효화 지연**은 1,200건"))
+        self.assertIn("1200건", P.squash("1,200건"))
+        self.assertIsNone(P.compare_elements([], SUMMARY))
+
+    def test_plan_check_reports_keywords_of_the_last_round_that_the_plan_lost(self):
+        res = P.check(P.parse_plan(PLAN), FACTS)
+        lost = [c for c in res["candidates"] if c["kind"] == "설계에 없는 핵심 요소의 키워드"]
+        self.assertEqual(len(lost), 1)                                      # the plan has no line on the throughput
+        self.assertIn("처리량", lost[0]["text"])
+
+    def test_cli_and_check_ko_print_the_comparison(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            facts, article = os.path.join(tmp, "note.facts.md"), os.path.join(tmp, "note.draft.md")
+            write(facts, FACTS)
+            write(article, SUMMARY.replace("처리량이 15% 떨어졌습니다", "성능이 떨어졌습니다"))
+            run = lambda script, *a: subprocess.run([sys.executable, os.path.join(SCRIPTS, script), *a],  # noqa: E731
+                                                    capture_output=True, text=True, encoding="utf-8")
+            p = run("plan_ko.py", "elements", facts, "--max", "5")
+            self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
+            self.assertIn("write elements | note.facts.md | 1차 6개 → 2차 3개", p.stdout)
+            self.assertIn("점검 후보가 없다", p.stdout)
+            self.assertIn("분량에 담을 수보다 많은 마지막 차수", run("plan_ko.py", "elements", facts, "--max", "2").stdout)
+            write(os.path.join(tmp, "empty.facts.md"), "# fact sheet\n")
+            self.assertEqual(run("plan_ko.py", "elements", os.path.join(tmp, "empty.facts.md")).returncode, 1)
+            out = run("check_ko.py", article).stdout                     # the draft uses note.facts.md
+            self.assertIn("핵심 요소 대조: 마지막 차수(2차)", out)
+            self.assertIn("처리량, 15%", out)
+            write(article, SUMMARY.replace("처리량이 15% 떨어졌습니다", "성능이 크게 떨어졌습니다"))
+            out = run("check_ko.py", article).stdout                     # still missing, but not lost by this edit
+            self.assertNotIn("핵심 요소 대조", out)
+            write(article, SUMMARY.replace("재전송이 전체 전송의 18%였습니다", "재전송이 많았습니다"))
+            out = run("check_ko.py", article).stdout.split("핵심 요소 대조", 1)[1]
+            self.assertIn("지난 검사 뒤에 글에서 빠진 키워드 1개", out)       # only the keyword that this edit removed
+            self.assertIn("18%", out)
 
 
 FLOW_PARAS = [

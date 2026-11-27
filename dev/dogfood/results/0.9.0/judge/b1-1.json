@@ -1,0 +1,75 @@
+{
+ "A": {
+  "main_point": "K-Writer 0.5.0은 write와 brief 스킬을 추가하고 techblog의 short 모드를 삭제했으며, 새 스킬은 subagent의 테스트 실행으로 확인했지만 eval과 dogfood, 다른 글과의 비교는 하지 않았다.",
+  "off_topic": [],
+  "skipped": [
+   "짧은 글 기준은 core의 `rules.json`으로 옮겼고 `lint_ko.py --short`와 `revise_ko.py`의 `check --short`, `audit --short`가 이 기준을 적용합니다.: `check`와 `audit`에 `--short`를 추가한 이유가 없다. 자료에는 감사를 맡은 subagent가 두 명령이 짧은 글 기준을 적용하지 않아 lint와 판정이 다른 것을 찾았다는 과정이 있다.",
+   "수정 전후의 `lint_ko.py`를 예시 글, eval 글, 평가 기록의 글 34개에 `--tone default`와 `--tone casual`로 실행해 출력 68개를 비교했습니다.: `lint_ko.py`에서 무엇을 수정했는지가 없어 비교한 이유를 독자가 채워야 한다. 자료에는 short 모드 코드를 삭제하면서 두 번 정의돼 있던 정규식 두 개를 맞췄다는 내용이 있다."
+  ],
+  "missing": [
+   "단위 테스트 210개 통과와 `dev/sync_core.py --check`, `dev/borrow_thresholds.py --check`, `claude plugin validate .` 통과",
+   "short 모드와 함께 삭제한 대상(`short.md`, `short` 인자, `thresholds.json`의 short 설정, lint의 `--source`와 `--terms`, 원문 대조 항목 F1~F8, `tests/test_short_mode.py`)",
+   "감사를 맡은 subagent가 찾은 `check`, `audit`와 `lint_ko.py --short`의 판정 차이(lint를 통과한 요약이 `check`에서 FAIL, lint가 찾은 번역투 두 개를 `check`가 통과)",
+   "`--tone auto`가 해라체로 쓴 문서 7개를 `plain`으로 인식해 출력이 달라진 것",
+   "문장 길이, 문단, 목록 비중 같은 분포 항목의 기준치는 가져오지 않은 것",
+   "회의록 요약의 결과(338자에서 189자)와 실행에 걸린 시간(27분에서 9분, 14분에서 3분), 독자 점검의 설명으로 469자가 630자가 된 것",
+   "write 테스트 실행의 결과(423자와 905자, 일정과 수치 등이 자료와 같았음)",
+   "스킬의 `thresholds.json`이 장르에서 자연스러운 표현을 허용하게 한 것과 settings-protocol.md의 \"반드시 받는 값\"",
+   "write가 본문 1,500자를 기준으로 독립 점검의 범위를 나누는 것",
+   "brief의 분량을 글자 수 범위로 정해 넘기지 않게 한 것",
+   "README 세 개를 점검해 스킬 문서와 다르게 설명한 11건을 반영한 것",
+   "한계: 테스트 실행이 설정마다 한 번인 것, 이어진 턴에서 검사 스크립트의 사전 허용이 유지되는지 확인하지 못한 것, 구성과 분량 범위와 Plain 종결의 분포가 측정값이 아닌 것, lint가 반말 종결을 검출하지 못하는 것"
+  ],
+  "unlinked": [],
+  "compressed": [
+   "사실 표의 열",
+   "brief의 출력 파일 조립"
+  ],
+  "wrong": [],
+  "awkward": [
+   "독자 점검이 낸 질문마다",
+   "한 문단, 합니다체로 요약한 brief의 요약은"
+  ]
+ },
+ "B": {
+  "main_point": "K-Writer 0.5.0은 기본 스킬 write와 요약 스킬 brief를 추가하고 techblog의 short 모드를 삭제했으며, 단위 테스트 210개와 두 차례의 테스트 실행으로 확인했지만 eval과 dogfood, 다른 글과의 비교는 하지 않았다.",
+  "off_topic": [],
+  "skipped": [
+   "감사를 맡은 subagent는 `revise_ko.py`의 `check`와 `audit`가 core의 `rules.json`에 있는 짧은 글 기준을 적용하지 않아 `lint_ko.py --short`와 판정이 다르다는 것을 찾았습니다.: 짧은 글 기준을 core의 `rules.json`으로 옮겼고 `lint_ko.py --short`가 이 기준을 적용한다는 설명이 앞에 없다. short 모드를 삭제했다고 읽은 독자는 `--short`가 무엇인지 스스로 채워야 한다.",
+   "기준 글 표본이 없으면 부정 대구나 번역투도 판정하지 못해서, write와 brief에는 기술 블로그 글에서 측정한 techblog의 기준치 중 특정 표현의 빈도를 세는 항목 15개를 가져왔습니다.: write와 brief에 기준 글 표본이 없다는 전제가 없다. 자료에는 \"write와 brief는 기준 글 표본이 없다\"가 있다."
+  ],
+  "missing": [
+   "사용자가 스킬 두 개를 요청했고 write가 기본 스킬이라고 설명했다는 배경",
+   "brief가 `-o`가 있으면 요약을 파일에도 저장하는 것",
+   "write 테스트 실행의 결과(423자와 905자, 일정과 수치 등이 자료와 같았음)",
+   "스킬의 `thresholds.json`이 장르에서 자연스러운 표현을 허용하게 한 것과 settings-protocol.md의 \"반드시 받는 값\"",
+   "write가 본문 1,500자를 기준으로 독립 점검의 범위를 나누는 것",
+   "brief의 분량을 글자 수 범위로 정해 넘기지 않게 한 것",
+   "README 세 개를 점검해 스킬 문서와 다르게 설명한 11건을 반영한 것",
+   "한계: 2차 실행 뒤에 수정한 사실 표의 열과 brief의 출력 파일 조립을 다시 확인하지 않은 것, 구성과 분량 범위와 Plain 종결의 분포가 측정값이 아닌 것, lint가 반말 종결을 검출하지 못하는 것"
+  ],
+  "unlinked": [
+   "감사를 맡은 subagent는 `revise_ko.py`의 `check`와 `audit`가 core의 `rules.json`에 있는 짧은 글 기준을 적용하지 않아 `lint_ko.py --short`와 판정이 다르다는 것을 찾았습니다.",
+   "기준 글 표본이 없으면 부정 대구나 번역투도 판정하지 못해서, write와 brief에는 기술 블로그 글에서 측정한 techblog의 기준치 중 특정 표현의 빈도를 세는 항목 15개를 가져왔습니다."
+  ],
+  "compressed": [
+   "검사 스크립트 실행의 사전 허용"
+  ],
+  "wrong": [
+   "다만 테스트 실행은 자료와 요청의 조합마다 한 번씩만 했고, 2차 실행 뒤에 수정한 \"저희\" 규칙은 다시 실행해 확인하지 않았습니다.: 자료는 \"테스트 실행은 설정마다 한 번\"이라고 했다. 자료의 표에서 brief는 같은 자료와 요청으로 1차와 2차를 실행했으므로 '자료와 요청의 조합마다 한 번'은 표와 맞지 않고, 같은 글의 \"brief는 1차와 2차에 같은 자료와 요청을 사용했고\"와도 어긋난다. 표현을 바꾸면서 생긴 작은 차이다."
+  ],
+  "awkward": [
+   "`--tone auto`로 실행하면 해라체로 쓴 문서 7개를 `plain`으로 인식해 출력이 수정 전과 달라졌습니다",
+   "회의록을 항목 형식으로 쓴 요약은",
+   "독립 점검이 그 안의 독자 점검에서 나온 질문마다"
+  ]
+ },
+ "verdict": {
+  "topic": {"better": "tie", "reason": "두 글 모두 0.5.0에서 바꾼 것, 확인한 것, 한계만 다루고 삭제해도 되는 문단이나 문장이 없다."},
+  "sufficiency": {"better": "B", "reason": "B에는 단위 테스트 210개 통과, short 모드와 함께 삭제한 대상, 감사 subagent가 찾은 판정 차이와 `--short`를 추가한 이유, `--tone auto`의 변화, 실행 시간, 사전 허용 미확인이 있는데 A에는 모두 없다."},
+  "flow": {"better": "A", "reason": "A는 문단마다 한 가지를 다루고 변경, 확인, 한계 순서로 이어지는데 B는 short 모드를 삭제했다는 문단에서 설명 없이 `lint_ko.py --short`와 `rules.json`의 짧은 글 기준이 나오고 한계가 첫 문단과 마지막 문단에 나뉘어 있다."},
+  "facts": {"better": "A", "reason": "A는 자료와 다른 곳이 없고 B는 \"설정마다 한 번\"을 \"자료와 요청의 조합마다 한 번씩만\"으로 바꿔 자료의 표와 맞지 않는 곳이 하나 있지만 차이는 작다."},
+  "korean": {"better": "tie", "reason": "두 글 모두 문장이 자연스럽고 어색한 표현은 A에 두 곳, 분량이 더 많은 B에 세 곳으로 비슷하다."},
+  "overall": {"better": "B", "reason": "자세한 요약만 읽고 자료의 내용을 알아야 하는 독자에게는 구성이 더 정돈된 A보다 검증 결과, 삭제 범위, 감사에서 찾은 문제와 한계를 더 많이 전하는 B가 낫다."}
+ }
+}

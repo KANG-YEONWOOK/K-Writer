@@ -3,7 +3,8 @@
   "run_skill.py의 brief, write 케이스. files는 저장소 루트 기준 경로이고 실행 폴더에 같은 파일 이름으로 복사한다.",
   "b1, b2의 자료는 2026-11-11 사용자 검토에서 지적된 문장이 나온 개발 기록이다(evals/brief-release-record).",
   "budget은 --max-budget-usd, timeout은 초다. 지정하지 않으면 run_skill.py의 기본값을 사용한다.",
-  "w6은 0.6.0에서 추가한 발표 자료 케이스다. 슬라이드의 제목과 부제가 명사나 명사형으로 끝나는지 확인한다."
+  "w6은 0.6.0에서 추가한 발표 자료 케이스다. 슬라이드의 제목과 부제가 명사나 명사형으로 끝나는지 확인한다.",
+  "b12, b13은 0.9.0에서 추가한 케이스다. 핵심 요소를 여러 차수로 줄여야 하는 분량(한 줄, 사용자가 정한 글자 수)이다."
  ],
  "cases": [
   {"name": "b1-release-detail", "files": ["evals/brief-release-record/source.md"],
@@ -22,6 +23,10 @@
    "prompt": "/k-writer:brief source.md(검색 서비스 2.4 개발 기록) 한 문단으로 합니다체. 이 기록을 읽지 않은 같은 회사 개발자가 읽을 요약이야. --keep-work -o summary.md"},
   {"name": "b11-devlog-detail", "files": ["evals/brief-devlog/source.md"],
    "prompt": "/k-writer:brief source.md(검색 서비스 2.4 개발 기록) 자세히 합니다체 --keep-work -o summary.md"},
+  {"name": "b12-note-line", "files": ["dev/dogfood/sources/rate-limiter-note.md"],
+   "prompt": "/k-writer:brief rate-limiter-note.md 한 줄로 합니다체 --keep-work -o summary.md"},
+  {"name": "b13-pep-300", "files": ["dev/dogfood/sources/pep-0659.rst"],
+   "prompt": "/k-writer:brief pep-0659.rst 300자 이내로 합니다체 --keep-work -o summary.md"},
   {"name": "w1-notice-casual", "files": ["evals/write-notice-casual/source.md"], "budget": 14, "timeout": 3000,
    "prompt": "/k-writer:write source.md(스터디 모집 메모)로 사내 게시판에 올릴 스터디 모집 안내 글을 써줘. 독자는 스터디에 처음 참가하는 사내 직원이야. 분량은 공백 제외 500자 안팎, 어투는 해요체. -o notice.md --keep-work"},
   {"name": "w2-report-plain", "files": ["evals/write-report-plain/source.md"], "budget": 14, "timeout": 3000,

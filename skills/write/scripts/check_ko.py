@@ -26,6 +26,8 @@ applied automatically when the body of ARTICLE is under 1,500 characters; --shor
 When a writing plan (<name>.plan.md) is next to ARTICLE, the article is also compared with the plan (plan_ko.py):
 plan lines with no matching sentence, numbers of the plan that the article lost, and sentences with no plan line.
 Later runs list unplanned sentences only among the changed sentences.
+When the fact sheet lists the key elements of the text ("## 핵심 요소"), the keywords of the last round that the
+article does not have are listed too. Later runs list only the keywords that the edit removed.
 
 Exit codes: 0 the whole article passes, 1 a Gate violation, a FAIL, too many WARN items, or a worsened AI style item,
 2 usage or input error
@@ -78,6 +80,17 @@ def plan_report(plan_file, text, only_lines=None):
     res = P.compare(P.parse_plan(L.read_text(plan_file)), text)
     out = P.render_compare(res, only_lines=only_lines, title=only_lines is None)
     return out, res
+
+
+def elements_report(facts, text, base_text=None):
+    """Keywords of the last round of key elements that the article does not have, or with base_text (the last checked
+    text) only the ones that the edit removed. ("", None) when the fact sheet has no elements."""
+    if not facts:
+        return "", None
+    rounds = P.parse_elements(L.read_text(facts))
+    res = P.compare_elements(rounds, text)
+    before = P.compare_elements(rounds, base_text) if base_text is not None else None
+    return P.render_elements(res, before=before), res
 
 
 def lint(text, tone, facts_text, short):
@@ -266,6 +279,9 @@ def render_delta(base, path, res, short, saved):
         lines.append("")
         lines.append(f"바뀐 부분 {k} (L{min(ls)}~L{max(ls)}). -는 지난 검사의 문장, +는 지금 문장, 표시가 없는 줄은 앞뒤 문맥이다.")
         lines.extend(_unit_line(mark, u) for mark, u in rows)
+    if res.get("elements_text"):
+        lines.append("")
+        lines.append(res["elements_text"])
     if res.get("plan_text"):
         lines.append("")
         lines.append(res["plan_text"])
@@ -318,10 +334,14 @@ def main(argv=None):
             out, ev = full_report(args.article, args.tone, facts, short)
             code = 0 if ev["summary"]["verdict"] == "PASS" else 1
             plan_text, plan_res = plan_report(plan, text) if plan else ("", None)
+            elem_text, elem_res = elements_report(facts, text)
             if args.json:
                 out = json.dumps({"mode": "full", "file": args.article, "short": short, "summary": ev["summary"],
-                                  "results": ev["results"], "plan": plan_res}, ensure_ascii=False, indent=1)
+                                  "results": ev["results"], "plan": plan_res, "elements": elem_res},
+                                 ensure_ascii=False, indent=1)
             else:
+                if elem_text:
+                    out += "\n\n" + elem_text
                 if plan_text:
                     out += "\n\n" + plan_text
                 out += "\n\n" + ("짧은 글 기준(본문 1,500자 미만)을 적용했다. " if short else "")
@@ -333,10 +353,12 @@ def main(argv=None):
             print(out)
             return code
         facts_text = L.read_text(facts) if facts else None
-        res = delta(L.read_text(base), text, args.tone, facts_text, short, max(0, args.context))
+        base_text = L.read_text(base)
+        res = delta(base_text, text, args.tone, facts_text, short, max(0, args.context))
         if plan:
             changed = {u["line"] for rows in res["groups"] for mark, u in rows if mark == "+"}
             res["plan_text"], res["plan"] = plan_report(plan, text, only_lines=changed)
+        res["elements_text"], res["elements"] = elements_report(facts, text, base_text=base_text)
         saved = None
         if not args.keep and res["groups"]:
             shutil.copyfile(args.article, base)
@@ -348,6 +370,7 @@ def main(argv=None):
                 slim[k] = [{"id": r["id"], "status": r["status"], "value": r["value"], "hits": r.get("hits", [])}
                            for r in res[k]]
             slim.pop("plan_text", None)
+            slim.pop("elements_text", None)
             print(json.dumps(dict(slim, mode="delta", file=args.article, base=base, short=short),
                              ensure_ascii=False, indent=1))
         else:

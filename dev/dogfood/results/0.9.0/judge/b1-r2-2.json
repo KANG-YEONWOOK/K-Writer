@@ -1,0 +1,63 @@
+{
+ "A": {
+  "main_point": "K-Writer 0.5.0은 write와 brief 스킬을 추가하고 techblog의 short 모드를 삭제했으며, 단위 테스트와 검사는 통과했지만 eval, dogfood, 다른 글과의 비교는 하지 않았다.",
+  "off_topic": [],
+  "skipped": [
+   "감사를 맡은 subagent는 `revise_ko.py`의 `check`와 `audit`가 core의 `rules.json`에 둔 짧은 글 기준을 적용하지 않아서 `lint_ko.py --short`와 판정이 다르다는 것을 찾았습니다.: 짧은 글 기준을 core의 `rules.json`으로 옮겨 `lint_ko.py --short`가 계속 적용한다는 설명이 앞에 없어, short 모드를 삭제했다는 문장 뒤에 `--short`가 왜 남아 있는지 독자가 짐작해야 한다. 판정이 어떻게 달랐는지(lint를 통과한 요약이 `check`에서 FAIL, lint가 찾은 번역투 두 개를 `check`가 통과)도 없다"
+  ],
+  "missing": [
+   "사용자가 write가 기본 스킬이고 다른 스킬은 글의 목적, 문체, 구성을 미리 정해 둔 것이라고 설명한 내용",
+   "새 eval 케이스 4개는 작성만 하고 실행하지 않았다는 한계",
+   "write 테스트 실행의 결과(1차 423자, 2차 905자, 일정과 수치 등이 자료와 같았음)와 brief 회의록 실행의 결과(338자에서 189자)",
+   "brief의 분량을 글자 수 범위로 정해 넘기지 않게 한 수정",
+   "한계 가운데 write 테스트 자료가 그때의 genre.md 예와 같은 상황이었던 점, 구성과 분량 범위와 가져온 기준치가 write와 brief에서 측정한 값이 아닌 점, lint가 반말 종결을 검출하지 못하는 점",
+   "자료나 주제를 받지 못하면 작업을 시작하지 않는다는 규칙(settings-protocol.md의 반드시 받는 값)과 스킬의 thresholds.json이 장르에 맞는 표현을 허용하게 한 변경"
+  ],
+  "unlinked": [
+   "write와 brief에는 기준 글 표본이 없고 표본이 없으면 부정 대구나 번역투도 판정할 수 없습니다."
+  ],
+  "compressed": [
+   "사실 표의 열, brief의 출력 파일 조립(무엇을 수정했는지 설명이 없다. 자료에도 설명은 없다)"
+  ],
+  "wrong": [],
+  "awkward": [
+   "요약으로 답하며",
+   "판정이 다르다는 것을 찾았습니다"
+  ]
+ },
+ "B": {
+  "main_point": "K-Writer 0.5.0은 brief와 write 스킬을 추가하고 techblog의 short 모드를 삭제했으며, 새 스킬은 subagent 테스트 실행으로만 확인했고 eval과 dogfood는 실행하지 않았다.",
+  "off_topic": [],
+  "skipped": [
+   "짧은 글 기준은 core의 `rules.json`으로 옮겼고 `lint_ko.py --short`와 `revise_ko.py`의 `check --short`, `audit --short`가 이 기준을 적용합니다.: `check`와 `audit`에 `--short`가 생긴 경위(감사를 맡은 subagent가 두 명령이 짧은 글 기준을 적용하지 않아 `lint_ko.py --short`와 판정이 다른 것을 찾았다)가 빠지고 결과만 있다",
+   "수정 전후의 `lint_ko.py`를 예시 글, eval 글, 평가 기록의 글 34개에 `--tone default`와 `--tone casual`로 실행해 출력 68개를 비교했습니다.: 무엇을 수정한 전후인지(short 모드 코드를 삭제하면서 중복 정의된 정규식 두 개를 맞춘 수정)가 없어 비교한 이유를 독자가 짐작해야 한다"
+  ],
+  "missing": [
+   "단위 테스트 210개 통과와 `dev/sync_core.py --check`, `dev/borrow_thresholds.py --check`, `claude plugin validate .` 통과",
+   "short 모드와 함께 삭제한 대상(`short.md`, short 인자, `thresholds.json`의 short 설정, lint의 `--source`와 `--terms`, 원문 대조 항목 F1~F8, `tests/test_short_mode.py`)",
+   "write가 본문 1,500자를 기준으로 subagent에게 맡기는 독립 점검의 범위를 다르게 한다는 내용",
+   "문장 길이, 문단, 목록 비중 같은 분포 항목의 기준치는 가져오지 않았다는 내용",
+   "테스트 실행이 설정마다 한 번이었다는 한계",
+   "write 테스트 실행의 결과(1차 423자, 2차 905자, 일정과 수치 등이 자료와 같았음)와 brief 회의록 실행의 결과(338자에서 189자)",
+   "brief의 분량을 글자 수 범위로 정해 넘기지 않게 한 수정",
+   "한계 가운데 write 테스트 자료가 그때의 genre.md 예와 같은 상황이었던 점, 구성과 분량 범위와 가져온 기준치가 write와 brief에서 측정한 값이 아닌 점, lint가 반말 종결을 검출하지 못하는 점",
+   "자료나 주제를 받지 못하면 작업을 시작하지 않는다는 규칙(settings-protocol.md의 반드시 받는 값)과 스킬의 thresholds.json이 장르에 맞는 표현을 허용하게 한 변경"
+  ],
+  "unlinked": [
+   "write와 brief는 기준 글 표본이 없어 부정 대구나 번역투도 판정하지 못하므로 특정 표현의 빈도를 세는 lint 항목 15개는 techblog의 기준치를 가져와 사용합니다."
+  ],
+  "compressed": [
+   "사실 표의 열, brief의 출력 파일 조립(무엇을 수정했는지 설명이 없다. 자료에도 설명은 없다)"
+  ],
+  "wrong": [],
+  "awkward": []
+ },
+ "verdict": {
+  "topic": {"better": "tie", "reason": "두 글 모두 자료의 변경, 확인, 한계만 다루고 요청의 목적과 관계없는 문단이나 문장이 없다."},
+  "sufficiency": {"better": "A", "reason": "A는 단위 테스트 210개와 검사 통과, short 모드와 함께 삭제한 대상, 1,500자 기준 독립 점검, 분포 항목 제외, `--short`를 추가한 경위를 남겼고 B는 이 내용을 모두 뺐으며, B에만 있는 내용(사용자의 write 설명, eval 케이스 4개, `rules.json` 이동)은 그보다 적다."},
+  "flow": {"better": "B", "reason": "B는 변경, 확인, 한계 순서로 한계를 마지막 문단에 모았고, A는 한계가 첫 문단과 마지막 문단에 나뉘어 있으며 short 모드를 삭제했다는 문장 뒤에 설명 없이 `lint_ko.py --short`가 나와 독자가 멈추게 된다(차이는 작다)."},
+  "facts": {"better": "tie", "reason": "두 글의 수치(210개, 1,500자, 15개, 34개, 68개, 590자와 296자, 6개, 4개)와 서술이 모두 자료와 같고 자료에 없는 사실도 없다."},
+  "korean": {"better": "B", "reason": "A에는 \"요약으로 답하며\", \"판정이 다르다는 것을 찾았습니다\"처럼 조금 어색한 표현이 두 군데 있고 B에는 눈에 띄는 어색한 표현이 없지만 차이는 작다."},
+  "overall": {"better": "A", "reason": "요청이 자세한 요약이고 독자가 요약만 읽고 자료의 내용을 알아야 하는데, B는 테스트와 검사 통과, 삭제 대상, `--short` 추가 경위처럼 개발자에게 필요한 사실을 빼서 구성이 조금 더 정돈된 점을 감안해도 A가 목적에 더 맞다."}
+ }
+}

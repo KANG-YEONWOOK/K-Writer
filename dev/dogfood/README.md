@@ -48,10 +48,19 @@ python dev/dogfood/askback.py --report <작업 폴더>/judge/before.json <작업
 ```
 
 - `run_skill.py`는 모든 실행에서 marketplace로 설치한 K-Writer(`k-writer@k-writer`)를 그 실행에 한해 끈다(`--settings`의 `enabledPlugins`). 설치본을 끄지 않으면 `--plugin`으로 지정한 폴더의 스킬과 설치본의 스킬이 함께 로드된다. 대화에 답한 글은 실행 폴더의 `answer.md`에 저장된다.
-- 케이스는 `cases-brief-write.json`에 있다. brief 8건과 write 5건이고, 자료는 `evals/`의 케이스 자료, `dev/dogfood/sources/`의 파일, `dev/codex/REPORT.md`다. `sources/pep-0659.rst`는 PEP 659 원문이다(public domain 또는 CC0). `b1`, `b2`, `w3`의 자료는 2026-11-11 사용자 검토에서 지적된 문장이 나온 개발 기록(`evals/brief-release-record/source.md`)이다. 2026-11-11의 실행은 이 파일을 정리하기 전의 복사본으로 했고, 그때는 케이스 이름과 prompt의 파일 이름 일부가 달랐다(예: `b1-status-detail`과 `release-0.5.0.md`). 자료의 내용은 같다.
+- 케이스는 `cases-brief-write.json`에 있다. brief 10건과 write 6건이고, 자료는 `evals/`의 케이스 자료, `dev/dogfood/sources/`의 파일, `dev/codex/REPORT.md`다. `sources/pep-0659.rst`는 PEP 659 원문이다(public domain 또는 CC0). `b1`, `b2`, `w3`의 자료는 2026-11-11 사용자 검토에서 지적된 문장이 나온 개발 기록(`evals/brief-release-record/source.md`)이다. 2026-11-11의 실행은 이 파일을 정리하기 전의 복사본으로 했고, 그때는 케이스 이름과 prompt의 파일 이름 일부가 달랐다(예: `b1-status-detail`과 `release-0.5.0.md`). 자료의 내용은 같다.
 - `askback.py`는 글만 읽는 judge에게 문장마다 그 문장이 전하는 일을 자기 말로 다시 적게 한 뒤 clear, ask_back(글쓴이에게 되물어야 하는 문장), two_readings, awkward 중 하나를 선택하게 한다. `judge.py`의 clarity judge(J9)는 문장이 무엇에 대한 내용인지만 묻기 때문에 "write와 brief의 구성과 분량 범위는 측정값이 아니라 정한 값입니다"처럼 주어가 있는 문장을 찾지 못한다. 이 문장을 opus judge는 두 번 실행해 두 번 모두 ask_back으로 판정했고 sonnet judge는 두 번 중 한 번만 ask_back으로 판정했다. 그래서 기본 모델을 opus로 정했다.
 - 같은 judge로 사람 글도 판정해 대조군으로 사용한다. 논문 초록 40편(290문장)에서 두 번 모두 ask_back인 문장은 8.6%, awkward가 한 번 이상인 문장은 29.3%였다. 초록에는 "방안을 제안하였다"처럼 내용을 밝히지 않은 문장과 띄어쓰기 오류가 많아서, 이 값은 judge가 사람 글에서도 이만큼 지적한다는 참고값이고 판정 기준으로는 사용하지 않는다.
 - judge는 긴 글에서 사용자가 지적한 문장과 같은 유형의 문장을 놓치기도 한다. 0.5.0으로 쓴 1,153자 요약의 "…구성과 분량 범위는 측정해서 정한 값이 아니고…"와 1,167자 글에 있던 같은 내용의 문장은 두 번 모두 clear로 판정됐다. 최종 판단은 사람이 읽어서 한다.
+
+## 0.9.0의 실행 결과 (`results/0.9.0`)
+
+0.9.0에서 핵심 요소 추출을 추가하고 실행한 결과를 `results/0.9.0`에 기록했다. 이 결과의 평가는 `EVALUATION.md`의 K-Writer 0.9.0 섹션에 있다.
+
+- 케이스 폴더의 `k-writer-0.9.0.md`는 0.9.0의 최종 글이고 `k-writer-0.9.0.elements.md`는 그 실행의 fact sheet에서 가져온 `## 핵심 요소` 섹션이다. 요소를 차수마다 어떻게 합치고 제외했는지는 이 파일에 있다. `w3-release-explain`에는 설계 문서(`k-writer-0.9.0.plan.md`)도 있다.
+- `b1-release-detail`, `b3-note-para`, `b13-pep-300`, `w3-release-explain`에는 이름이 `k-writer-0.9.0-first`로 시작하는 파일도 있다. 첫 판정의 지적을 반영해 요소를 선택하는 규칙을 수정하기 전에 실행한 글과 그 핵심 요소다. 이 네 건은 규칙을 수정한 뒤 다시 실행했고 그 결과가 `k-writer-0.9.0.md`다. `b13-pep-300`은 키워드를 다시 고르는 규칙을 추가한 뒤 한 번 더 실행해서, 선택 규칙만 수정했을 때의 글은 `k-writer-0.9.0-second.md`이고 `k-writer-0.9.0.md`는 세 번째로 실행한 글이다. `b12-note-line`은 다시 실행하지 않아서 `k-writer-0.9.0.md`가 규칙을 수정하기 전의 글이다.
+- `b12-note-line`과 `b13-pep-300`은 0.9.0에서 추가한 케이스라서 같은 날 0.8.1(commit bd02433의 복사본을 `--plugin`에 지정)로도 실행했고 그 요약이 `k-writer-0.8.1.md`다. `b1-release-detail`과 `b3-note-para`는 `results/0.8.0`의 0.8.0, 0.7.1 요약과 비교했고 `w3-release-explain`은 `results/0.7.0`의 0.7.0 글과 비교했다.
+- `judge-guide.md`는 0.7.0의 비교에 사용한 판정 지침과 같은 파일이다. `judge/`에는 쌍마다 A와 B의 순서를 바꿔 판정한 결과가 있고, 판정마다 A와 B가 어느 글이었는지는 `judge/keys.json`에 있다. `b3a`는 0.7.1과, `b3b`는 0.8.0과 비교한 판정이다. 이름에 `-r2`가 있는 파일은 규칙을 수정한 뒤 다시 실행한 글을 판정한 결과이고 `-r3`이 있는 파일은 `b13-pep-300`의 세 번째 글을 판정한 결과다.
 
 ## 0.8.0의 실행 결과 (`results/0.8.0`)
 
