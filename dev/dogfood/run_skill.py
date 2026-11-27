@@ -5,16 +5,12 @@ run.py runs only techblog from an installed copy. This script loads the plugin f
 checkout can be compared with another (for example a copy of an earlier commit). Each case runs in its own folder with
 the user's CLAUDE.md and auto memory turned off.
 
---no-plugin runs the same cases with no plugin at all. cases-method.json holds requests that call no skill, so a run
-with the plugin shows what the session-start hook (hooks/) changes and a run with --no-plugin is the baseline.
-
 Output under <out>/<case>/: the files the run wrote, run.jsonl (stream-json), run.err, meta.json, and answer.md (the
 final answer in the conversation)
 
 Usage
   python dev/dogfood/run_skill.py --out <work>/after [--plugin <plugin dir>] [--cases dev/dogfood/cases-brief-write.json]
       [--only b1-release-detail w1-notice-casual] [--jobs 5]
-  python dev/dogfood/run_skill.py --out <work>/none --no-plugin --cases dev/dogfood/cases-method.json
   python dev/dogfood/run_skill.py --summary <work>/after
 """
 
@@ -45,14 +41,10 @@ def run_case(case, plugin, out_dir, model, effort, budget, timeout):
            "--permission-mode", "acceptEdits", "--max-budget-usd", str(case.get("budget", budget)),
            # Nobody can answer in this run, so the settings question tool is removed.
            "--disallowedTools", "AskUserQuestion",
-           # A copy of K-Writer installed from the marketplace would load next to the folder under test (or into a
-           # --no-plugin run), so it is turned off for this run only.
-           "--settings", json.dumps({"enabledPlugins": {INSTALLED_PLUGIN: False}})]
-    if plugin:
-        cmd += ["--plugin-dir", plugin]
-    if case.get("allowed"):
-        # Tools a user would approve at the prompt, for example the check scripts that a run without a skill calls.
-        cmd += ["--allowedTools", *case["allowed"]]
+           # A copy of K-Writer installed from the marketplace would load next to the folder under test, so it is
+           # turned off for this run only.
+           "--settings", json.dumps({"enabledPlugins": {INSTALLED_PLUGIN: False}}),
+           "--plugin-dir", plugin]
     env = dict(os.environ)
     env.update({"CLAUDE_CODE_DISABLE_CLAUDE_MDS": "1", "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"})
     t0 = time.time()
@@ -133,7 +125,6 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--cases", default=os.path.join(ROOT, "dev", "dogfood", "cases-brief-write.json"))
     ap.add_argument("--plugin", default=ROOT, help="plugin folder to load (default: this checkout)")
-    ap.add_argument("--no-plugin", action="store_true", help="run without any plugin (baseline for cases-method.json)")
     ap.add_argument("--out")
     ap.add_argument("--summary", help="print the summary table of a finished output folder and exit")
     ap.add_argument("--only", nargs="*")
@@ -154,8 +145,8 @@ def main():
         cases = [c for c in cases if c["name"] in args.only]
     os.makedirs(args.out, exist_ok=True)
     with ThreadPoolExecutor(max_workers=args.jobs) as ex:
-        plugin = None if args.no_plugin else os.path.abspath(args.plugin)
-        list(ex.map(lambda c: run_case(c, plugin, args.out, args.model, args.effort, args.budget, args.timeout), cases))
+        list(ex.map(lambda c: run_case(c, os.path.abspath(args.plugin), args.out, args.model, args.effort, args.budget,
+                                       args.timeout), cases))
     summarize(args.out)
 
 

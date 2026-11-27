@@ -1072,8 +1072,6 @@ class PlainTermsDocsTest(unittest.TestCase):
     DOCS = ("style-guide.md", "style-sources.md", "planning.md", "genre.md", "drafting.md", "fact-sheet.md",
             "validation.md", "checking.md", "independent-review.md", "revision.md", "runtime.md", "settings.md",
             "settings-protocol.md", "tone.md")
-    # The text that the plugin's hook adds to every session, and the steps it points to for documents.
-    HOOK_DOCS = ("writing-method.md", "document-steps.md")
     SKILLS = sorted(d for d in os.listdir(os.path.join(SCRIPTS, "..", ".."))
                     if os.path.isfile(os.path.join(SCRIPTS, "..", "..", d, "SKILL.md")))
     OWN = {"A6.version_pan", "A5.plain_terms", "A5.plain_terms_check", "A6.metaphor_check"}
@@ -1104,12 +1102,6 @@ class PlainTermsDocsTest(unittest.TestCase):
             with self.subTest(skill=skill, doc="SKILL.md"):
                 self.assert_plain(f"{skill}/SKILL.md", L.read_text(os.path.join(base, "SKILL.md")))
         self.assertGreaterEqual(checked, 3 * 10)
-
-    def test_hook_documents_use_plain_terms(self):
-        base = os.path.join(SCRIPTS, "..", "..", "..", "hooks")
-        for name in self.HOOK_DOCS:
-            with self.subTest(doc=name):
-                self.assert_plain(f"hooks/{name}", L.read_text(os.path.join(base, name)))
 
     def test_hints_use_plain_terms(self):
         for pid, p in self.spec.items():

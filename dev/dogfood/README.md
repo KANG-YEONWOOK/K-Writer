@@ -47,29 +47,17 @@ python dev/dogfood/askback.py --out <작업 폴더>/judge --label after <요약�
 python dev/dogfood/askback.py --report <작업 폴더>/judge/before.json <작업 폴더>/judge/after.json --show
 ```
 
+- `run_skill.py`는 모든 실행에서 marketplace로 설치한 K-Writer(`k-writer@k-writer`)를 그 실행에 한해 끈다(`--settings`의 `enabledPlugins`). 설치본을 끄지 않으면 `--plugin`으로 지정한 폴더의 스킬과 설치본의 스킬이 함께 로드된다. 대화에 답한 글은 실행 폴더의 `answer.md`에 저장된다.
 - 케이스는 `cases-brief-write.json`에 있다. brief 8건과 write 5건이고, 자료는 `evals/`의 케이스 자료, `dev/dogfood/sources/`의 파일, `dev/codex/REPORT.md`다. `sources/pep-0659.rst`는 PEP 659 원문이다(public domain 또는 CC0). `b1`, `b2`, `w3`의 자료는 2026-11-11 사용자 검토에서 지적된 문장이 나온 개발 기록(`evals/brief-release-record/source.md`)이다. 2026-11-11의 실행은 이 파일을 정리하기 전의 복사본으로 했고, 그때는 케이스 이름과 prompt의 파일 이름 일부가 달랐다(예: `b1-status-detail`과 `release-0.5.0.md`). 자료의 내용은 같다.
 - `askback.py`는 글만 읽는 judge에게 문장마다 그 문장이 전하는 일을 자기 말로 다시 적게 한 뒤 clear, ask_back(글쓴이에게 되물어야 하는 문장), two_readings, awkward 중 하나를 선택하게 한다. `judge.py`의 clarity judge(J9)는 문장이 무엇에 대한 내용인지만 묻기 때문에 "write와 brief의 구성과 분량 범위는 측정값이 아니라 정한 값입니다"처럼 주어가 있는 문장을 찾지 못한다. 이 문장을 opus judge는 두 번 실행해 두 번 모두 ask_back으로 판정했고 sonnet judge는 두 번 중 한 번만 ask_back으로 판정했다. 그래서 기본 모델을 opus로 정했다.
 - 같은 judge로 사람 글도 판정해 대조군으로 사용한다. 논문 초록 40편(290문장)에서 두 번 모두 ask_back인 문장은 8.6%, awkward가 한 번 이상인 문장은 29.3%였다. 초록에는 "방안을 제안하였다"처럼 내용을 밝히지 않은 문장과 띄어쓰기 오류가 많아서, 이 값은 judge가 사람 글에서도 이만큼 지적한다는 참고값이고 판정 기준으로는 사용하지 않는다.
 - judge는 긴 글에서 사용자가 지적한 문장과 같은 유형의 문장을 놓치기도 한다. 0.5.0으로 쓴 1,153자 요약의 "…구성과 분량 범위는 측정해서 정한 값이 아니고…"와 1,167자 글에 있던 같은 내용의 문장은 두 번 모두 clear로 판정됐다. 최종 판단은 사람이 읽어서 한다.
 
-## 스킬을 호출하지 않는 요청 (`cases-method.json`)
-
-`cases-method.json`은 스킬을 호출하지 않는 요청 네 건이다. 세션 시작 hook(`hooks/`)이 추가한 기본 글쓰기 방식이 글을 어떻게 바꾸는지 확인하려고 0.8.0에서 추가했다. m1과 m4는 자료를 읽고 대화에 답하는 설명, m2는 스크립트를 읽고 파일로 쓰는 README, m3은 diff를 읽고 쓰는 PR 설명이다.
-
-```bash
-python dev/dogfood/run_skill.py --out <작업 폴더>/none --no-plugin --cases dev/dogfood/cases-method.json --jobs 4   # 플러그인 없음
-python dev/dogfood/run_skill.py --out <작업 폴더>/plugin --cases dev/dogfood/cases-method.json --jobs 4            # 현재 작업 중인 저장소
-```
-
-- `--no-plugin`은 `--plugin-dir` 없이 실행한다. 대화에 답한 글은 실행 폴더의 `answer.md`에 저장되고 m2의 문서는 `README.md`에 저장된다.
-- `run_skill.py`는 모든 실행에서 marketplace로 설치한 K-Writer(`k-writer@k-writer`)를 그 실행에 한해 끈다(`--settings`의 `enabledPlugins`). 설치본을 끄지 않으면 `--no-plugin` 실행에도 설치본의 스킬이 로드된다. 2026-11-27의 첫 실행에서는 0.6.0 설치본이 로드된 세션이 m2와 m3에서 write 스킬을 호출하려고 했고, 그 실행은 비교에 사용하지 않았다.
-- 케이스의 `allowed`는 사용자가 권한 질문에서 허용할 도구다. 플러그인을 로드한 세션은 문서 파일을 쓸 때 `python3`으로 검사 스크립트를 실행하므로 `Bash(python3:*)`를 허용했다. 두 실행에 같은 값을 적용한다.
-
 ## 0.8.0의 실행 결과 (`results/0.8.0`)
 
-0.8.0에서 기본 글쓰기 방식을 추가하고 brief에 설계 단계를 넣은 뒤 실행한 결과를 `results/0.8.0`에 기록했다. 이 결과의 평가는 `EVALUATION.md`의 K-Writer 0.8.0 섹션에 있다.
+0.8.0에서 brief에 설계 단계를 넣고 실행한 결과를 `results/0.8.0`에 기록했다. 0.8.0에는 스킬을 호출하지 않은 글에도 같은 글쓰기 순서를 적용하는 세션 시작 hook이 있었고 그 hook을 확인한 결과도 여기에 있다. hook은 0.8.1에서 삭제했다. K-Writer는 사용자가 스킬을 호출했을 때만 동작해야 하기 때문이다. 이 결과의 평가는 `EVALUATION.md`의 K-Writer 0.8.0 섹션에 있다.
 
-- `m1`~`m4` 폴더에는 `cases-method.json`의 요청에 플러그인이 없는 세션이 쓴 글(`no-plugin.md`)과 0.8.0을 로드한 세션이 쓴 글(`method-1.md`)이 있다. m2는 세션이 파일로 쓴 README이고 나머지는 대화에 답한 글이다. `m3`과 `m4` 폴더의 `method-2.md`는 판정의 지적을 기본 글쓰기 방식에 반영한 뒤 다시 실행해 얻은 글이다.
+- `m1`~`m4` 폴더에는 스킬을 호출하지 않는 요청 네 건에 플러그인이 없는 세션이 쓴 글(`no-plugin.md`)과 hook이 있는 0.8.0을 로드한 세션이 쓴 글(`method-1.md`)이 있다. m1과 m4는 자료를 읽고 대화에 답한 설명, m2는 스크립트를 읽고 파일로 쓴 README, m3은 diff를 읽고 쓴 PR 설명이다. `m3`과 `m4` 폴더의 `method-2.md`는 판정의 지적을 hook이 전달하는 글쓰기 순서에 반영한 뒤 다시 실행해 얻은 글이다. 이 요청을 실행한 케이스 파일(`cases-method.json`), m3의 자료, `run_skill.py`의 `--no-plugin` 옵션은 hook과 함께 삭제했고 commit 105dc19에 남아 있다.
 - `b1-release-detail`과 `b3-note-para`에는 brief 0.7.1(commit 05d12c1의 복사본을 `--plugin`에 지정)과 0.8.0이 쓴 요약이 있다. b3의 0.8.0 요약은 세 편이다. `k-writer-0.8.0-plan-document.md`는 한 문단 요약도 설계 문서를 쓰던 때의 요약이다. `k-writer-0.8.0-fact-sheet.md`는 설계를 fact sheet에 적도록 바꾼 뒤의 요약이고 `judge/b3-1.json`, `judge/b3-2.json`이 이 요약을 판정했다. `k-writer-0.8.0.md`는 설계한 내용이 요약에 모두 있는지 대조하는 확인을 추가한 뒤의 요약이고 `judge/b3-1-r2.json`, `judge/b3-2-r2.json`이 이 요약을 판정했다.
 - `judge-guide.md`는 0.7.0의 비교에 사용한 판정 지침과 같은 파일이다. `judge/`에는 쌍마다 A와 B의 순서를 바꿔 판정한 결과가 있고, `m3`과 `m4`에서 이름이 `-r2`로 끝나는 파일은 `method-2.md`를 판정한 결과다. 판정마다 A와 B가 어느 글이었는지는 `judge/keys.json`에 있다.
 

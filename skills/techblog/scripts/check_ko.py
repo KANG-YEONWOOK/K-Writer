@@ -5,7 +5,7 @@ The source of this file is core/scripts/check_ko.py in the repo. dev/sync_core.p
 
 Usage
   python check_ko.py ARTICLE [--tone default|casual|plain|free|auto] [--facts FACTS.md] [--short | --full]
-                             [--all] [--context N] [--keep] [--work DIR] [--json]
+                             [--all] [--context N] [--keep] [--json]
 
 First run on ARTICLE (no checked copy yet), or any run with --all: runs the full style lint (the same verdict and
 output as lint_ko.py) and saves a copy of ARTICLE as the checked copy (<name>.checked.md, next to ARTICLE).
@@ -26,9 +26,6 @@ applied automatically when the body of ARTICLE is under 1,500 characters; --shor
 When a writing plan (<name>.plan.md) is next to ARTICLE, the article is also compared with the plan (plan_ko.py):
 plan lines with no matching sentence, numbers of the plan that the article lost, and sentences with no plan line.
 Later runs list unplanned sentences only among the changed sentences.
-With --work DIR the checked copy is saved in DIR, and the fact sheet and the plan are looked up in DIR, under the
-file name of ARTICLE. A document written outside a skill run (README, guide) is checked this way, so that no work
-file is left next to it.
 
 Exit codes: 0 the whole article passes, 1 a Gate violation, a FAIL, too many WARN items, or a worsened AI style item,
 2 usage or input error
@@ -74,11 +71,6 @@ def default_facts(path):
 def default_plan(path):
     pp = P.plan_path(path)
     return pp if os.path.isfile(pp) else None
-
-
-def work_base(article, work=None):
-    """The path that the work files of ARTICLE are named after: ARTICLE itself, or its file name inside --work."""
-    return os.path.join(work, os.path.basename(article)) if work else article
 
 
 def plan_report(plan_file, text, only_lines=None):
@@ -302,7 +294,6 @@ def main(argv=None):
     ap.add_argument("--all", action="store_true", help="run the full lint again and reset the checked copy")
     ap.add_argument("--context", type=int, default=3, help="unchanged units shown before and after a change")
     ap.add_argument("--keep", action="store_true", help="do not update the checked copy")
-    ap.add_argument("--work", help="folder for the checked copy, the fact sheet, and the plan (default: next to ARTICLE)")
     ap.add_argument("--json", action="store_true")
     try:
         args = ap.parse_args(argv)
@@ -314,16 +305,12 @@ def main(argv=None):
     if args.article.endswith(CHECKED_SUFFIX):
         print(f"검사한 글의 복사본이 아니라 글 파일을 지정합니다: {args.article}", file=sys.stderr)
         return 2
-    if args.work and not os.path.isdir(args.work):
-        print(f"폴더가 없습니다: {args.work}", file=sys.stderr)
-        return 2
-    named = work_base(args.article, args.work)
-    facts = args.facts or default_facts(named)
+    facts = args.facts or default_facts(args.article)
     if facts and not os.path.isfile(facts):
         print(f"파일이 없습니다: {facts}", file=sys.stderr)
         return 2
-    base = checked_path(named)
-    plan = default_plan(named)
+    base = checked_path(args.article)
+    plan = default_plan(args.article)
     try:
         text = L.read_text(args.article)
         short = use_short(text, args.short)

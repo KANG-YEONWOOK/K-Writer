@@ -4,6 +4,20 @@
 
 이 문서는 techblog 스킬이 쓴 글을 같은 자료로 스킬 없이 쓴 글, 사람이 쓴 기술 블로그 글과 비교한 결과를 정리한다. 0.2.0 버전의 글은 스킬 없이 쓴 글과 비교했고 0.3.0 버전의 글은 0.2.0 버전의 글과 비교했다. 0.4.0 버전은 같은 실행에서 후처리 전 초안과 후처리를 마친 글을 비교했다. 0.6.0 버전은 같은 자료로 0.5.1 버전이 쓴 글과 비교하고 문장마다 한국어 표현을 판정했다. 0.8.0 버전은 사용자가 지적한 용어 설명, 출처와 인용 동사, 다의어 문제를 이전 노트, 사람 글, 같은 자료로 쓴 새 글에서 측정했다. 0.11.0 버전은 서술어 직역을 일부러 넣은 초안으로 0.10.0과 비교하고, 영어 비유 동사가 많은 자료로 새 글을 써서 fact sheet부터 최종 글까지 서술어를 측정했다. 측정 방법과 iteration별 기록은 [`dev/dogfood/README.md`](dev/dogfood/README.md)와 [`dev/dogfood/REPORT.md`](dev/dogfood/REPORT.md)에 있다.
 
+## K-Writer 0.8.1 세션 시작 hook 삭제 (2026-11-27)
+
+0.8.1은 0.8.0에서 추가한 세션 시작 hook을 삭제했다. 0.8.0은 "플러그인을 설치하면 내가 말한 대로 작동하게" 하라는 사용자의 지적을 스킬을 호출하지 않은 글에도 같은 글쓰기 순서를 적용하라는 뜻으로 해석했다. 사용자는 같은 날 이 해석이 요청과 다르다고 다시 지적했다. 요청은 플러그인의 스킬을 사용할 때 모든 스킬이 그 글쓰기 순서와 잘 쓴 글에서 가져온 기준을 따르게 하라는 것이었고, K-Writer는 사용자가 스킬을 호출했을 때만 동작해야 한다.
+
+- 삭제한 것
+  - `hooks/` 폴더 전체(`hooks.json`, `writing_method.py`, `writing-method.md`, `document-steps.md`)와 `tests/test_hooks.py`를 삭제했다. 플러그인은 세션과 subagent의 컨텍스트에 아무 내용도 추가하지 않는다.
+  - hook이 안내하는 문서 작성 순서에서만 사용하던 `check_ko.py`의 `--work` 옵션을 삭제했다.
+  - hook을 확인하던 도구를 삭제했다. `dev/codex/smoke.py`의 `method` 케이스, `dev/dogfood/cases-method.json`, 그 케이스의 자료 `dev/dogfood/sources/plan-check.diff`, `run_skill.py`의 `--no-plugin` 옵션과 케이스의 `allowed` 값이다. 삭제한 파일은 commit 105dc19에 남아 있다.
+- 남긴 것
+  - brief의 설계 단계는 스킬 안에서 동작하므로 그대로 두었다.
+  - `run_skill.py`가 marketplace로 설치한 K-Writer를 실행마다 끄는 설정과 대화에 답한 글을 `answer.md`에 저장하는 기능은 스킬을 실행할 때도 필요해서 남겼다.
+  - 아래 0.8.0 섹션과 `dev/dogfood/results/0.8.0`의 글과 판정은 그때 실행한 기록이라서 수정하지 않았다.
+- 검증: 단위 테스트 272개, `python dev/sync_core.py --check`, `python dev/borrow_thresholds.py --check`, `claude plugin validate .`가 통과했다. hook을 삭제한 뒤 스킬은 다시 실행하지 않았다. 스킬의 문서와 검사 항목은 `--work` 옵션 외에 바뀌지 않았다.
+
 ## K-Writer 0.8.0 기본 글쓰기 방식과 brief의 설계 단계 (2026-11-27)
 
 사용자는 0.7.1의 결과를 보고 설계 단계를 write와 techblog에만 넣은 것이 요청과 다르다고 지적했다. 요청은 특정 스킬을 바꾸라는 것이 아니라 플러그인을 설치하면 한국어 글이 그 순서로 작성되게 하라는 것이었다. 0.7.1까지는 스킬을 호출해야 설계 단계가 실행됐고 brief에는 설계 단계가 없었다. 0.8.0은 세션이 시작될 때 글쓰기 순서를 모델에 전달하는 hook을 추가하고 brief에도 설계 단계를 넣었다.

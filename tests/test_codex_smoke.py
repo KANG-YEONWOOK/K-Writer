@@ -24,29 +24,6 @@ class CodexEvidenceTest(unittest.TestCase):
             link.unlink()
             self.assertEqual(auth.read_text(encoding="utf-8"), "test fixture")
 
-    def test_method_case_reads_the_last_agent_message_and_stages_the_hook(self):
-        titles = "1. 쓸 내용 정하기 2. 문장 쓰기 3. 점검하기 4. 글의 크기에 따른 방법"
-        with tempfile.TemporaryDirectory() as tmp:
-            log = Path(tmp) / "run.jsonl"
-            events = [{"type": "item.completed", "item": {"type": "agent_message", "text": "확인하겠습니다."}},
-                      {"type": "item.completed", "item": {"type": "command_execution", "command": "ls"}},
-                      {"type": "item.completed", "item": {"type": "agent_message", "text": titles}}]
-            log.write_text("\n".join(json.dumps(e, ensure_ascii=False) for e in events) + "\nnot json\n",
-                           encoding="utf-8")
-            messages = smoke.agent_messages(log)
-            self.assertEqual(len(messages), 2)
-            self.assertTrue(smoke.method_in_context(messages))
-            self.assertFalse(smoke.method_in_context(messages[:1]))
-            self.assertFalse(smoke.method_in_context([]))
-            package = Path(tmp) / "package"
-            smoke.stage_package(package)
-            self.assertTrue((package / "hooks/hooks.json").is_file())
-            self.assertTrue((package / "hooks/writing_method.py").is_file())
-        # The titles the case looks for are the headings of the text the hook prints.
-        text = (ROOT / "hooks/writing-method.md").read_text(encoding="utf-8")
-        for title in smoke.METHOD_TITLES:
-            self.assertRegex(text, r"(?m)^## \d\. " + title + "$")
-
     def test_powershell_checker_with_unicode_and_spaces(self):
         command = 'powershell.exe -NoProfile -Command \'python "C:\\설치 폴더\\scripts\\revise_ko.py" check "article.md"\''
         self.assertEqual(smoke.checker_invocations(command), [{"script": "revise_ko.py", "action": "check"}])

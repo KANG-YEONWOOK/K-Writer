@@ -145,26 +145,6 @@ class CheckKoTest(unittest.TestCase):
         _, out, _ = self.run_check()
         self.assertNotIn("A18.category_change", out)
 
-    def test_work_folder_holds_the_checked_copy_and_the_plan(self):
-        # A document written outside a skill run is checked with --work, so no work file is left next to it.
-        work = os.path.join(self.dir, "작업 폴더")
-        os.makedirs(work)
-        with open(os.path.join(work, "note.plan.md"), "w", encoding="utf-8") as f:
-            f.write("# 설계\n\n- 핵심 주제: 게이트웨이의 응답 시간이 길어진 원인을 설명한다.\n\n## 단위 1. 원인\n"
-                    "- 형태: 문단\n- 전할 내용: 게이트웨이의 응답 시간이 길어진 원인을 설명한다.\n- 전개: 현상 → 원인\n\n"
-                    "1. [현상] 금성 관측소의 망원경 예약은 3월 9일에 4,812건으로 늘었다.\n")
-        code, out, err = self.run_check("--work", work)
-        self.assertEqual(code, 0, out + err)
-        self.assertTrue(os.path.isfile(os.path.join(work, "note.checked.md")))
-        self.assertFalse(os.path.isfile(C.checked_path(self.path)))
-        self.assertIn("설계 대조", out)
-        self.assertIn("4,812", out)
-        code, out, err = self.run_check("--work", work)          # the second run finds the copy in the work folder
-        self.assertIn("지난 검사 뒤에 바뀐 문장, 헤딩, 표의 행이 없다", out)
-        self.assertEqual(sorted(os.listdir(self.dir)), ["note.md", "작업 폴더"])
-        code, out, err = self.run_check("--work", os.path.join(self.dir, "없는 폴더"))
-        self.assertEqual(code, 2)
-
     def test_refuses_checked_copy_as_article(self):
         self.run_check()
         p = subprocess.run([sys.executable, os.path.join(SCRIPTS, "check_ko.py"), C.checked_path(self.path)],
