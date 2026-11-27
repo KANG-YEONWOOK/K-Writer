@@ -1,0 +1,92 @@
+{
+ "b1-1": {
+  "case": "b1-release-detail",
+  "A": "k-writer-0.7.1",
+  "B": "k-writer-0.8.0"
+ },
+ "b1-2": {
+  "case": "b1-release-detail",
+  "A": "k-writer-0.8.0",
+  "B": "k-writer-0.7.1"
+ },
+ "b3-1": {
+  "case": "b3-note-para",
+  "A": "k-writer-0.7.1",
+  "B": "k-writer-0.8.0-fact-sheet"
+ },
+ "b3-1-r2": {
+  "case": "b3-note-para",
+  "A": "k-writer-0.8.0",
+  "B": "k-writer-0.7.1"
+ },
+ "b3-2": {
+  "case": "b3-note-para",
+  "A": "k-writer-0.8.0-fact-sheet",
+  "B": "k-writer-0.7.1"
+ },
+ "b3-2-r2": {
+  "case": "b3-note-para",
+  "A": "k-writer-0.7.1",
+  "B": "k-writer-0.8.0"
+ },
+ "m1-1": {
+  "case": "m1-explain-note",
+  "A": "no-plugin",
+  "B": "method-1"
+ },
+ "m1-2": {
+  "case": "m1-explain-note",
+  "A": "method-1",
+  "B": "no-plugin"
+ },
+ "m2-1": {
+  "case": "m2-readme-file",
+  "A": "no-plugin",
+  "B": "method-1"
+ },
+ "m2-2": {
+  "case": "m2-readme-file",
+  "A": "method-1",
+  "B": "no-plugin"
+ },
+ "m3-1": {
+  "case": "m3-pr-description",
+  "A": "no-plugin",
+  "B": "method-1"
+ },
+ "m3-1-r2": {
+  "case": "m3-pr-description",
+  "A": "no-plugin",
+  "B": "method-2"
+ },
+ "m3-2": {
+  "case": "m3-pr-description",
+  "A": "method-1",
+  "B": "no-plugin"
+ },
+ "m3-2-r2": {
+  "case": "m3-pr-description",
+  "A": "method-2",
+  "B": "no-plugin"
+ },
+ "m4-1": {
+  "case": "m4-explain-pep",
+  "A": "no-plugin",
+  "B": "method-1"
+ },
+ "m4-1-r2": {
+  "case": "m4-explain-pep",
+  "A": "no-plugin",
+  "B": "method-2"
+ },
+ "m4-2": {
+  "case": "m4-explain-pep",
+  "A": "method-1",
+  "B": "no-plugin"
+ },
+ "m4-2-r2": {
+  "case": "m4-explain-pep",
+  "A": "method-2",
+  "B": "no-plugin"
+ }
+}

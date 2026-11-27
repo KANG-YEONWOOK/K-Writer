@@ -10,7 +10,12 @@ writing-method.md applies to every Korean text of the session without a skill ca
 - A subagent gets it as JSON (hookSpecificOutput.additionalContext). Agent types that only search or plan
   (SKIP_AGENTS) get nothing.
 - "<K-Writer 경로>" in the text is replaced with the folder of the installed plugin, taken from the location of this
-  file, so the model can open the documents and run the scripts that the text names.
+  file, so the model can run the scripts that the text names.
+
+The model runs the script itself with --document before it writes a document file. That call prints the steps for a
+document (document-steps.md) and the plan format (the "설계 문서 형식" section of the write skill's planning.md). The
+steps are printed by a command, not read as a file, because a session may not read files outside its project folder
+without asking, while the same approval that covers the check scripts covers this command.
 
 The script never fails or delays the session: on any error it prints nothing and exits 0, and it reads the hook input
 from stdin only for a subagent and waits for it one second at most.
@@ -25,6 +30,9 @@ import threading
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 METHOD = os.path.join(HERE, "writing-method.md")
+STEPS = os.path.join(HERE, "document-steps.md")
+PLANNING = os.path.join(ROOT, "skills", "write", "references", "planning.md")
+FORMAT_HEADING = "## 설계 문서 형식"
 PLACEHOLDER = "<K-Writer 경로>"
 # Built-in agent types whose output is a search result or a plan for the main agent, not a text for a reader.
 SKIP_AGENTS = ("Explore", "Plan", "statusline-setup", "claude-code-guide", "web-fetch")
@@ -35,6 +43,36 @@ def method_text(root=ROOT, path=METHOD):
     with open(path, encoding="utf-8") as f:
         text = f.read()
     return text.replace(PLACEHOLDER, root.replace(os.sep, "/")).strip() + "\n"
+
+
+def section(text, heading):
+    """The section of a Markdown text from `heading` to the next heading of the same level, or "" when absent."""
+    lines = text.splitlines()
+    level = heading.split(" ", 1)[0]
+    try:
+        start = lines.index(heading)
+    except ValueError:
+        return ""
+    end = len(lines)
+    fenced = False
+    for i in range(start + 1, len(lines)):
+        if lines[i].startswith("```"):
+            fenced = not fenced
+        elif not fenced and lines[i].startswith(level + " "):
+            end = i
+            break
+    return "\n".join(lines[start:end]).strip() + "\n"
+
+
+def document_text(root=ROOT, steps=STEPS, planning=PLANNING):
+    """The steps for writing a document file, followed by the plan format that the check script reads."""
+    text = method_text(root, steps)
+    try:
+        with open(planning, encoding="utf-8") as f:
+            form = section(f.read(), FORMAT_HEADING)
+    except OSError:
+        form = ""
+    return text + ("\n" + form if form else "")
 
 
 def hook_input(stream=None, wait=1.0):
@@ -68,8 +106,11 @@ def hook_input(stream=None, wait=1.0):
 
 
 def output(argv, read_input=hook_input):
-    """What to print for this hook call: plain text for a session, JSON for a subagent, "" to add nothing.
-    Only the subagent call needs the hook input (the agent type), so a session call does not read stdin."""
+    """What to print for this call: plain text for a session, JSON for a subagent, "" to add nothing, and the steps
+    for a document with --document. Only the subagent call needs the hook input (the agent type), so the other calls
+    do not read stdin."""
+    if "--document" in argv:
+        return document_text()
     if "--subagent" not in argv:
         return method_text()
     if read_input().get("agent_type") in SKIP_AGENTS:

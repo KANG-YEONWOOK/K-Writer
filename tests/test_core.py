@@ -129,8 +129,9 @@ class SectionReferenceTest(unittest.TestCase):
         for skill in SKILLS:
             docs = {p.name: p for p in (skill / "references").glob("*.md")}
             docs["SKILL.md"] = skill / "SKILL.md"
-            heads = {name: [re.sub(r"^\d+\.\s*", "", m.group(1).strip())
-                            for m in re.finditer(r"^#{1,6}\s+(.*)$", p.read_text(encoding="utf-8"), re.M)]
+            # A numbered heading ("## 3. 문장별 내용") can be named with or without its number.
+            heads = {name: [form for m in re.finditer(r"^#{1,6}\s+(.*)$", p.read_text(encoding="utf-8"), re.M)
+                            for form in (m.group(1).strip(), re.sub(r"^\d+\.\s*", "", m.group(1).strip()))]
                      for name, p in docs.items()}
             for name, p in docs.items():
                 for m in SECTION_REF.finditer(p.read_text(encoding="utf-8")):
