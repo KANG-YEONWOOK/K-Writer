@@ -7,7 +7,7 @@ techblog 스킬이 쓴 글을 점검하는 기준이다. 스킬의 점검 단계
   - **Gate (G)**: 위반 1건이면 불합격.
   - **자동 측정 (A, T)**: `scripts/lint_ko.py`가 세고 PASS / WARN / FAIL로 판정한다.
   - **참고 지표 (INFO)**: 값만 보고하고 판정에 반영하지 않는다.
-  - **점검 후보 (CHECK)**: 판정에 반영하지 않고 검출된 문장을 "단독 읽기 점검 후보"(A18), "한국어 점검 후보"(A5.plain_terms_check, A6.metaphor_check, A6.calque_check, A6.open_close_check, A14.quoted_english_check, A14.report_write_check, A14.causative, A14.adverb_pair, A5.pleonasm, A18.negation_scope, A19, A21), "용어 설명 점검 후보"(A20)로 출력한다. 스킬은 5단계의 점검에서 이 문장들을 먼저 읽는다.
+  - **점검 후보 (CHECK)**: 판정에 반영하지 않고 검출된 문장을 "단독 읽기 점검 후보"(A18), "한국어 점검 후보"(A5.plain_terms_check, A6.metaphor_check, A6.calque_check, A6.open_close_check, A14.quoted_english_check, A14.report_write_check, A14.causative, A14.adverb_pair, A5.pleonasm, A18.negation_scope, A18.simile_scope, A19, A21), "용어 설명 점검 후보"(A20)로 출력한다. 스킬은 5단계의 점검에서 이 문장들을 먼저 읽는다.
   - **판정 (J)**: 사람이나 judge model이 0~2점으로 매긴다.
 - "AI 문체 패턴"은 영어권 연구에서 tell이라고 부르는 표현이다. 이 문서는 영어 목록을 옮기지 않고 한국어 측정 자료(KCI 초록, KatFishNet, im-not-ai, 블로그 측정)를 우선한다.
 
@@ -203,6 +203,7 @@ lint는 아래 항목으로 검출한 문장을 "한국어 점검 후보"로 따
 | A6.calque_check | 추상 명사 + "남다"(remain), "손으로 계산"(by hand) | 0편 | 5 / 0 |
 | A14.quoted_english_check | 따옴표 친 영어 단어 + "~로 끝나다", "~로 보이다" | 0편 | 2 / 0 |
 | A18.negation_scope | "모든 X가 ~지 않았다", "X가 모두 ~지 않았다" | 0편 | 1 / 0 |
+| A18.simile_scope | "X처럼", "X와 달리" 뒤에 다른 명사를 꾸미는 절이 이어진 문장 | 측정하지 않음. 2018~2022년 글 461편 중에서는 112편(160문장, 2026-11-28 측정) | 측정하지 않음 |
 | A19.term_mix | 병기한 쌍의 두 표기가 병기 위치 밖에서 모두 나옴 | 38편 | 3 / 15 |
 | A19.term_avoid | fact sheet 용어 표에서 쓰지 않기로 한 표기 | 측정하지 않음(fact sheet 필요) | - |
 

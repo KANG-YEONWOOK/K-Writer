@@ -655,6 +655,10 @@
       "kind": "check",
       "group": "ko"
     },
+    "A18.simile_scope": {
+      "kind": "check",
+      "group": "ko"
+    },
     "A19.term_mix": {
       "kind": "check",
       "group": "ko",

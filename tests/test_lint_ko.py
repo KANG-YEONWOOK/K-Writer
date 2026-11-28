@@ -557,6 +557,30 @@ class KoreanPatternTest(unittest.TestCase):
                      "모든 셀을 다시 실행하지 않았다면 출력은 이전 결과일 수 있습니다."):
             self.assertEqual(self.m(text)["A18.negation_scope"]["value"], 0, text)
 
+    # 2026-11-28 user review: in a brief summary, "대부분의 애플리케이션처럼 거의 실행되지 않는 함수가 많으면" read two ways,
+    # because the comparison phrase can attach to the clause that modifies the next noun or to the main predicate.
+    def test_simile_scope(self):
+        for text in ("다만 대부분의 애플리케이션처럼 거의 실행되지 않는 함수가 많으면 CPython 3.11은 3.10보다 메모리를 조금 더 사용합니다.",
+                     "다른 리전처럼 쓰기 요청이 많은 서비스에서는 지연이 늘었습니다.",
+                     "이전 버전과 달리 자주 호출되지 않는 함수의 캐시는 만들지 않습니다."):
+            self.assertEqual(self.m(text)["A18.simile_scope"]["value"], 1, text)
+        for text in ("대부분의 애플리케이션에서는 함수 상당수가 거의 실행되지 않고, 이런 애플리케이션에서는 CPython 3.11이 메모리를 조금 더 사용합니다.",
+                     "쓰기 요청이 많은 서비스에서는 다른 리전에서와 마찬가지로 지연이 늘었습니다.",
+                     "K-Writer는 AI가 사람처럼 자연스러운 한국어 글을 쓰게 합니다.",
+                     "아래처럼 설정 파일에 값을 추가한 뒤 서버를 다시 시작합니다.",
+                     "이처럼 배치 크기를 줄인 서비스에서는 지연이 줄었습니다.",
+                     "앞에서 설명한 것처럼 배치 크기가 큰 서비스에서는 지연이 늘었습니다."):
+            self.assertEqual(self.m(text)["A18.simile_scope"]["value"], 0, text)
+
+    def test_simile_scope_is_a_korean_check(self):
+        text = "다른 리전처럼 쓰기 요청이 많은 서비스에서는 지연이 늘었습니다.\n"
+        a = L.analyze(text)
+        ev = L.evaluate(a, L.load_thresholds(), "default")
+        st = {r["id"]: r for r in ev["results"]}
+        self.assertEqual(st["A18.simile_scope"]["status"], "CHECK")
+        self.assertEqual(st["A18.simile_scope"]["group"], "ko")
+        self.assertIn("A18.simile_scope", L.render_text("x.md", "default", a, ev))
+
     # 2026-11-11 user review: a brief summary said "측정값이 아니라 정한 값입니다" and "수정한 내용 세 가지는" without saying
     # what was set or changed. 1,206 KCI abstracts (2018~2021) had the change forms 3 times and the count form once.
     CHANGE_HITS = ("그래서 기본 독자와 독립 점검 방식을 수정했습니다.", "2차 테스트 뒤에 수정한 내용은 다시 확인하지 않았습니다.",
